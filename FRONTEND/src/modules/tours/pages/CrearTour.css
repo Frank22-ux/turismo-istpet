@@ -1,0 +1,248 @@
+/* src/modules/tours/pages/CrearTour.css */
+
+.crear-tour-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding-top: 40px;
+    padding-bottom: 60px;
+    background-color: #f4f6f9;
+}
+
+.crear-tour-card {
+    background-color: white;
+    padding: 2.5rem;
+    border-radius: var(--border-radius-main);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    width: 95%;
+    max-width: 800px; /* Un poco más ancho para acomodar la galería */
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-title {
+    color: var(--color-primary);
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close-btn {
+    font-size: 2rem;
+    color: #bbb;
+    text-decoration: none;
+    line-height: 1;
+}
+.close-btn:hover { color: var(--color-error); }
+
+.divider {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 2rem 0;
+}
+
+/* --- SECCIÓN MULTIMEDIA (NUEVO) --- */
+.media-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 1rem;
+}
+
+/* Columna Izquierda: Portada */
+.media-col-main {
+    flex: 1;
+}
+
+.cover-wrapper .image-upload-label {
+    height: 200px; /* Altura fija para la portada */
+    border: 2px dashed #ccc;
+    border-radius: var(--border-radius-main);
+    background-color: #fafafa;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.cover-wrapper .image-upload-label:hover {
+    border-color: var(--color-secondary);
+    background-color: #f0f8ff;
+}
+
+/* Columna Derecha: Galería */
+.media-col-gallery {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.gallery-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: var(--color-input-bg);
+    color: var(--color-primary);
+    padding: 10px;
+    border-radius: var(--border-radius-input);
+    cursor: pointer;
+    font-weight: bold;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.gallery-upload-btn:hover {
+    background-color: #dbeafe;
+    border-color: var(--color-primary);
+}
+
+/* Grid de Miniaturas */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.gallery-thumb {
+    width: 100%;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hidden-file-input { display: none; }
+.image-preview { width: 100%; height: 100%; object-fit: cover; }
+.upload-placeholder { display: flex; flex-direction: column; alignItems: center; color: #888; }
+
+/* --- RESTO DEL FORMULARIO (Inputs) --- */
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 1.2rem;
+}
+
+.form-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 700px) {
+    .media-section { flex-direction: column; }
+    .form-row { flex-direction: column; gap: 0; }
+    .form-col { margin-bottom: 1.2rem; }
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-main);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-input);
+    background-color: var(--color-input-bg);
+    color: var(--color-text-main);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: white;
+}
+
+.guide-select-box {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 1.5rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 2rem;
+}
+
+.btn-save {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: var(--border-radius-input);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+    display: flex; align-items: center;
+}
+
+.btn-save:hover { background-color: var(--color-secondary); }
+
+.btn-cancel {
+    padding: 12px 20px; color: #666; text-decoration: none; font-weight: bold;
+}
+.btn-cancel:hover { color: var(--color-error); }
+
+.error-text { color: var(--color-error); font-size: 0.8rem; margin-top: 5px; display: block; }
+
+.map-section {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.map-wrapper {
+    width: 100%;
+    height: 350px; /* IMPORTANTE: Altura obligatoria */
+    border-radius: var(--border-radius-main);
+    overflow: hidden;
+    border: 2px solid #ddd;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Clase interna de React-Leaflet */
+.leaflet-container {
+    width: 100%;
+    height: 100%;
+}
+
+.coords-text {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    background-color: #e6f7ff;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+    text-align: center;
+    border: 1px dashed var(--color-primary);
+    font-weight: bold;
+}

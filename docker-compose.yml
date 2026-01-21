@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # ------------------------------------
+  # 1. SERVICIO DE BASE DE DATOS (PostgreSQL)
+  # ------------------------------------
+  db:
+    image: postgres:15
+    container_name: turismo_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: turismo_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # ------------------------------------
+  # 2. SERVICIO BACKEND (Node.js API)
+  # ------------------------------------
+  backend:
+    build: ./backend
+    container_name: turismo_backend
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_USER: admin
+      DB_PASSWORD: password123
+      DB_NAME: turismo_app
+      DB_PORT: 5432
+      JWT_SECRET: mi_secreto_super_seguro
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - ./backend/uploads:/app/uploads   # ✅ VOLUMEN CRÍTICO
+      - /app/node_modules
+
+  # ------------------------------------
+  # 3. SERVICIO FRONTEND (React + Vite)
+  # ------------------------------------
+  frontend:
+    build: ./frontend
+    container_name: turismo_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:4000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:

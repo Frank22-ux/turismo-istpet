@@ -1,0 +1,188 @@
+/* src/modules/admin/pages/GestionReservas.css */
+
+.reservas-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+}
+
+/* --- Cabecera --- */
+.reservas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.reservas-title {
+    color: var(--color-primary);
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+/* Resumen rápido (Cards pequeñas arriba) */
+.stats-summary {
+    display: flex;
+    gap: 15px;
+}
+
+.stat-card {
+    background-color: white;
+    padding: 10px 15px;
+    border-radius: var(--border-radius-input);
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--color-text-main);
+}
+
+/* --- Buscador --- */
+.search-bar {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    background-color: var(--color-bg-card);
+    padding: 10px 15px;
+    border-radius: var(--border-radius-input);
+    max-width: 400px;
+}
+
+.search-input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    margin-left: 10px;
+    font-size: 1rem;
+    color: var(--color-text-main);
+    outline: none;
+}
+
+/* --- Tabla --- */
+.table-wrapper {
+    overflow-x: auto;
+    background-color: white;
+    border-radius: var(--border-radius-main);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.reservas-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px; /* Un poco más ancha porque tiene muchos datos */
+}
+
+.reservas-table th {
+    background-color: var(--color-bg-card);
+    color: var(--color-primary);
+    text-align: left;
+    padding: 15px;
+    font-weight: bold;
+}
+
+.reservas-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    color: var(--color-text-main);
+    vertical-align: middle;
+}
+
+.reservas-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* --- Estilos de Celdas --- */
+.text-bold {
+    font-weight: bold;
+}
+
+.price-cell {
+    font-family: 'Consolas', 'Monaco', monospace; /* Fuente tipo contable */
+    font-weight: bold;
+    color: #022b3a;
+}
+
+/* --- Badges de Estado de Pago --- */
+.payment-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.pay-pending {
+    background-color: #fff3cd;
+    color: #856404; /* Amarillo oscuro */
+}
+
+.pay-success {
+    background-color: #d4edda;
+    color: #155724; /* Verde */
+}
+
+.pay-cancelled {
+    background-color: #f8d7da;
+    color: #721c24; /* Rojo */
+}
+
+/* --- Acciones --- */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-approve {
+    background-color: #e6fffa;
+    color: #28a745;
+}
+.btn-approve:hover {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-reject {
+    background-color: #fff5f5;
+    color: #dc3545;
+}
+.btn-reject:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-details {
+    background-color: #e6f7ff;
+    color: #007bff;
+}
+.btn-details:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 2rem;
+    color: var(--color-primary);
+    font-weight: bold;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+.back-link:hover {
+    text-decoration: underline;
+}

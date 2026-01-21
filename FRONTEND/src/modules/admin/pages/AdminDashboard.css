@@ -1,0 +1,100 @@
+/* src/modules/admin/pages/AdminDashboard.css */
+
+.admin-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    background-color: var(--color-bg-card);
+    padding: 1.5rem;
+    border-radius: var(--border-radius-main);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.admin-title {
+    color: var(--color-primary);
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.user-info {
+    font-weight: bold;
+    color: var(--color-text-main);
+}
+
+/* --- GRID DE TARJETAS --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+}
+
+.dashboard-card {
+    background-color: var(--color-bg-card); /* #E1E5F2 */
+    border-radius: var(--border-radius-main);
+    padding: 2rem;
+    text-align: center;
+    text-decoration: none; /* Quitar subrayado del Link */
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    background-color: #FFFFFF;
+    border-color: var(--color-primary);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 3rem;
+    color: var(--color-primary); /* #022b3a */
+    margin-bottom: 1rem;
+    transition: color 0.3s;
+}
+
+.dashboard-card:hover .card-icon {
+    color: var(--color-secondary); /* #1F7A8C */
+}
+
+.card-title {
+    color: var(--color-text-main);
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.card-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Botón de Salir */
+.btn-logout {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+    border: 1px solid var(--color-error);
+    padding: 8px 16px;
+    border-radius: var(--border-radius-input);
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: var(--color-error);
+    color: white;
+}

@@ -1,0 +1,131 @@
+/* frontend/src/modules/auth/pages/LoginPage.css */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* Ya no necesitamos background-color aquí porque está en el body global */
+  padding: 20px;
+}
+
+.login-card {
+  background-color: var(--color-bg-card); /* USANDO VARIABLE */
+  padding: 2.5rem;
+  border-radius: var(--border-radius-main);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  text-align: center;
+  color: var(--color-text-main);
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.form-group {
+  margin-bottom: 1.2rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-main);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.form-input, .form-input-password {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-input);
+  background-color: var(--color-input-bg); /* USANDO VARIABLE */
+  color: var(--color-text-main);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input-password {
+  padding-right: 45px;
+}
+
+.form-input:focus, .form-input-password:focus {
+  outline: none;
+  border-color: var(--color-primary); /* USANDO VARIABLE */
+  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.2); 
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-primary); /* USANDO VARIABLE */
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s;
+}
+
+.eye-btn:hover {
+  color: var(--color-secondary); /* USANDO VARIABLE */
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--color-primary); /* USANDO VARIABLE */
+  color: #FFFFFF; /* Este lo dejamos blanco fijo */
+  border: none;
+  border-radius: var(--border-radius-input);
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-secondary); /* USANDO VARIABLE */
+}
+
+.error-msg {
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+  padding: 10px;
+  border-radius: var(--border-radius-input);
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.register-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--color-text-main);
+  font-size: 0.9rem;
+}
+
+.register-link {
+  color: var(--color-primary); /* USANDO VARIABLE */
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.register-link:hover {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}

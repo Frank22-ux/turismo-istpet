@@ -1,0 +1,13 @@
+cd BACKEND
+npm install
+npm run dev
+
+cd FRONTEND
+npm install
+npm run dev
+
+SELECT id_usuario, primer_nombre, correo, id_rol FROM usuarios;
+
+UPDATE usuarios 
+SET id_rol = 1 
+WHERE correo = 'jose22.quezada@gmail.com';
