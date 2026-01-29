@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { getToursRequest } from '../../tours/services/tour.service';
 import { 
     FaMapMarkerAlt, FaClock, FaCalendarAlt, FaSearch, 
-    FaLocationArrow, FaTimes, FaUserCircle, FaSuitcase, FaSignOutAlt, FaUserEdit 
+    FaLocationArrow, FaTimes, FaUserCircle, FaSuitcase, FaSignOutAlt, FaUserEdit,
+    FaHotel, FaUserTie 
 } from 'react-icons/fa';
 import './TuristaDashboard.css';
 
@@ -18,16 +19,19 @@ const TuristaDashboard = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const RADIUS_KM = 40; // Radio estricto de búsqueda
+    const RADIUS_KM = 40; 
 
+    // Usamos un efecto para cargar tours al montar y cada vez que el componente gane foco
     useEffect(() => {
         cargarTours();
     }, []);
 
     const cargarTours = async () => {
         try {
+            setLoading(true);
+            // Forzamos la obtención de datos frescos del backend
             const data = await getToursRequest();
-            setTours(data);
+            setTours(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error al cargar catálogo:", error);
         } finally {
@@ -40,9 +44,9 @@ const TuristaDashboard = () => {
         navigate('/login');
     };
 
-    // --- FÓRMULA MATEMÁTICA HAVERSINE ---
+    // --- FÓRMULA HAVERSINE ---
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371; // Radio de la Tierra en KM
+        const R = 6371; 
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -58,48 +62,36 @@ const TuristaDashboard = () => {
             return;
         }
 
-        // Solicitar ubicación en tiempo real
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                 setIsLocationFilterActive(true);
             },
-            () => alert("⚠️ Por favor, activa los permisos de ubicación en tu navegador para usar esta función.")
+            () => alert("⚠️ Por favor, activa los permisos de ubicación para filtrar tours cercanos.")
         );
     };
 
-    // --- SISTEMA DE FILTRADO DINÁMICO ---
     const filteredTours = tours.filter(tour => {
-        // 1. Filtro por texto (Nombre o Ciudad)
         const matchesSearch = tour.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             tour.ciudad_destino.toLowerCase().includes(searchTerm.toLowerCase());
         
-        // 2. Filtro Geográfico Estricto
         if (isLocationFilterActive && userLocation) {
-            // Si las coordenadas no existen en la DB, el tour desaparece por seguridad
             if (!tour.latitud || !tour.longitud) return false;
-
             const distance = calculateDistance(
-                userLocation.lat, 
-                userLocation.lng, 
-                parseFloat(tour.latitud), 
-                parseFloat(tour.longitud)
+                userLocation.lat, userLocation.lng, 
+                parseFloat(tour.latitud), parseFloat(tour.longitud)
             );
-            
-            // Retorna TRUE solo si cumple búsqueda Y está dentro del radio
             return matchesSearch && distance <= RADIUS_KM;
         }
-        
-        // Si el filtro no está activo, solo filtra por texto
         return matchesSearch;
     });
 
-    if (loading) return <div className="loading-screen">Cargando experiencias...</div>;
+    if (loading) return <div className="loading-screen">Cargando experiencias reales...</div>;
 
     return (
         <div className="turista-dashboard">
             <nav className="navbar-turista">
-                <div className="nav-logo">
+                <div className="nav-logo" onClick={() => navigate('/home')} style={{cursor:'pointer'}}>
                     <span className="logo-icon">🌍</span>
                     <span className="logo-text">TravelExplor</span>
                 </div>
@@ -123,13 +115,13 @@ const TuristaDashboard = () => {
 
             <header className="hero-section">
                 <div className="hero-content">
-                    <h1>¡Descubre el mundo! ✈️</h1>
+                    <h1>Explora nuevas aventuras 🏔️</h1>
                     <div className="search-and-filter">
                         <div className="search-box">
                             <FaSearch className="search-icon" />
                             <input 
                                 type="text" 
-                                placeholder="Busca por nombre o ciudad..." 
+                                placeholder="Ciudad, hotel o actividad..." 
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -137,7 +129,6 @@ const TuristaDashboard = () => {
                         <button 
                             className={`btn-location ${isLocationFilterActive ? 'active' : ''}`}
                             onClick={handleGetLocation}
-                            title={isLocationFilterActive ? "Ver todos los tours" : "Ver tours cerca de mí"}
                         >
                             {isLocationFilterActive ? <FaTimes /> : <FaLocationArrow />}
                             {isLocationFilterActive ? " Quitar Filtro" : " Cerca de mí"}
@@ -147,46 +138,46 @@ const TuristaDashboard = () => {
             </header>
 
             <main className="catalog-container">
-                {isLocationFilterActive && (
-                    <div className="filter-status-bar">
-                        📍 Mostrando solo tours en un radio de <strong>{RADIUS_KM} km</strong> a la redonda.
-                    </div>
-                )}
-
                 <div className="tours-grid">
                     {filteredTours.map((tour) => (
                         <div key={tour.id_tour} className="tour-card">
+                            {/* BADGE DE PRECIO */}
                             <div className="tour-badge">${Number(tour.precio).toFixed(0)}</div>
-                            <div className="tour-card-image">
-                                <img src={`${API_URL}${tour.imagen_portada}`} alt={tour.nombre} />
+                            
+                            {/* ICONOS DE SERVICIOS INCLUIDOS */}
+                            <div className="tour-services-icons">
+                                {tour.id_hotel_base && <span className="icon-tag" title="Incluye Hotel"><FaHotel /></span>}
+                                {tour.id_guia && <span className="icon-tag" title="Guía Profesional"><FaUserTie /></span>}
                             </div>
+
+                            <div className="tour-card-image">
+                                <img src={tour.imagen_portada ? `${API_URL}${tour.imagen_portada}` : 'https://via.placeholder.com/300x200'} alt={tour.nombre} />
+                            </div>
+                            
                             <div className="tour-card-body">
                                 <span className="tour-city"><FaMapMarkerAlt /> {tour.ciudad_destino}</span>
                                 <h3 className="tour-name">{tour.nombre}</h3>
+                                <p className="tour-description-short">
+                                    {tour.descripcion ? tour.descripcion.substring(0, 80) + '...' : 'Explora esta increíble actividad con nosotros.'}
+                                </p>
+                                
                                 <div className="tour-card-footer">
-                                    <button onClick={() => navigate(`/admin/detalle-tour/${tour.id_tour}`)} className="btn-details">Detalles</button>
+                                    <button 
+                                        onClick={() => navigate(`/admin/detalle-tour/${tour.id_tour}`)} 
+                                        className="btn-details"
+                                    >
+                                        Ver Detalles
+                                    </button>
                                     <button className="btn-reserve">Reservar</button>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
-
-                {/* MENSAJE CUANDO NO HAY NADA EN EL RADIO */}
+                
                 {filteredTours.length === 0 && (
-                    <div className="no-results-friendly">
-                        <div className="no-results-icon">🕵️</div>
-                        <h3>No hay tours en esta zona</h3>
-                        <p>
-                            {isLocationFilterActive 
-                                ? `Actualmente no tenemos tours registrados en un radio de ${RADIUS_KM}km de tu ubicación actual.` 
-                                : "No hay tours que coincidan con tu búsqueda."}
-                        </p>
-                        {isLocationFilterActive && (
-                            <button onClick={handleGetLocation} className="btn-clear-filter">
-                                Ver tours de todo el país
-                            </button>
-                        )}
+                    <div className="no-results">
+                        <h3>No encontramos lo que buscas, intenta con otra ciudad o nombre.</h3>
                     </div>
                 )}
             </main>

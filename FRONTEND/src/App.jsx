@@ -12,10 +12,15 @@ import DetalleTour from './modules/tours/pages/DetalleTour';
 
 // --- IMPORTAR DASHBOARD Y PERFIL DEL TURISTA ---
 import TuristaDashboard from './modules/usuarios/pages/TuristaDashboard';
-import PerfilTurista from './modules/usuarios/pages/PerfilTurista'; // <--- NUEVA IMPORTACIÓN
+import PerfilTurista from './modules/usuarios/pages/PerfilTurista';
+
+// --- IMPORTAR LAS PÁGINAS DE GESTIÓN DE HOTELES ---
+import GestionHoteles from './modules/hoteles/pages/GestionHoteles';
+import CrearHotel from './modules/hoteles/pages/CrearHotel'; 
+import DetalleHotel from './modules/hoteles/pages/DetalleHotel';
+import EditarHotel from './modules/hoteles/pages/EditarHotel'; // <--- IMPORTACIÓN HABILITADA
 
 // --- OTRAS GESTIONES ---
-import GestionHoteles from './modules/hoteles/pages/GestionHoteles';
 import GestionGuias from './modules/admin/pages/GestionGuias';
 import GestionReservas from './modules/admin/pages/GestionReservas';
 
@@ -34,7 +39,7 @@ function App() {
         
         {/* --- RUTAS DE USUARIO TURISTA --- */}
         <Route path="/home" element={<TuristaDashboard />} />
-        <Route path="/perfil-turista" element={<PerfilTurista />} /> {/* <--- NUEVA RUTA */}
+        <Route path="/perfil-turista" element={<PerfilTurista />} />
         
         {/* Roles Secundarios */}
         <Route path="/guia" element={<GuiaDashboard />} />
@@ -43,17 +48,18 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         
         {/* Gestión de Tours */}
-        <Route path="/admin/crear-tour" element={<GestionTours />} />
-        <Route path="/admin/crear-tour/nuevo" element={<CrearTour />} /> 
-        
-        {/* Ruta para EDITAR (Carga el formulario con datos) */}
+        <Route path="/admin/tours" element={<GestionTours />} />
+        <Route path="/admin/crear-tour" element={<CrearTour />} /> 
         <Route path="/admin/editar-tour/:id" element={<EditarTour />} />
-        
-        {/* Ruta para VISUALIZAR DETALLES (Común para todos) */}
         <Route path="/admin/detalle-tour/:id" element={<DetalleTour />} />
 
+        {/* --- GESTIÓN DE HOTELES --- */}
+        <Route path="/admin/hoteles" element={<GestionHoteles />} />
+        <Route path="/admin/crear-hotel" element={<CrearHotel />} />
+        <Route path="/admin/hoteles/detalle/:id" element={<DetalleHotel />} />
+        <Route path="/admin/editar-hotel/:id" element={<EditarHotel />} /> {/* <--- RUTA HABILITADA */}
+
         {/* Otras Gestiones del Panel Administrativo */}
-        <Route path="/admin/crear-hotel" element={<GestionHoteles />} />
         <Route path="/admin/crear-guia" element={<GestionGuias />} />
         <Route path="/admin/reservas" element={<GestionReservas />} />
 

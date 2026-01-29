@@ -37,7 +37,7 @@ CREATE TABLE usuarios (
     CONSTRAINT fk_usuario_rol FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
 );
 
--- 4. TABLA: HOTELES
+-- 4. TABLA: HOTELES (Actualizada con Foto, Galería y Teléfono)
 CREATE TABLE hoteles (
     id_hotel SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -48,7 +48,10 @@ CREATE TABLE hoteles (
     estrellas INTEGER DEFAULT 3, 
     habitaciones INTEGER DEFAULT 0,
     estado_convenio VARCHAR(20) DEFAULT 'Disponible',
-    descripcion TEXT
+    descripcion TEXT,
+    foto_url VARCHAR(500), -- Imagen de portada del hotel
+    galeria TEXT[],        -- Array para múltiples imágenes
+    telefono VARCHAR(20)   -- Teléfono de contacto
 );
 
 -- 5. TABLA: CATEGORIAS
@@ -141,10 +144,11 @@ CREATE TABLE pagos (
 INSERT INTO roles (nombre_rol) VALUES ('Administrador'), ('Guía'), ('Turista');
 INSERT INTO categorias (nombre_categoria) VALUES ('Aventura'), ('Relax'), ('Cultural');
 
-INSERT INTO hoteles (nombre, direccion, ciudad, estrellas) VALUES 
-('Hotel Paraíso Real', 'Av. Amazonas 123', 'Quito', 5),
-('Hostal La Montaña', 'Calle Larga 456', 'Cuenca', 3),
-('Resort Blue Ocean', 'Via Barbasquillo', 'Manta', 4);
+INSERT INTO hoteles (nombre, direccion, ciudad, estrellas, estado_convenio) VALUES 
+('Hotel Paraíso Real', 'Av. Amazonas 123', 'Quito', 5, 'Disponible'),
+('Hostal La Montaña', 'Calle Larga 456', 'Cuenca', 3, 'Disponible'),
+('Resort Blue Ocean', 'Via Barbasquillo', 'Manta', 4, 'Disponible');
 
+-- El password es: admin123 (hash genérico de prueba)
 INSERT INTO usuarios (primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, correo, password, id_rol, descripcion_perfil) 
-VALUES ('Super', 'Admin', 'Sistema', 'Principal', 'admin@toursystem.com', '$2a$10$X7vO.aD/P.g0X.j/P.g0X.j/P.g0X.j/P.g0X.j/P.g0X', 1, 'Cuenta administradora');
+VALUES ('Super', 'Admin', 'Sistema', 'Principal', 'admin@toursystem.com', '$2b$10$76YVfH.fB3XG.X/y5jXpY.e.X7vO.aD/P.g0X.j/P.g0X.j/P.g0X', 1, 'Cuenta administradora');

@@ -1,12 +1,22 @@
 import { useForm } from 'react-hook-form';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import axios from 'axios'; // Importamos axios para los hoteles
 import { FaSave, FaImages, FaMapMarkerAlt, FaCalendarAlt, FaHotel, FaUserTie } from 'react-icons/fa';
 import { getTourRequest, updateTourRequest } from '../services/tour.service';
 import './EditarTour.css';
 
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Corregir iconos de Leaflet
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+let DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconSize: [25, 41], iconAnchor: [12, 41] });
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const API_URL = 'http://localhost:4000';
 
 const EditarTour = () => {
     const { id } = useParams();
@@ -18,7 +28,7 @@ const EditarTour = () => {
     const [galleryFiles, setGalleryFiles] = useState([]); 
     const [galleryPreviews, setGalleryPreviews] = useState([]); 
     const [listaGuias, setListaGuias] = useState([]);
-    const [listaHoteles, setListaHoteles] = useState([]);
+    const [listaHoteles, setListaHoteles] = useState([]); // <--- Lista dinámica
     const [position, setPosition] = useState(null);
 
     const defaultCenter = [-0.1807, -78.4678];
@@ -26,41 +36,42 @@ const EditarTour = () => {
     useEffect(() => {
         const cargarTodo = async () => {
             try {
-                // Catálogos (Asegúrate de que coincidan con los IDs de tu DB)
+                // 1. CARGAR HOTELES REALES DE LA DB
+                const resHoteles = await axios.get(`${API_URL}/api/hoteles`);
+                setListaHoteles(resHoteles.data);
+
+                // 2. CARGAR GUÍAS (Puedes dinamizarlo igual cuando tengas el backend de guías)
                 setListaGuias([
                     { id: 1, nombre: 'Carlos Andrés Turista' },
                     { id: 2, nombre: 'Maria Fernanda Gomez' }
                 ]);
-                setListaHoteles([
-                    { id: 1, nombre: 'Hotel Paraíso Real' },
-                    { id: 2, nombre: 'Hostal La Montaña' }
-                ]);
 
+                // 3. CARGAR DATOS DEL TOUR
                 const tour = await getTourRequest(id);
                 if (!tour) return;
 
-                // Mapeo exacto de campos para el formulario
                 reset({
                     nombre: tour.nombre,
                     ciudad_destino: tour.ciudad_destino,
                     precio: tour.precio,
                     descripcion: tour.descripcion,
                     duracion: tour.duracion,
-                    // Conversión de fecha ISO a YYYY-MM-DD para el input date
                     fecha_inicio: tour.fecha_inicio ? tour.fecha_inicio.split('T')[0] : '',
                     fecha_fin: tour.fecha_fin ? tour.fecha_fin.split('T')[0] : '',
                     latitud: tour.latitud,
                     longitud: tour.longitud,
                     id_guia: tour.id_guia || '',
-                    id_hotel_base: tour.id_hotel_base || ''
+                    id_hotel_base: tour.id_hotel_base || '' // Vincula con el id_hotel de la DB
                 });
 
-                if (tour.imagen_portada) setCoverPreview(`http://localhost:4000${tour.imagen_portada}`);
-                if (tour.galeria) setGalleryPreviews(tour.galeria.map(img => `http://localhost:4000${img}`));
-                if (tour.latitud && tour.longitud) setPosition({ lat: parseFloat(tour.latitud), lng: parseFloat(tour.longitud) });
+                if (tour.imagen_portada) setCoverPreview(`${API_URL}${tour.imagen_portada}`);
+                if (tour.galeria) setGalleryPreviews(tour.galeria.map(img => `${API_URL}${img}`));
+                if (tour.latitud && tour.longitud) {
+                    setPosition({ lat: parseFloat(tour.latitud), lng: parseFloat(tour.longitud) });
+                }
 
             } catch (error) {
-                console.error("Error al cargar:", error);
+                console.error("Error al cargar datos en Editar Tour:", error);
             }
         };
         cargarTodo();
@@ -80,37 +91,28 @@ const EditarTour = () => {
     const onSubmit = async (data) => {
         try {
             const formData = new FormData();
+            const token = localStorage.getItem('token');
             
-            // 1. Agregar campos de texto obligatorios
             formData.append('nombre', data.nombre);
             formData.append('ciudad_destino', data.ciudad_destino);
             formData.append('precio', data.precio);
             formData.append('duracion', data.duracion);
             formData.append('descripcion', data.descripcion || '');
-            
-            // 2. Manejo de fechas (asegurarse de que no vayan como strings vacíos si son null)
             formData.append('fecha_inicio', data.fecha_inicio || '');
             formData.append('fecha_fin', data.fecha_fin || '');
-            
-            // 3. Coordenadas
             formData.append('latitud', data.latitud);
             formData.append('longitud', data.longitud);
+            formData.append('id_guia', data.id_guia);
+            formData.append('id_hotel_base', data.id_hotel_base);
 
-            // 4. IDs de relación (convertir a null si están vacíos)
-            formData.append('id_guia', data.id_guia !== "" ? data.id_guia : "");
-            formData.append('id_hotel_base', data.id_hotel_base !== "" ? data.id_hotel_base : "");
-
-            // 5. Archivos: Solo se agregan si el usuario seleccionó nuevos
-            if (imagenFile) {
-                formData.append('imagen_portada', imagenFile);
-            }
+            if (imagenFile) formData.append('imagen_portada', imagenFile);
             if (galleryFiles.length > 0) {
                 galleryFiles.forEach(file => formData.append('galeria', file));
             }
 
             await updateTourRequest(id, formData);
             alert('¡Tour actualizado con éxito!');
-            navigate('/admin/crear-tour');
+            navigate('/admin/tours');
         } catch (error) {
             console.error("Error en submit:", error);
             alert('Error al guardar cambios.');
@@ -122,10 +124,11 @@ const EditarTour = () => {
             <div className="editar-tour-card">
                 <div className="card-header">
                     <h2>Editar Tour: {watch('nombre')}</h2>
-                    <Link to="/admin/crear-tour" className="close-btn">×</Link>
+                    <Link to="/admin/tours" className="close-btn">×</Link>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
+                    {/* SECCIÓN MULTIMEDIA */}
                     <div className="media-section">
                         <div className="media-col-main">
                             <label className="form-label">Imagen de Portada</label>
@@ -153,6 +156,7 @@ const EditarTour = () => {
                         </div>
                     </div>
 
+                    {/* DATOS BÁSICOS */}
                     <div className="form-row">
                         <div className="form-col">
                             <label className="form-label">Nombre del Tour *</label>
@@ -186,6 +190,7 @@ const EditarTour = () => {
                         </div>
                     </div>
 
+                    {/* MAPA */}
                     <div className="map-section">
                         <label className="form-label"><FaMapMarkerAlt /> Ubicación (Haz clic para mover el pin)</label>
                         <div className="map-wrapper" style={{ height: '300px', marginBottom: '15px' }}>
@@ -194,29 +199,30 @@ const EditarTour = () => {
                                 <LocationMarker />
                             </MapContainer>
                         </div>
-                        <div className="form-row">
-                            <div className="form-col">
-                                <input type="hidden" {...register("latitud")} />
-                            </div>
-                            <div className="form-col">
-                                <input type="hidden" {...register("longitud")} />
-                            </div>
-                        </div>
+                        <input type="hidden" {...register("latitud")} />
+                        <input type="hidden" {...register("longitud")} />
                     </div>
 
+                    {/* RELACIONES */}
                     <div className="form-row">
                         <div className="form-col">
                             <label className="form-label"><FaHotel /> Hotel Base</label>
                             <select className="form-input" {...register("id_hotel_base")}>
-                                <option value="">-- Ninguno --</option>
-                                {listaHoteles.map(h => <option key={h.id} value={h.id}>{h.nombre}</option>)}
+                                <option value="">-- Ninguno / Sin Hotel --</option>
+                                {listaHoteles.map(h => (
+                                    <option key={h.id_hotel} value={h.id_hotel}>
+                                        {h.nombre} ({h.estrellas}⭐)
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className="form-col">
                             <label className="form-label"><FaUserTie /> Guía Asignado</label>
                             <select className="form-input" {...register("id_guia")}>
                                 <option value="">-- Sin Asignar --</option>
-                                {listaGuias.map(g => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+                                {listaGuias.map(g => (
+                                    <option key={g.id} value={g.id}>{g.nombre}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -227,7 +233,7 @@ const EditarTour = () => {
                     </div>
 
                     <div className="form-actions">
-                        <button type="button" onClick={() => navigate('/admin/crear-tour')} className="btn-cancel">Descartar</button>
+                        <button type="button" onClick={() => navigate('/admin/tours')} className="btn-cancel">Descartar</button>
                         <button type="submit" className="btn-save"><FaSave /> Guardar Cambios</button>
                     </div>
                 </form>

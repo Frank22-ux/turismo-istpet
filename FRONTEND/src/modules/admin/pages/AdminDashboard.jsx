@@ -31,17 +31,17 @@ const AdminDashboard = () => {
             <div className="dashboard-grid">
                 
                 {/* 1. CREAR TOURS */}
-                <Link to="/admin/crear-tour" className="dashboard-card">
+                <Link to="/admin/tours" className="dashboard-card">
                     <FaMapMarkedAlt className="card-icon" />
                     <h3 className="card-title">Gestionar Tours</h3>
                     <p className="card-desc">Crear, editar o eliminar paquetes turísticos.</p>
                 </Link>
 
                 {/* 2. CREAR HOTELES */}
-                <Link to="/admin/crear-hotel" className="dashboard-card">
+                <Link to="/admin/hoteles" className="dashboard-card">
                     <FaHotel className="card-icon" />
-                    <h3 className="card-title">Gestionar Hoteles</h3>
-                    <p className="card-desc">Administrar alojamientos y habitaciones.</p>
+                    <h3 className="card-title">Convenios Hoteles</h3>
+                    <p className="card-desc">Hoteles disponibles para las actividades.</p>
                 </Link>
 
                 {/* 3. CREAR GUÍAS */}

@@ -146,3 +146,36 @@
 .back-link:hover {
     text-decoration: underline;
 }
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: 0.3s;
+    color: white;
+}
+
+.btn-view {
+    background-color: #3498db; /* Azul para Ver */
+}
+
+.btn-edit {
+    background-color: #f1c40f; /* Amarillo para Editar */
+}
+
+.btn-delete {
+    background-color: #e74c3c; /* Rojo para Eliminar */
+}
+
+.btn-action:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
