@@ -1,76 +1,141 @@
 /* frontend/src/modules/auth/pages/RegisterPage.css */
 
 .register-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: 20px;
-  /* El color de fondo viene del body global */
+  max-height: 100vh; /* Limita la altura máxima */
+  width: 100%;
+  padding: 2vh 3vw;
+  overflow-y: auto; /* Permite scroll si es necesario */
+  overflow-x: hidden;
+}
+
+/* Sistema de Carousel de Imágenes de Fondo */
+.background-carousel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+}
+
+.background-image.active {
+  opacity: 1;
+}
+
+/* Overlay oscuro sutil para mejor legibilidad sin alterar colores */
+.register-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25); /* Overlay negro muy sutil */
+  z-index: -1;
 }
 
 .register-card {
-  background-color: var(--color-bg-card); /* #E1E5F2 */
-  padding: 2rem;
+  position: relative;
+  background-color: var(--color-bg-card);
+  padding: clamp(1rem, 2.5vh, 2rem);
   border-radius: var(--border-radius-main);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 550px; /* Un poco más ancho que el login porque hay más campos */
+  box-shadow: 0 1.5vh 4vh rgba(0, 0, 0, 0.3);
+  width: 95%;
+  max-width: 550px;
+  max-height: 95vh; /* Limita altura para que quepa en pantalla */
+  overflow-y: auto; /* Scroll interno si es necesario */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeInUp 0.7s ease-out;
+  margin: auto; /* Centrado adicional */
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .register-title {
   text-align: center;
   color: var(--color-text-main);
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
+  margin-bottom: clamp(0.8rem, 3vh, 1.5rem);
+  font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+  font-weight: 700;
 }
 
 /* --- Layout para filas (Nombre + Apellido) --- */
 .form-row {
   display: flex;
-  gap: 15px;
-  margin-bottom: 1.2rem;
+  gap: 2%;
+  margin-bottom: clamp(0.5rem, 2vh, 1rem);
+  width: 100%;
 }
 
 .form-col {
-  flex: 1; /* Ocupa el espacio disponible equitativamente */
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Previene overflow */
 }
 
 /* Ajuste para móviles: que se pongan uno debajo del otro */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .form-row {
     flex-direction: column;
     gap: 0;
     margin-bottom: 0;
   }
   .form-col {
-    margin-bottom: 1.2rem;
+    margin-bottom: clamp(0.5rem, 2vh, 1rem);
   }
 }
 
 /* --- Estilos de Inputs --- */
 .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: clamp(0.5rem, 2vh, 1rem);
+  width: 100%;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: clamp(0.2rem, 1vh, 0.4rem);
   color: var(--color-text-main);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 1.8vw, 0.88rem);
 }
 
 .form-input {
   width: 100%;
-  padding: 12px;
+  padding: clamp(0.5rem, 1.5vh, 0.75rem) clamp(0.6rem, 2vw, 1rem);
   border: 1px solid transparent;
   border-radius: var(--border-radius-input);
-  background-color: var(--color-input-bg); /* #BFDBF7 */
+  background-color: var(--color-input-bg);
   color: var(--color-text-main);
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 1.8vw, 0.95rem);
   transition: all 0.3s ease;
   box-sizing: border-box;
 }
@@ -78,7 +143,8 @@
 .form-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.2);
+  box-shadow: 0 0 0 0.3vh rgba(31, 122, 140, 0.3);
+  transform: translateY(-1px);
 }
 
 /* --- Contraseña (Ojito) --- */
@@ -89,89 +155,249 @@
 
 .form-input-password {
   width: 100%;
-  padding: 12px;
-  padding-right: 45px;
+  padding: clamp(0.5rem, 1.5vh, 0.75rem) clamp(0.6rem, 2vw, 1rem);
+  padding-right: clamp(2.5rem, 10%, 3rem);
   border: 1px solid transparent;
   border-radius: var(--border-radius-input);
   background-color: var(--color-input-bg);
   color: var(--color-text-main);
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 1.8vw, 0.95rem);
   box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 .form-input-password:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.2);
+  box-shadow: 0 0 0 0.3vh rgba(31, 122, 140, 0.3);
+  transform: translateY(-1px);
 }
 
 .eye-btn {
   position: absolute;
-  right: 12px;
+  right: 4%;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
   color: var(--color-primary);
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  padding: 2%;
 }
 
 .eye-btn:hover {
   color: var(--color-secondary);
+  transform: translateY(-50%) scale(1.1);
 }
 
 /* --- Botones y Errores --- */
 .btn-primary {
   width: 100%;
-  padding: 14px;
-  background-color: var(--color-primary); /* #022b3a */
+  padding: clamp(0.6rem, 2vh, 0.9rem) 0;
+  background-color: var(--color-primary);
   color: #FFFFFF;
   border: none;
   border-radius: var(--border-radius-input);
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.8vw, 1rem);
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+  margin-top: clamp(0.5rem, 2vh, 1rem);
+  box-shadow: 0 0.5vh 1.5vh rgba(31, 122, 140, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-secondary); /* #1F7A8C */
+  background-color: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 0.8vh 2vh rgba(31, 122, 140, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .error-text {
   color: var(--color-error);
-  font-size: 0.8rem;
-  margin-top: 4px;
+  font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+  margin-top: 0.2rem;
   display: block;
+  animation: shake 0.4s;
 }
 
 .error-msg-box {
   background-color: var(--color-error-bg);
   color: var(--color-error);
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 1rem;
+  padding: clamp(0.5rem, 1.5vh, 0.75rem);
+  border-radius: var(--border-radius-input);
+  margin-bottom: clamp(0.5rem, 2vh, 1rem);
   text-align: center;
+  font-size: clamp(0.75rem, 1.8vw, 0.88rem);
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .login-redirect {
-  margin-top: 1.5rem;
+  margin-top: clamp(0.8rem, 3vh, 1.5rem);
   text-align: center;
   color: var(--color-text-main);
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 1.8vw, 0.88rem);
 }
 
 .login-link {
   color: var(--color-primary);
   font-weight: bold;
   text-decoration: none;
+  transition: all 0.3s;
 }
 
 .login-link:hover {
   color: var(--color-secondary);
   text-decoration: underline;
+}
+
+/* Indicadores de carousel (opcional) */
+.carousel-indicators {
+  position: absolute;
+  bottom: 3vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1vw;
+  z-index: 1;
+}
+
+.carousel-dot {
+  width: clamp(8px, 1vw, 12px);
+  height: clamp(8px, 1vw, 12px);
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.carousel-dot.active {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .register-container {
+    padding: 1.5vh 3vw;
+  }
+  
+  .register-card {
+    width: 98%;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    max-height: 96vh;
+  }
+  
+  .background-image {
+    background-attachment: scroll;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-container {
+    padding: 1vh 2vw;
+  }
+  
+  .register-card {
+    width: 100%;
+    padding: clamp(0.8rem, 5vw, 1.2rem);
+    box-shadow: 0 0.5vh 2vh rgba(0, 0, 0, 0.2);
+    max-height: 98vh;
+  }
+  
+  .form-input, .form-input-password {
+    padding: clamp(0.4rem, 1.2vh, 0.6rem) clamp(0.5rem, 1.8vw, 0.8rem);
+  }
+  
+  .btn-primary {
+    padding: clamp(0.5rem, 1.8vh, 0.8rem) 0;
+  }
+  
+  .carousel-indicators {
+    bottom: 1.5vh;
+  }
+}
+
+@media (min-width: 1200px) {
+  .register-card {
+    padding: 2rem;
+    max-width: 580px;
+  }
+  
+  .register-container {
+    padding: 2vh 2vw;
+  }
+}
+
+/* Mejora de accesibilidad */
+.form-input:focus,
+.form-input-password:focus,
+.btn-primary:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Animación de carga en el botón */
+.btn-primary.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* Personalización del scrollbar para la tarjeta */
+.register-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.register-card::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.register-card::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 10px;
+}
+
+.register-card::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Para Firefox */
+.register-card {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) rgba(255, 255, 255, 0.1);
 }

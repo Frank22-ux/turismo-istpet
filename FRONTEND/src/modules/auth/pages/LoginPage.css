@@ -1,62 +1,99 @@
 /* frontend/src/modules/auth/pages/LoginPage.css */
 
 .login-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  /* Ya no necesitamos background-color aquí porque está en el body global */
-  padding: 20px;
+  width: 100%;
+  padding: 5vh 5vw;
+  overflow: hidden;
+}
+
+/* Fondo con GIF */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('../../../../uploads/login/tropical_login.gif'); /* Ajusta el nombre del archivo */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -1;
+  opacity: 1; /* Opacidad para que no compita con el formulario */
+}
+
+/* Overlay oscuro opcional para mejor legibilidad */
+.login-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Capa semi-transparente */
+  z-index: -1;
 }
 
 .login-card {
-  background-color: var(--color-bg-card); /* USANDO VARIABLE */
-  padding: 2.5rem;
+  position: relative;
+  background-color: var(--color-bg-card);
+  padding: clamp(2rem, 5vw, 3rem); /* Responsive padding */
   border-radius: var(--border-radius-main);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
+  box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 450px;
+  backdrop-filter: blur(10px); /* Efecto de cristal esmerilado */
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .login-title {
   text-align: center;
   color: var(--color-text-main);
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
+  margin-bottom: 8%;
+  font-size: clamp(1.5rem, 4vw, 2rem); /* Responsive font */
+  font-weight: 700;
 }
 
 .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 5%;
+  width: 100%;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 2%;
   color: var(--color-text-main);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
 }
 
 .form-input, .form-input-password {
   width: 100%;
-  padding: 12px;
+  padding: 3% 4%;
   border: 1px solid transparent;
   border-radius: var(--border-radius-input);
-  background-color: var(--color-input-bg); /* USANDO VARIABLE */
+  background-color: var(--color-input-bg);
   color: var(--color-text-main);
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 2vw, 1rem);
   transition: all 0.3s ease;
   box-sizing: border-box;
 }
 
 .form-input-password {
-  padding-right: 45px;
+  padding-right: 12%;
 }
 
 .form-input:focus, .form-input-password:focus {
   outline: none;
-  border-color: var(--color-primary); /* USANDO VARIABLE */
-  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.2); 
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.3vh rgba(31, 122, 140, 0.3);
+  transform: translateY(-1px);
 }
 
 .password-wrapper {
@@ -66,66 +103,145 @@
 
 .eye-btn {
   position: absolute;
-  right: 12px;
+  right: 4%;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-primary); /* USANDO VARIABLE */
-  font-size: 1.2rem;
+  color: var(--color-primary);
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
   display: flex;
   align-items: center;
-  transition: color 0.3s;
+  justify-content: center;
+  transition: all 0.3s;
+  padding: 2%;
 }
 
 .eye-btn:hover {
-  color: var(--color-secondary); /* USANDO VARIABLE */
+  color: var(--color-secondary);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .btn-primary {
   width: 100%;
-  padding: 14px;
-  background-color: var(--color-primary); /* USANDO VARIABLE */
-  color: #FFFFFF; /* Este lo dejamos blanco fijo */
+  padding: 4% 0;
+  background-color: var(--color-primary);
+  color: #FFFFFF;
   border: none;
   border-radius: var(--border-radius-input);
-  font-size: 1rem;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 1rem;
+  transition: all 0.3s ease;
+  margin-top: 5%;
+  box-shadow: 0 0.5vh 1.5vh rgba(31, 122, 140, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-secondary); /* USANDO VARIABLE */
+  background-color: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 0.8vh 2vh rgba(31, 122, 140, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .error-msg {
   background-color: var(--color-error-bg);
   color: var(--color-error);
-  padding: 10px;
+  padding: 3%;
   border-radius: var(--border-radius-input);
-  margin-bottom: 1rem;
+  margin-bottom: 5%;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .register-text {
-  margin-top: 1.5rem;
+  margin-top: 8%;
   text-align: center;
   color: var(--color-text-main);
-  font-size: 0.9rem;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
 }
 
 .register-link {
-  color: var(--color-primary); /* USANDO VARIABLE */
+  color: var(--color-primary);
   font-weight: bold;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: all 0.3s;
 }
 
 .register-link:hover {
   color: var(--color-secondary);
   text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 3vh 4vw;
+  }
+  
+  .login-card {
+    width: 95%;
+    padding: 8vw;
+  }
+  
+  .login-container::before {
+    background-attachment: scroll; /* Mejor rendimiento en móviles */
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 2vh 3vw;
+  }
+  
+  .login-card {
+    width: 100%;
+    padding: 10vw 8vw;
+    box-shadow: 0 0.5vh 2vh rgba(0, 0, 0, 0.2);
+  }
+  
+  .form-input, .form-input-password {
+    padding: 4% 5%;
+  }
+  
+  .btn-primary {
+    padding: 5% 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  .login-card {
+    padding: 3rem;
+  }
+  
+  .login-container {
+    padding: 2rem;
+  }
+}
+
+/* Animación de entrada suave */
+.login-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -9,12 +9,16 @@ import './LoginPage.css';
 import { ROLES } from "../../../core/constants/roles";
 
 const LoginPage = () => {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async (data) => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
       const res = await loginRequest(data);
 
@@ -48,6 +52,8 @@ const LoginPage = () => {
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || "Error al iniciar sesión");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,9 +72,17 @@ const LoginPage = () => {
             <input
               type="email"
               className="form-input"
-              {...register("correo", { required: true })}
+              {...register("correo", { 
+                required: "El correo es requerido",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Correo electrónico inválido"
+                }
+              })}
               placeholder="ejemplo@correo.com"
+              disabled={isLoading}
             />
+            {errors.correo && <span className="error-msg">{errors.correo.message}</span>}
           </div>
           
           {/* Contraseña */}
@@ -78,22 +92,35 @@ const LoginPage = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 className="form-input-password"
-                {...register("password", { required: true })}
+                {...register("password", { 
+                  required: "La contraseña es requerida",
+                  minLength: {
+                    value: 6,
+                    message: "La contraseña debe tener al menos 6 caracteres"
+                  }
+                })}
                 placeholder="********"
+                disabled={isLoading}
               />
               <button
                   type="button"
                   className="eye-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   title={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                  disabled={isLoading}
               >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
+            {errors.password && <span className="error-msg">{errors.password.message}</span>}
           </div>
 
-          <button type="submit" className="btn-primary">
-            Ingresar
+          <button 
+            type="submit" 
+            className="btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
 

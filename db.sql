@@ -31,9 +31,18 @@ CREATE TABLE usuarios (
     telefono VARCHAR(20),
     descripcion_perfil TEXT,
     foto_url VARCHAR(500),
+    pais VARCHAR(100),
+    ciudad VARCHAR(100),
+    idiomas VARCHAR(255),
+    nivel_experiencia VARCHAR(50) DEFAULT 'principiante',
+    preferencias JSONB DEFAULT '{}'::jsonb,
     id_rol INTEGER NOT NULL,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     activo BOOLEAN DEFAULT TRUE,
+    viajes_completados INTEGER DEFAULT 0,
+    paises_visitados INTEGER DEFAULT 0,
+    resenas INTEGER DEFAULT 0,
+    insignias INTEGER DEFAULT 0,
     CONSTRAINT fk_usuario_rol FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
 );
 
@@ -138,6 +147,25 @@ CREATE TABLE pagos (
     CONSTRAINT fk_pago_reserva FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva)
 );
 
+-- 11. TABLA: INSIGNIAS
+CREATE TABLE insignias (
+    id_insignia SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    icono_url VARCHAR(255)
+);
+
+-- 12. TABLA: INSIGNACIONES DE INSIGNIAS (quién la otorgó y cuándo)
+CREATE TABLE usuario_insignias (
+    id SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    id_insignia INTEGER NOT NULL,
+    asignado_por INTEGER, -- id del guía que asignó (puede ser NULL si sistema)
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ui_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_ui_insignia FOREIGN KEY (id_insignia) REFERENCES insignias(id_insignia) ON DELETE CASCADE
+);
+
 -- ============================================
 -- DATOS SEMILLA
 -- ============================================
@@ -152,3 +180,11 @@ INSERT INTO hoteles (nombre, direccion, ciudad, estrellas, estado_convenio) VALU
 -- El password es: admin123 (hash genérico de prueba)
 INSERT INTO usuarios (primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, correo, password, id_rol, descripcion_perfil) 
 VALUES ('Super', 'Admin', 'Sistema', 'Principal', 'admin@toursystem.com', '$2b$10$76YVfH.fB3XG.X/y5jXpY.e.X7vO.aD/P.g0X.j/P.g0X.j/P.g0X', 1, 'Cuenta administradora');
+
+-- Insignias semilla
+INSERT INTO insignias (nombre, descripcion, icono_url) VALUES
+('Primer Viaje', 'Otorgada al completar la primera reserva y viaje', '/icons/medal.svg'),
+('Explorador', 'Explora 5 destinos distintos', '/icons/globe.svg'),
+('Fotógrafo', 'Sube 10 fotos a tu galería', '/icons/camera.svg'),
+('Aventurero', 'Realiza 3 tours de aventura', '/icons/mountain.svg'),
+('Gourmet', 'Participa en 2 tours gastronómicos', '/icons/utensils.svg');

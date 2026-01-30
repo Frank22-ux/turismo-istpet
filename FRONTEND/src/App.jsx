@@ -13,6 +13,7 @@ import DetalleTour from './modules/tours/pages/DetalleTour';
 // --- IMPORTAR DASHBOARD Y PERFIL DEL TURISTA ---
 import TuristaDashboard from './modules/usuarios/pages/TuristaDashboard';
 import PerfilTurista from './modules/usuarios/pages/PerfilTurista';
+import MisReservas from './modules/usuarios/pages/MisReservas';
 
 // --- IMPORTAR LAS PÁGINAS DE GESTIÓN DE HOTELES ---
 import GestionHoteles from './modules/hoteles/pages/GestionHoteles';
@@ -40,6 +41,7 @@ function App() {
         {/* --- RUTAS DE USUARIO TURISTA --- */}
         <Route path="/home" element={<TuristaDashboard />} />
         <Route path="/perfil-turista" element={<PerfilTurista />} />
+        <Route path="/mis-reservas" element={<MisReservas />} />
         
         {/* Roles Secundarios */}
         <Route path="/guia" element={<GuiaDashboard />} />
