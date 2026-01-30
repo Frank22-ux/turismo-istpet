@@ -1,0 +1,20 @@
+Tu compañero hace:
+
+Cambia a su rama:
+
+git checkout cristhofer-parreno
+
+
+Trae los cambios más recientes del remoto:
+
+git fetch origin
+
+
+Mezcla tu rama en la suya:
+
+git merge origin/francisco-quezada
+
+
+Esto trae todos tus cambios de francisco-quezada a cristhofer-parreno.
+
+Puede que aparezcan conflictos si modificaron lo mismo; Git los marcará para resolver.
