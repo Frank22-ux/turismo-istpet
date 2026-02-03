@@ -1,66 +1,88 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaArrowLeft, FaWhatsapp } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaEdit, FaTrash, FaArrowLeft, FaEye } from 'react-icons/fa';
 import './GestionGuias.css';
 
 const GestionGuias = () => {
-  // DATOS MOCK
-  const [guias, setGuias] = useState([
-    { 
-        id: 1, 
-        nombre: 'Carlos Andrés', 
-        apellido: 'Turista', 
-        correo: 'carlos@turismo.com', 
-        telefono: '0991234567',
-        idiomas: ['Español', 'Inglés'], 
-        estado: 'Activo' 
-    },
-    { 
-        id: 2, 
-        nombre: 'Maria Fernanda', 
-        apellido: 'Gomez', 
-        correo: 'maria@turismo.com', 
-        telefono: '0987654321',
-        idiomas: ['Español', 'Francés', 'Alemán'], 
-        estado: 'Activo' 
-    },
-    { 
-        id: 3, 
-        nombre: 'Juan Pablo', 
-        apellido: 'Velasco', 
-        correo: 'juanp@turismo.com', 
-        telefono: '0955555555',
-        idiomas: ['Español'], 
-        estado: 'Inactivo' 
-    },
-  ]);
-
+  const [guias, setGuias] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtrar por nombre o apellido
+  // 1. Cargar guías desde el Backend
+  useEffect(() => {
+    const fetchGuias = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:4000/api/usuarios/guias-lista', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        
+        // Formatear idiomas si vienen como string desde la BD
+        const formattedData = data.map(g => ({
+          ...g,
+          idiomas: typeof g.idiomas === 'string' ? g.idiomas.split(',') : (g.idiomas || [])
+        }));
+
+        setGuias(formattedData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error al cargar guías:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchGuias();
+  }, []);
+
+  // 2. Filtrado corregido
   const filteredGuias = guias.filter(guia => 
-    guia.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    guia.apellido.toLowerCase().includes(searchTerm.toLowerCase())
+    `${guia.primer_nombre} ${guia.apellido_paterno}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = (id) => {
-    if(window.confirm('¿Estás seguro de desvincular a este guía?')) {
-        setGuias(guias.filter(g => g.id !== id));
+  // 3. Función de eliminación corregida
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de desvincular a este guía?')) {
+      try {
+        const token = localStorage.getItem('token');
+        
+        const response = await fetch(`http://localhost:4000/api/usuarios/guia/${id}`, {
+          method: 'DELETE',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          // Si el servidor confirma el borrado, actualizamos el estado local
+          setGuias(prevGuias => prevGuias.filter(g => g.id_guia !== id));
+          alert("Guía eliminado exitosamente.");
+        } else {
+          // Si hay un error (ej. restricción de llave foránea), mostramos el mensaje
+          const errorData = await response.json();
+          alert(`Error al eliminar: ${errorData.message || "No se pudo completar la acción"}`);
+        }
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+        alert("Ocurrió un error al intentar conectar con el servidor.");
+      }
     }
   };
 
+  if (loading) return <div className="loading">Cargando lista de guías...</div>;
+
   return (
     <div className="guias-container">
-      
-      {/* 1. CABECERA */}
       <div className="guias-header">
         <h1 className="guias-title">🧑‍🏫 Gestión de Guías</h1>
-        <button className="btn-create">
+        <Link to="/admin/crear-guia" className="btn-create">
           <FaPlus /> Registrar Nuevo Guía
-        </button>
+        </Link>
       </div>
 
-      {/* 2. BUSCADOR */}
       <div className="search-bar">
         <FaSearch color="#666" />
         <input 
@@ -72,13 +94,12 @@ const GestionGuias = () => {
         />
       </div>
 
-      {/* 3. TABLA DE DATOS */}
       <div className="table-wrapper">
         <table className="guias-table">
             <thead>
                 <tr>
                     <th>Perfil</th>
-                    <th>Contacto</th>
+                    <th>Especialidad</th>
                     <th>Idiomas</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -87,55 +108,58 @@ const GestionGuias = () => {
             <tbody>
                 {filteredGuias.length > 0 ? (
                     filteredGuias.map((guia) => (
-                        <tr key={guia.id}>
-                            {/* Columna Perfil (Avatar + Nombre) */}
+                        <tr key={guia.id_guia}>
                             <td>
                                 <div className="guide-profile">
                                     <img 
-                                        src={`https://ui-avatars.com/api/?name=${guia.nombre}+${guia.apellido}&background=022b3a&color=fff`} 
+                                        src={guia.foto_url 
+                                            ? `http://localhost:4000${guia.foto_url}` 
+                                            : `https://ui-avatars.com/api/?name=${guia.primer_nombre}+${guia.apellido_paterno}&background=022b3a&color=fff`} 
                                         alt="Avatar" 
                                         className="guide-avatar"
                                     />
                                     <div>
-                                        <span className="guide-name">{guia.nombre} {guia.apellido}</span>
+                                        <span className="guide-name">{guia.primer_nombre} {guia.apellido_paterno}</span>
                                         <span className="guide-email">{guia.correo}</span>
                                     </div>
                                 </div>
                             </td>
                             
-                            {/* Columna Contacto */}
-                            <td>
-                                <div style={{display:'flex', alignItems:'center', gap:'5px'}}>
-                                    <FaWhatsapp color="#25D366" /> 
-                                    {guia.telefono}
-                                </div>
-                            </td>
+                            <td><span className="specialty-text">{guia.especialidad || 'No asignada'}</span></td>
 
-                            {/* Columna Idiomas (Tags) */}
                             <td>
-                                {guia.idiomas.map((idioma, index) => (
-                                    <span key={index} className="lang-badge">
-                                        {idioma}
-                                    </span>
+                                {guia.idiomas && guia.idiomas.map((idioma, index) => (
+                                    <span key={index} className="lang-badge">{idioma.trim()}</span>
                                 ))}
                             </td>
 
-                            {/* Columna Estado */}
                             <td>
-                                <span className={`status-badge ${guia.estado === 'Activo' ? 'status-active' : 'status-inactive'}`}>
-                                    {guia.estado}
+                                <span className={`status-badge ${guia.activo ? 'status-active' : 'status-inactive'}`}>
+                                    {guia.activo ? 'Activo' : 'Inactivo'}
                                 </span>
                             </td>
 
-                            {/* Columna Acciones */}
                             <td className="actions-cell">
-                                <button className="btn-action btn-edit" title="Editar Información">
+                                <Link 
+                                    to={`/admin/detalle-guia/${guia.id_guia}`} 
+                                    className="btn-action btn-view" 
+                                    title="Ver Detalles"
+                                >
+                                    <FaEye />
+                                </Link>
+
+                                <Link 
+                                    to={`/admin/editar-guia/${guia.id_guia}`} 
+                                    className="btn-action btn-edit" 
+                                    title="Editar Información"
+                                >
                                     <FaEdit />
-                                </button>
+                                </Link>
+                                
                                 <button 
                                     className="btn-action btn-delete" 
-                                    title="Desvincular"
-                                    onClick={() => handleDelete(guia.id)}
+                                    title="Eliminar Guía"
+                                    onClick={() => handleDelete(guia.id_guia)}
                                 >
                                     <FaTrash />
                                 </button>

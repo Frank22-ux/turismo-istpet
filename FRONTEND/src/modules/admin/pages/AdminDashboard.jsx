@@ -45,7 +45,7 @@ const AdminDashboard = () => {
                 </Link>
 
                 {/* 3. CREAR GUÍAS */}
-                <Link to="/admin/crear-guia" className="dashboard-card">
+                <Link to="/admin/guias" className="dashboard-card">
                     <FaUserTie className="card-icon" />
                     <h3 className="card-title">Gestionar Guías</h3>
                     <p className="card-desc">Registrar personal y asignar tours.</p>

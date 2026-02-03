@@ -24,15 +24,15 @@ const Tour = {
             data.longitud,
             data.imagen_portada,
             data.galeria && data.galeria.length > 0 ? data.galeria : null,
-            data.id_guia || null,
-            data.id_hotel_base || null
+            data.id_guia, // Ya viene limpio del controller
+            data.id_hotel_base // Ya viene limpio del controller
         ];
 
         const { rows } = await pool.query(query, values);
         return rows[0];
     },
 
-    // --- 2. OBTENER TODOS (Con Guía y Hotel) ---
+    // --- 2. OBTENER TODOS (Con JOIN para ver nombres en la lista) ---
     findAll: async () => {
         const query = `
             SELECT t.*, 
@@ -40,7 +40,8 @@ const Tour = {
                    u.apellido_paterno as apellido_guia,
                    h.nombre as nombre_hotel
             FROM tours t
-            LEFT JOIN usuarios u ON t.id_guia = u.id_usuario
+            LEFT JOIN guias g ON t.id_guia = g.id_guia
+            LEFT JOIN usuarios u ON g.id_usuario = u.id_usuario
             LEFT JOIN hoteles h ON t.id_hotel_base = h.id_hotel
             ORDER BY t.id_tour DESC
         `;
@@ -48,7 +49,7 @@ const Tour = {
         return rows;
     },
 
-    // --- 3. BUSCAR POR ID (Para DetalleTour con información completa) ---
+    // --- 3. BUSCAR POR ID (Crucial para DetalleTour.jsx) ---
     findById: async (id) => {
         const query = `
             SELECT t.*, 
@@ -56,7 +57,8 @@ const Tour = {
                    u.apellido_paterno as apellido_guia,
                    h.nombre as nombre_hotel
             FROM tours t
-            LEFT JOIN usuarios u ON t.id_guia = u.id_usuario
+            LEFT JOIN guias g ON t.id_guia = g.id_guia
+            LEFT JOIN usuarios u ON g.id_usuario = u.id_usuario
             LEFT JOIN hoteles h ON t.id_hotel_base = h.id_hotel
             WHERE t.id_tour = $1
         `;
@@ -95,10 +97,10 @@ const Tour = {
             data.fecha_fin || null,
             data.latitud,
             data.longitud,
-            data.imagen_portada, 
-            data.galeria,        
-            data.id_guia || null,
-            data.id_hotel_base || null,
+            data.imagen_portada, // Si es null, COALESCE mantiene la anterior
+            data.galeria,        // Si es null, COALESCE mantiene la anterior
+            data.id_guia,
+            data.id_hotel_base,
             id
         ];
 

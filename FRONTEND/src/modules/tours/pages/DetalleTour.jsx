@@ -17,6 +17,7 @@ const DetalleTour = () => {
     useEffect(() => {
         const cargarTour = async () => {
             try {
+                // Se obtiene la información del tour desde el servicio
                 const data = await getTourRequest(id);
                 setTour(data);
             } catch (error) {
@@ -81,12 +82,12 @@ const DetalleTour = () => {
                             </div>
                         )}
                         
-                        {/* --- HOTEL: AHORA MUESTRA EL NOMBRE REAL --- */}
+                        {/* HOTEL: Muestra nombre_hotel que debe venir del JOIN en el backend */}
                         <div className="info-item">
                             <FaHotel /> <strong>Hotel Base:</strong> {tour.nombre_hotel || 'No incluido / No asignado'}
                         </div>
                         
-                        {/* --- GUÍA: AHORA MUESTRA EL NOMBRE Y APELLIDO PATERNO --- */}
+                        {/* GUÍA: Muestra nombre_guia que debe venir del JOIN en el backend */}
                         <div className="info-item">
                             <FaUserTie /> <strong>Guía Asignado:</strong> {
                                 tour.nombre_guia 
@@ -109,6 +110,7 @@ const DetalleTour = () => {
                                     center={[parseFloat(tour.latitud), parseFloat(tour.longitud)]} 
                                     zoom={14} 
                                     style={{ height: '250px', width: '100%' }}
+                                    scrollWheelZoom={false}
                                 >
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                     <Marker position={[parseFloat(tour.latitud), parseFloat(tour.longitud)]}>

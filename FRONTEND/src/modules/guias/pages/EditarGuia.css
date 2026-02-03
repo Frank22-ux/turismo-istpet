@@ -1,0 +1,47 @@
+.editar-guia-container {
+    padding: 40px 20px;
+    background-color: #f4f7f6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+}
+
+.editar-guia-card {
+    background: white;
+    width: 100%;
+    max-width: 700px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 30px;
+}
+
+.btn-update {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-update:hover {
+    background-color: #21867a;
+    transform: translateY(-2px);
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.2rem;
+    color: #022b3a;
+    font-weight: bold;
+}
+
+/* Reutiliza los estilos de photo-section y form-row del archivo CrearGuia.css */

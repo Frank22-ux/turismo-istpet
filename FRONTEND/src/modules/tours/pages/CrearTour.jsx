@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { createTourRequest } from '../services/tour.service';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import axios from 'axios'; // <--- Importamos axios
+import axios from 'axios'; 
 import { FaSave, FaCloudUploadAlt, FaUserTie, FaImages, FaMapMarkerAlt, FaHotel, FaCalendarAlt } from 'react-icons/fa';
 import './CrearTour.css';
 
@@ -27,14 +27,13 @@ const CrearTour = () => {
     const { register, handleSubmit, setValue, watch } = useForm();
     const navigate = useNavigate();
     
-    // --- ESTADOS PARA ARCHIVOS ---
     const [coverPreview, setCoverPreview] = useState(null);
     const [imagenFile, setImagenFile] = useState(null); 
     const [galleryFiles, setGalleryFiles] = useState([]); 
     const [galleryPreviews, setGalleryPreviews] = useState([]); 
     
     const [listaGuias, setListaGuias] = useState([]);
-    const [listaHoteles, setListaHoteles] = useState([]); // <--- Hoteles dinámicos
+    const [listaHoteles, setListaHoteles] = useState([]); 
     const [position, setPosition] = useState(null); 
     const [isSearchingCity, setIsSearchingCity] = useState(false);
 
@@ -43,22 +42,25 @@ const CrearTour = () => {
     const latitudManual = watch('latitud');
     const longitudManual = watch('longitud');
 
-    // --- CARGAR HOTELES REALES DE LA DB ---
+    // --- CARGAR CATÁLOGOS DINÁMICOS (Corregido con Guías Reales) ---
     useEffect(() => {
         const cargarCatalogos = async () => {
             try {
+                const token = localStorage.getItem('token');
+                const config = {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                };
+
                 // Traer hoteles desde el backend
-                const resHoteles = await axios.get(`${API_URL}/api/hoteles`);
+                const resHoteles = await axios.get(`${API_URL}/api/hoteles`, config);
                 setListaHoteles(resHoteles.data);
 
-                // Traer guías (puedes dinamizarlo después igual que hoteles)
-                setListaGuias([
-                    { id: 1, nombre: 'Carlos Andrés Turista' },
-                    { id: 2, nombre: 'Maria Fernanda Gomez' },
-                    { id: 3, nombre: 'Juan Pablo Velasco' }
-                ]);
+                // Traer guías reales desde el backend (Ya no son estáticos)
+                const resGuias = await axios.get(`${API_URL}/api/usuarios/guias-lista`, config);
+                setListaGuias(resGuias.data);
+
             } catch (error) {
-                console.error("Error al cargar hoteles:", error);
+                console.error("Error al cargar catálogos:", error);
             }
         };
         cargarCatalogos();
@@ -244,7 +246,11 @@ const CrearTour = () => {
                             <label className="form-label"><FaUserTie /> Asignar Guía</label>
                             <select className="form-input" {...register("id_guia")}>
                                 <option value="">-- Sin asignar --</option>
-                                {listaGuias.map(g => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+                                {listaGuias.map(g => (
+                                    <option key={g.id_guia} value={g.id_guia}>
+                                        {g.primer_nombre} {g.apellido_paterno} — {g.especialidad}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

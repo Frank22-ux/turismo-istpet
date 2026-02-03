@@ -1,13 +1,15 @@
 -- ============================================
--- SISTEMA DE GESTIÓN DE TOURS (VERSIÓN INTEGRADA)
+-- SISTEMA DE GESTIÓN DE TOURS (VERSIÓN INTEGRAL)
 -- ============================================
 
 -- 1. LIMPIEZA
+DROP TABLE IF EXISTS usuario_insignias CASCADE;
+DROP TABLE IF EXISTS insignias CASCADE;
 DROP TABLE IF EXISTS pagos CASCADE;
 DROP TABLE IF EXISTS reservas CASCADE;
 DROP TABLE IF EXISTS tour_galeria CASCADE;
-DROP TABLE IF EXISTS guias CASCADE;
 DROP TABLE IF EXISTS tours CASCADE;
+DROP TABLE IF EXISTS guias CASCADE;
 DROP TABLE IF EXISTS categorias CASCADE;
 DROP TABLE IF EXISTS hoteles CASCADE;
 DROP TABLE IF EXISTS usuarios CASCADE;
@@ -19,7 +21,7 @@ CREATE TABLE roles (
     nombre_rol VARCHAR(50) NOT NULL UNIQUE
 );
 
--- 3. TABLA: USUARIOS
+-- 3. TABLA: USUARIOS (Contiene datos compartidos y de contacto)
 CREATE TABLE usuarios (
     id_usuario SERIAL PRIMARY KEY,
     primer_nombre VARCHAR(50) NOT NULL,
@@ -29,7 +31,7 @@ CREATE TABLE usuarios (
     correo VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     telefono VARCHAR(20),
-    descripcion_perfil TEXT,
+    descripcion_perfil TEXT, -- Se usa como 'Bio' general
     foto_url VARCHAR(500),
     pais VARCHAR(100),
     ciudad VARCHAR(100),
@@ -46,7 +48,7 @@ CREATE TABLE usuarios (
     CONSTRAINT fk_usuario_rol FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
 );
 
--- 4. TABLA: HOTELES (Actualizada con Foto, Galería y Teléfono)
+-- 4. TABLA: HOTELES
 CREATE TABLE hoteles (
     id_hotel SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -58,9 +60,9 @@ CREATE TABLE hoteles (
     habitaciones INTEGER DEFAULT 0,
     estado_convenio VARCHAR(20) DEFAULT 'Disponible',
     descripcion TEXT,
-    foto_url VARCHAR(500), -- Imagen de portada del hotel
-    galeria TEXT[],        -- Array para múltiples imágenes
-    telefono VARCHAR(20)   -- Teléfono de contacto
+    foto_url VARCHAR(500),
+    galeria TEXT[],
+    telefono VARCHAR(20)
 );
 
 -- 5. TABLA: CATEGORIAS
@@ -70,7 +72,18 @@ CREATE TABLE categorias (
     descripcion TEXT
 );
 
--- 6. TABLA: TOURS (Actualizada con Fechas y Galería Integrada)
+-- 6. TABLA: GUIAS (Extensión de Usuarios para el rol Guía)
+CREATE TABLE guias (
+    id_guia SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL UNIQUE,
+    id_hotel_asignado INTEGER, 
+    especialidad VARCHAR(200),
+    bio TEXT, -- Biografía específica profesional
+    CONSTRAINT fk_guia_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_guia_hotel FOREIGN KEY (id_hotel_asignado) REFERENCES hoteles(id_hotel) ON DELETE SET NULL
+);
+
+-- 7. TABLA: TOURS
 CREATE TABLE tours (
     id_tour SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -78,47 +91,29 @@ CREATE TABLE tours (
     precio DECIMAL(10, 2) NOT NULL,
     duracion VARCHAR(50) NOT NULL, 
     ciudad_destino VARCHAR(100),   
-    
-    -- Nuevos campos de Fecha
     fecha_inicio DATE,
     fecha_fin DATE,
-    
-    -- Coordenadas
     latitud DECIMAL(10, 8) DEFAULT 0,
     longitud DECIMAL(11, 8) DEFAULT 0,
-    
-    -- Imágenes
     imagen_portada VARCHAR(255),
-    galeria TEXT[], -- Array para guardar rutas de múltiples imágenes
-    
-    -- Relaciones
+    galeria TEXT[], 
     id_categoria INTEGER, 
     id_hotel_base INTEGER,
-    id_guia INTEGER,       
-    
+    id_guia INTEGER,
     estado VARCHAR(20) DEFAULT 'Activo',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_tour_categoria FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria),
-    CONSTRAINT fk_tour_hotel FOREIGN KEY (id_hotel_base) REFERENCES hoteles(id_hotel)
+    CONSTRAINT fk_tour_categoria FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria) ON DELETE SET NULL,
+    CONSTRAINT fk_tour_hotel FOREIGN KEY (id_hotel_base) REFERENCES hoteles(id_hotel) ON DELETE SET NULL,
+    CONSTRAINT fk_tour_guia FOREIGN KEY (id_guia) REFERENCES guias(id_guia) ON DELETE SET NULL
 );
 
--- 7. TABLA: TOUR_GALERIA (Mantenida para compatibilidad de relación 1:N)
+-- 8. TABLA: TOUR_GALERIA
 CREATE TABLE tour_galeria (
     id_imagen SERIAL PRIMARY KEY,
     id_tour INTEGER NOT NULL,
     url_imagen VARCHAR(500) NOT NULL,
     fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_galeria_tour FOREIGN KEY (id_tour) REFERENCES tours(id_tour) ON DELETE CASCADE
-);
-
--- 8. TABLA: GUIAS
-CREATE TABLE guias (
-    id_guia SERIAL PRIMARY KEY,
-    id_usuario INTEGER NOT NULL UNIQUE,
-    id_hotel_asignado INTEGER, 
-    especialidad VARCHAR(200),
-    CONSTRAINT fk_guia_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
 -- 9. TABLA: RESERVAS
@@ -131,8 +126,8 @@ CREATE TABLE reservas (
     cantidad_personas INTEGER DEFAULT 1,
     total DECIMAL(10, 2), 
     estado_reserva VARCHAR(20) DEFAULT 'Pendiente', 
-    CONSTRAINT fk_reserva_turista FOREIGN KEY (id_turista) REFERENCES usuarios(id_usuario),
-    CONSTRAINT fk_reserva_tour FOREIGN KEY (id_tour) REFERENCES tours(id_tour)
+    CONSTRAINT fk_reserva_turista FOREIGN KEY (id_turista) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_reserva_tour FOREIGN KEY (id_tour) REFERENCES tours(id_tour) ON DELETE CASCADE
 );
 
 -- 10. TABLA: PAGOS
@@ -144,7 +139,7 @@ CREATE TABLE pagos (
     referencia_transaccion VARCHAR(100),
     estado_paypal VARCHAR(50), 
     fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_pago_reserva FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva)
+    CONSTRAINT fk_pago_reserva FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva) ON DELETE CASCADE
 );
 
 -- 11. TABLA: INSIGNIAS
@@ -155,19 +150,19 @@ CREATE TABLE insignias (
     icono_url VARCHAR(255)
 );
 
--- 12. TABLA: INSIGNACIONES DE INSIGNIAS (quién la otorgó y cuándo)
+-- 12. TABLA: USUARIO_INSIGNIAS
 CREATE TABLE usuario_insignias (
     id SERIAL PRIMARY KEY,
     id_usuario INTEGER NOT NULL,
     id_insignia INTEGER NOT NULL,
-    asignado_por INTEGER, -- id del guía que asignó (puede ser NULL si sistema)
+    asignado_por INTEGER,
     fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_ui_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
     CONSTRAINT fk_ui_insignia FOREIGN KEY (id_insignia) REFERENCES insignias(id_insignia) ON DELETE CASCADE
 );
 
 -- ============================================
--- DATOS SEMILLA
+-- INSERCIÓN DE DATOS INICIALES
 -- ============================================
 INSERT INTO roles (nombre_rol) VALUES ('Administrador'), ('Guía'), ('Turista');
 INSERT INTO categorias (nombre_categoria) VALUES ('Aventura'), ('Relax'), ('Cultural');
@@ -177,11 +172,10 @@ INSERT INTO hoteles (nombre, direccion, ciudad, estrellas, estado_convenio) VALU
 ('Hostal La Montaña', 'Calle Larga 456', 'Cuenca', 3, 'Disponible'),
 ('Resort Blue Ocean', 'Via Barbasquillo', 'Manta', 4, 'Disponible');
 
--- El password es: admin123 (hash genérico de prueba)
+-- El password es 'admin123' (hash de ejemplo)
 INSERT INTO usuarios (primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, correo, password, id_rol, descripcion_perfil) 
 VALUES ('Super', 'Admin', 'Sistema', 'Principal', 'admin@toursystem.com', '$2b$10$76YVfH.fB3XG.X/y5jXpY.e.X7vO.aD/P.g0X.j/P.g0X.j/P.g0X', 1, 'Cuenta administradora');
 
--- Insignias semilla
 INSERT INTO insignias (nombre, descripcion, icono_url) VALUES
 ('Primer Viaje', 'Otorgada al completar la primera reserva y viaje', '/icons/medal.svg'),
 ('Explorador', 'Explora 5 destinos distintos', '/icons/globe.svg'),

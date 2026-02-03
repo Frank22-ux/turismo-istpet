@@ -187,3 +187,12 @@
 .back-link:hover {
     text-decoration: underline;
 }
+.btn-view {
+    background-color: #3498db; /* Azul para visualización */
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #2980b9;
+    transform: scale(1.1);
+}

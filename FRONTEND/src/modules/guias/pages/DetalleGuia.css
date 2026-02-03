@@ -1,0 +1,145 @@
+.detalle-wrapper {
+    background-color: #f4f7f9;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.detalle-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.btn-back-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 20px;
+    transition: color 0.3s;
+}
+
+.btn-back-main:hover { color: #022b3a; }
+
+.profile-card {
+    background: white;
+    border-radius: 15px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.profile-sidebar {
+    background: #022b3a;
+    width: 280px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+}
+
+.profile-img {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.2);
+    margin-bottom: 20px;
+}
+
+.status-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+.status-pill.activo { background: #27ae60; color: white; }
+
+.sidebar-info { text-align: center; font-size: 0.9rem; opacity: 0.8; }
+
+.profile-content {
+    flex: 1;
+    padding: 40px;
+}
+
+.profile-header h1 {
+    font-size: 2rem;
+    color: #1a1a1a;
+    margin-bottom: 5px;
+}
+
+.specialty-tag {
+    color: #3498db;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.info-item { display: flex; gap: 15px; }
+.info-item .icon { font-size: 1.4rem; color: #022b3a; margin-top: 5px; }
+.info-item label { display: block; font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 700; }
+.info-item p { color: #333; font-weight: 500; margin: 0; }
+
+.langs { display: flex; gap: 5px; margin-top: 5px; }
+.lang-tag { background: #eef2f3; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; }
+
+.bio-text { grid-column: span 2; line-height: 1.6; }
+
+.profile-footer {
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid #eee;
+}
+
+.btn-edit-profile {
+    background: #022b3a;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-edit-profile:hover { background: #1a73e8; }
+
+/* Badges de Nivel */
+.level-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    margin-top: 10px;
+}
+
+.lvl-expert { background: #ffd700; color: #000; }   /* Dorado para experto */
+.lvl-medium { background: #3498db; color: white; } /* Azul para medio */
+.lvl-beginner { background: #95a5a6; color: white; } /* Gris para principiante */
+
+/* Ajuste para que la biografía ocupe todo el ancho si es necesario */
+.info-item.full-width {
+    grid-column: span 2;
+}
+
+.bio-text {
+    margin-top: 5px;
+    line-height: 1.5;
+    color: #555;
+}
