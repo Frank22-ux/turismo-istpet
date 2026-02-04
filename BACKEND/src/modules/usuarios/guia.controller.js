@@ -1,7 +1,8 @@
 const pool = require('../../config/db');
 const path = require('path');
+const bcrypt = require('bcrypt'); // Asegúrate de tener instalado bcrypt (npm install bcrypt)
 
-// 1. LISTAR TODOS LOS GUÍAS (Incluye Nombre del Hotel y todos los apellidos)
+// 1. LISTAR TODOS LOS GUÍAS
 const listarGuias = async (req, res) => {
     try {
         const query = `
@@ -30,7 +31,7 @@ const listarGuias = async (req, res) => {
     }
 };
 
-// 2. OBTENER DETALLE POR ID (Corregido con JOIN de hoteles)
+// 2. OBTENER DETALLE POR ID
 const obtenerGuiaPorId = async (req, res) => {
     const { id } = req.params;
     try {
@@ -55,7 +56,7 @@ const obtenerGuiaPorId = async (req, res) => {
     }
 };
 
-// 3. REGISTRAR NUEVO GUÍA
+// 3. REGISTRAR NUEVO GUÍA (Con Encriptación)
 const registrarNuevoGuia = async (req, res) => {
     const { 
         primer_nombre, segundo_nombre, apellido_paterno, apellido_materno,
@@ -69,6 +70,16 @@ const registrarNuevoGuia = async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // --- ENCRIPTACIÓN DE CONTRASEÑA ---
+        if (!password) {
+            return res.status(400).json({ message: "La contraseña es requerida para el nuevo guía" });
+        }
+        
+        // Generamos el hash
+        const salt = await bcrypt.genSalt(10);
+        const passwordHasheada = await bcrypt.hash(password, salt);
+
+        // --- MANEJO DE IMAGEN ---
         if (req.files && req.files.foto) {
             const archivo = req.files.foto;
             const nombreArchivo = `${Date.now()}_${archivo.name}`;
@@ -76,6 +87,8 @@ const registrarNuevoGuia = async (req, res) => {
             foto_url = `/uploads/${nombreArchivo}`;
         }
 
+        // --- INSERTAR EN USUARIOS ---
+        // Se cambió "contrasena" por "password" para coincidir con tu base de datos
         const userResult = await client.query(
             `INSERT INTO usuarios (
                 primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, 
@@ -87,7 +100,7 @@ const registrarNuevoGuia = async (req, res) => {
                 apellido_paterno, 
                 apellido_materno || '',
                 correo, 
-                password, 
+                passwordHasheada, // <--- Guardamos el hash seguro
                 idiomas || '', 
                 nivel_experiencia || 'principiante', 
                 foto_url, 
@@ -97,17 +110,18 @@ const registrarNuevoGuia = async (req, res) => {
 
         const nuevoIdUsuario = userResult.rows[0].id_usuario;
 
+        // --- INSERTAR EN GUIAS ---
         await client.query(
             'INSERT INTO guias (id_usuario, especialidad, id_hotel_asignado, bio) VALUES ($1, $2, $3, $4)',
             [nuevoIdUsuario, especialidad, id_hotel_asignado || null, bio || '']
         );
 
         await client.query('COMMIT');
-        res.status(201).json({ message: "Guía creado exitosamente" });
+        res.status(201).json({ message: "Guía creado exitosamente con contraseña segura" });
     } catch (error) {
         await client.query('ROLLBACK');
         console.error("Error al registrar:", error);
-        if (error.code === '23505') return res.status(400).json({ message: "El correo ya existe" });
+        if (error.code === '23505') return res.status(400).json({ message: "El correo ya está registrado" });
         res.status(500).json({ message: "Error al registrar guía" });
     } finally {
         client.release();
@@ -135,33 +149,22 @@ const actualizarGuia = async (req, res) => {
         
         const idUsuario = guiaData.rows[0].id_usuario;
 
-        // Actualizar tabla Usuarios
         await client.query(
             `UPDATE usuarios SET 
                 primer_nombre=$1, segundo_nombre=$2, apellido_paterno=$3, apellido_materno=$4,
                 correo=$5, idiomas=$6, nivel_experiencia=$7, telefono=$8
              WHERE id_usuario=$9`,
-            [
-                primer_nombre, 
-                segundo_nombre || '', 
-                apellido_paterno, 
-                apellido_materno || '', 
-                correo, 
-                idiomas, 
-                nivel_experiencia, 
-                telefono || '', 
-                idUsuario
-            ]
+            [primer_nombre, segundo_nombre || '', apellido_paterno, apellido_materno || '', 
+             correo, idiomas, nivel_experiencia, telefono || '', idUsuario]
         );
 
-        // Actualizar tabla Guías
         await client.query(
             `UPDATE guias SET especialidad=$1, id_hotel_asignado=$2, bio=$3 WHERE id_guia=$4`,
             [especialidad, id_hotel_asignado || null, bio || '', id]
         );
 
         await client.query('COMMIT');
-        res.json({ message: "Datos actualizados correctamente" });
+        res.json({ message: "Datos del guía actualizados correctamente" });
     } catch (error) {
         await client.query('ROLLBACK');
         console.error("Error al actualizar:", error);
@@ -180,10 +183,9 @@ const eliminarGuia = async (req, res) => {
 
         const idUsuario = result.rows[0].id_usuario;
         
-        // El DELETE CASCADE debería encargarse de la tabla 'guias'
         await pool.query('DELETE FROM usuarios WHERE id_usuario = $1', [idUsuario]);
 
-        res.json({ message: "Guía eliminado correctamente" });
+        res.json({ message: "Guía y cuenta de usuario eliminados correctamente" });
     } catch (error) {
         console.error("Error al eliminar:", error);
         res.status(500).json({ message: "Error al eliminar el guía" });

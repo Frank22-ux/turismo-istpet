@@ -15,10 +15,14 @@ import CrearTour from './modules/tours/pages/CrearTour';
 import EditarTour from './modules/tours/pages/EditarTour';
 import DetalleTour from './modules/tours/pages/DetalleTour';
 
-// --- GESTIÓN DE GUÍAS ---
+// --- GESTIÓN DE GUÍAS (VISTA ADMIN) ---
 import CrearGuia from './modules/guias/pages/CrearGuia'; 
 import EditarGuia from './modules/guias/pages/EditarGuia';
-import DetalleGuia from './modules/guias/pages/DetalleGuia'; // <--- IMPORTACIÓN CORREGIDA
+import DetalleGuia from './modules/guias/pages/DetalleGuia';
+
+// --- MÓDULO ESPECÍFICO DEL GUÍA (SU PANEL) ---
+import GuiaDashboard from './modules/guias/pages/GuiaDashboard'; 
+import DetalleTourGuia from './modules/guias/pages/DetalleTourGuia'; // <--- NUEVA IMPORTACIÓN
 
 // --- GESTIÓN DE HOTELES ---
 import GestionHoteles from './modules/hoteles/pages/GestionHoteles';
@@ -31,8 +35,6 @@ import TuristaDashboard from './modules/usuarios/pages/TuristaDashboard';
 import PerfilTurista from './modules/usuarios/pages/PerfilTurista';
 import MisReservas from './modules/usuarios/pages/MisReservas';
 
-const GuiaDashboard = () => <div style={{padding: '20px'}}><h1>Panel de Control del Guía</h1></div>;
-
 function App() {
   return (
     <BrowserRouter>
@@ -44,36 +46,38 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
-        {/* --- RUTAS DEL TURISTA --- */}
+        {/* --- MÓDULO TURISTA --- */}
         <Route path="/home" element={<TuristaDashboard />} />
         <Route path="/perfil-turista" element={<PerfilTurista />} />
         <Route path="/mis-reservas" element={<MisReservas />} />
         
-        {/* --- RUTA DEL GUÍA --- */}
+        {/* --- MÓDULO DEL GUÍA --- */}
         <Route path="/guia" element={<GuiaDashboard />} />
+        {/* Nueva ruta para el detalle que verá el guía */}
+        <Route path="/guia/tour/:id" element={<DetalleTourGuia />} /> 
         
-        {/* --- RUTAS DE ADMINISTRACIÓN --- */}
+        {/* --- MÓDULO ADMINISTRACIÓN --- */}
         <Route path="/admin" element={<AdminDashboard />} />
         
-        {/* Gestión de Tours */}
+        {/* Gestión de Tours (Admin) */}
         <Route path="/admin/tours" element={<GestionTours />} />
         <Route path="/admin/crear-tour" element={<CrearTour />} /> 
         <Route path="/admin/editar-tour/:id" element={<EditarTour />} />
         <Route path="/admin/detalle-tour/:id" element={<DetalleTour />} />
 
-        {/* Gestión de Hoteles */}
+        {/* Gestión de Hoteles (Admin) */}
         <Route path="/admin/hoteles" element={<GestionHoteles />} />
         <Route path="/admin/crear-hotel" element={<CrearHotel />} />
         <Route path="/admin/hoteles/detalle/:id" element={<DetalleHotel />} />
         <Route path="/admin/editar-hotel/:id" element={<EditarHotel />} />
 
-        {/* --- GESTIÓN DE GUÍAS --- */}
+        {/* Gestión de Guías (Admin) */}
         <Route path="/admin/guias" element={<GestionGuias />} />
         <Route path="/admin/crear-guia" element={<CrearGuia />} />
         <Route path="/admin/editar-guia/:id" element={<EditarGuia />} />
-        <Route path="/admin/detalle-guia/:id" element={<DetalleGuia />} /> {/* <--- RUTA AGREGADA */}
+        <Route path="/admin/detalle-guia/:id" element={<DetalleGuia />} />
 
-        {/* Reservas */}
+        {/* Gestión de Reservas (Admin) */}
         <Route path="/admin/reservas" element={<GestionReservas />} />
 
         {/* 404 - Wildcard */}

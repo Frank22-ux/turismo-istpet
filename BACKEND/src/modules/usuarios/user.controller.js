@@ -4,15 +4,34 @@ const bcrypt = require('bcrypt');
 const pool = require('../../config/db');
 
 const userController = {
-    // Obtener perfil actual
+    // 1. Obtener perfil actual (Incluye ID de Guía si aplica)
     getPerfil: async (req, res) => {
         try {
-            // El ID viene del token (JWT) a través del middleware
+            // El ID viene del token (JWT) a través del middleware de autenticación
             const id_usuario = req.user.id; 
-            const usuario = await UserModel.findById(id_usuario);
-            if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
 
-            // Obtener últimas reservas (historial) del usuario con información básica del tour
+            // Consulta extendida: Buscamos en usuarios y unimos con guias
+            // Esto permite que el Dashboard de Guía reciba su 'id_guia'
+            const perfilQuery = `
+                SELECT 
+                    u.id_usuario, u.primer_nombre, u.segundo_nombre, 
+                    u.apellido_paterno, u.apellido_materno, u.correo, 
+                    u.foto_url, u.telefono, u.id_rol, u.activo,
+                    g.id_guia, g.especialidad, g.bio
+                FROM usuarios u
+                LEFT JOIN guias g ON u.id_usuario = g.id_usuario
+                WHERE u.id_usuario = $1
+            `;
+            
+            const { rows } = await pool.query(perfilQuery, [id_usuario]);
+
+            if (rows.length === 0) {
+                return res.status(404).json({ message: "Usuario no encontrado" });
+            }
+
+            const usuario = rows[0];
+
+            // 2. Obtener últimas reservas (Historial para Turistas)
             const reservasQuery = `
                 SELECT r.id_reserva, r.fecha_actividad, r.cantidad_personas, r.estado_reserva,
                        t.id_tour, t.nombre as tour_nombre, t.ciudad_destino, t.imagen_portada
@@ -24,7 +43,7 @@ const userController = {
             `;
             const { rows: reservas } = await pool.query(reservasQuery, [id_usuario]);
 
-            // Obtener insignias del usuario
+            // 3. Obtener insignias del usuario
             const badgesQuery = `
                 SELECT ui.id AS rel_id, b.id_insignia, b.nombre, b.descripcion, b.icono_url, ui.asignado_por, ui.fecha_asignacion
                 FROM usuario_insignias ui
@@ -34,23 +53,38 @@ const userController = {
             `;
             const { rows: badges } = await pool.query(badgesQuery, [id_usuario]);
 
-            res.json({ user: usuario, reservas, badges });
+            // Enviamos la respuesta unificada
+            // En el frontend (GuiaDashboard) usarás: res.data.id_guia
+            res.json({ 
+                user: usuario, 
+                reservas, 
+                badges,
+                id_guia: usuario.id_guia // Acceso directo para facilitar el Dashboard
+            });
+
         } catch (error) {
+            console.error("Error al obtener perfil:", error);
             res.status(500).json({ message: "Error al obtener perfil" });
         }
     },
 
-    // Actualizar perfil con foto y password
+    // 2. Actualizar perfil con foto y password
     actualizarPerfil: async (req, res) => {
         try {
             const id_usuario = req.user.id;
-            const { primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, telefono, descripcion_perfil, password, pais, ciudad, idiomas, nivel_experiencia } = req.body;
+            const { 
+                primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, 
+                telefono, descripcion_perfil, password, pais, ciudad, 
+                idiomas, nivel_experiencia 
+            } = req.body;
 
-            // Preferencias pueden venir como JSON string o como objeto
+            // Manejo de preferencias (JSON)
             let preferencias = null;
             if (req.body.preferencias) {
                 try {
-                    preferencias = typeof req.body.preferencias === 'string' ? JSON.parse(req.body.preferencias) : req.body.preferencias;
+                    preferencias = typeof req.body.preferencias === 'string' 
+                        ? JSON.parse(req.body.preferencias) 
+                        : req.body.preferencias;
                 } catch (e) {
                     preferencias = null;
                 }
@@ -58,25 +92,26 @@ const userController = {
 
             let foto_url = null;
 
-            // Lógica de express-fileupload
+            // Procesamiento de imagen de perfil
             if (req.files && req.files.foto) {
                 const archivo = req.files.foto;
                 const extension = path.extname(archivo.name);
                 const nombreArchivo = `perfil_${id_usuario}_${Date.now()}${extension}`;
                 
-                // Guardar en la carpeta uploads/perfiles
                 const rutaGuardado = path.join(process.cwd(), 'uploads/perfiles', nombreArchivo);
                 await archivo.mv(rutaGuardado);
                 
                 foto_url = `/uploads/perfiles/${nombreArchivo}`;
             }
 
-            // Encriptar password si el usuario decidió cambiarla
+            // Encriptar nueva contraseña si se proporcionó una
             let passwordHashed = null;
             if (password && password.trim() !== "") {
-                passwordHashed = await bcrypt.hash(password, 10);
+                const salt = await bcrypt.genSalt(10);
+                passwordHashed = await bcrypt.hash(password, salt);
             }
 
+            // Actualización mediante el Modelo
             const usuarioActualizado = await UserModel.updateProfile(id_usuario, {
                 primer_nombre,
                 segundo_nombre,
@@ -94,13 +129,13 @@ const userController = {
             });
 
             res.json({
-                message: "¡Perfil actualizado!",
+                message: "¡Perfil actualizado correctamente!",
                 user: usuarioActualizado
             });
 
         } catch (error) {
             console.error("Error en actualizarPerfil:", error);
-            res.status(500).json({ message: "Error interno del servidor" });
+            res.status(500).json({ message: "Error interno al actualizar el perfil" });
         }
     }
 };
