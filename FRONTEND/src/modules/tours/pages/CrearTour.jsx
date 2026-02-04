@@ -3,7 +3,11 @@ import { createTourRequest } from '../services/tour.service';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios'; 
-import { FaSave, FaCloudUploadAlt, FaUserTie, FaImages, FaMapMarkerAlt, FaHotel, FaCalendarAlt } from 'react-icons/fa';
+import { 
+    FaSave, FaCloudUploadAlt, FaUserTie, FaImages, 
+    FaMapMarkerAlt, FaHotel, FaCalendarAlt, FaUsers, 
+    FaCompass 
+} from 'react-icons/fa';
 import './CrearTour.css';
 
 // --- CONFIGURACIÓN DEL MAPA ---
@@ -24,7 +28,12 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const CrearTour = () => {
-    const { register, handleSubmit, setValue, watch } = useForm();
+    // Simplificamos defaultValues: solo necesitamos el precio base
+    const { register, handleSubmit, setValue, watch } = useForm({
+        defaultValues: {
+            precio: 0
+        }
+    });
     const navigate = useNavigate();
     
     const [coverPreview, setCoverPreview] = useState(null);
@@ -35,30 +44,22 @@ const CrearTour = () => {
     const [listaGuias, setListaGuias] = useState([]);
     const [listaHoteles, setListaHoteles] = useState([]); 
     const [position, setPosition] = useState(null); 
-    const [isSearchingCity, setIsSearchingCity] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 
     const defaultCenter = [-0.1807, -78.4678]; 
 
     const latitudManual = watch('latitud');
     const longitudManual = watch('longitud');
 
-    // --- CARGAR CATÁLOGOS DINÁMICOS (Corregido con Guías Reales) ---
     useEffect(() => {
         const cargarCatalogos = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const config = {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                };
-
-                // Traer hoteles desde el backend
+                const config = { headers: { 'Authorization': `Bearer ${token}` } };
                 const resHoteles = await axios.get(`${API_URL}/api/hoteles`, config);
                 setListaHoteles(resHoteles.data);
-
-                // Traer guías reales desde el backend (Ya no son estáticos)
                 const resGuias = await axios.get(`${API_URL}/api/usuarios/guias-lista`, config);
                 setListaGuias(resGuias.data);
-
             } catch (error) {
                 console.error("Error al cargar catálogos:", error);
             }
@@ -70,25 +71,26 @@ const CrearTour = () => {
         if (latitudManual && longitudManual) {
             const lat = parseFloat(latitudManual);
             const lng = parseFloat(longitudManual);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                setPosition({ lat, lng });
-            }
+            if (!isNaN(lat) && !isNaN(lng)) setPosition({ lat, lng });
         }
     }, [latitudManual, longitudManual]);
 
-    const fetchCityName = async (lat, lng) => {
-        setIsSearchingCity(true);
+    const fetchLocationDetails = async (lat, lng) => {
+        setIsSearching(true);
         try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
-            );
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
             const data = await response.json();
-            const city = data.address.city || data.address.town || data.address.village || data.address.municipality || "Ubicación no identificada";
+            const city = data.address.city || data.address.town || data.address.village || data.address.municipality || "Desconocido";
             setValue('ciudad_destino', city);
+            const street = data.address.road || "";
+            const houseNumber = data.address.house_number || "";
+            const neighborhood = data.address.neighbourhood || data.address.suburb || "";
+            const fullAddress = `${street} ${houseNumber} ${neighborhood}`.trim() || data.display_name;
+            setValue('direccion', fullAddress);
         } catch (error) {
-            console.error("Error al obtener la ciudad:", error);
+            console.error("Error al obtener detalles de ubicación:", error);
         } finally {
-            setIsSearchingCity(false);
+            setIsSearching(false);
         }
     };
 
@@ -99,7 +101,7 @@ const CrearTour = () => {
                 setPosition(e.latlng); 
                 setValue('latitud', lat.toFixed(6));
                 setValue('longitud', lng.toFixed(6));
-                await fetchCityName(lat, lng);
+                await fetchLocationDetails(lat, lng);
             },
         });
         return position ? <Marker position={position} /> : null;
@@ -133,12 +135,15 @@ const CrearTour = () => {
     const onSubmit = async (data) => {
         try {
             const formData = new FormData();
-            const duracion = calcularDuracion(data.fecha_inicio, data.fecha_fin);
-            
             formData.append('nombre', data.nombre);
             formData.append('ciudad_destino', data.ciudad_destino);
+            formData.append('direccion', data.direccion);
             formData.append('precio', parseFloat(data.precio) || 0);
-            formData.append('duracion', duracion);
+            
+            // Ya no enviamos precio_nino ni precio_especial manuales
+            // El backend los generará automáticamente basándose en 'precio'
+
+            formData.append('duracion', calcularDuracion(data.fecha_inicio, data.fecha_fin));
             formData.append('fecha_inicio', data.fecha_inicio || '');
             formData.append('fecha_fin', data.fecha_fin || '');
             formData.append('descripcion', data.descripcion || '');
@@ -147,7 +152,6 @@ const CrearTour = () => {
 
             if (data.id_guia) formData.append('id_guia', data.id_guia);
             if (data.id_hotel_base) formData.append('id_hotel_base', data.id_hotel_base);
-
             if (imagenFile) formData.append('imagen_portada', imagenFile);
             if (galleryFiles.length > 0) {
                 galleryFiles.forEach((file) => formData.append('galeria', file));
@@ -182,7 +186,6 @@ const CrearTour = () => {
                                 </label>
                             </div>
                         </div>
-
                         <div className="media-col-gallery">
                             <label className="form-label">Galería</label>
                             <input type="file" accept="image/*" multiple id="galeriaInput" className="hidden-file-input" onChange={handleGalleryChange} />
@@ -203,23 +206,50 @@ const CrearTour = () => {
                             <input type="text" className="form-input" {...register("nombre", { required: true })} />
                         </div>
                         <div className="form-col">
-                            <label className="form-label">Ciudad Destino * {isSearchingCity && <span className="loading-text">(Detectando...)</span>}</label>
-                            <input type="text" className={`form-input ${isSearchingCity ? 'input-loading' : ''}`} {...register("ciudad_destino", { required: true })} />
+                            <label className="form-label">Ciudad Destino * {isSearching && <span className="loading-text">(Detectando...)</span>}</label>
+                            <input type="text" className="form-input" {...register("ciudad_destino", { required: true })} />
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label"><FaCompass /> Dirección Exacta (Punto de encuentro)</label>
+                        <input 
+                            type="text" 
+                            className={`form-input ${isSearching ? 'input-loading' : ''}`} 
+                            placeholder="Se llenará al hacer clic en el mapa"
+                            {...register("direccion")} 
+                        />
+                    </div>
+
+                    {/* SECCIÓN DE PRECIO SIMPLIFICADA */}
+                    <h3 className="sub-section-title">Costo del Tour</h3>
+                    <div className="form-row">
+                        <div className="form-col" style={{maxWidth: '300px'}}>
+                            <label className="form-label"><FaUsers /> Precio Normal (Adultos) *</label>
+                            <div className="price-input-container">
+                                <span className="currency-prefix">$</span>
+                                <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    className="form-input highlight-input" 
+                                    placeholder="0.00"
+                                    {...register("precio", { required: true })} 
+                                />
+                                <span className="currency-suffix">USD</span>
+                            </div>
+                            <small className="form-help">
+                                Los precios de Niños (30% desc) y Especial (50% desc) se calcularán automáticamente.
+                            </small>
                         </div>
                     </div>
 
                     <div className="form-row">
-                        <div className="form-col"><label className="form-label">Precio ($) *</label><input type="number" step="0.01" className="form-input" {...register("precio", { required: true })} /></div>
                         <div className="form-col"><label className="form-label"><FaCalendarAlt /> Fecha de Inicio *</label><input type="date" className="form-input" {...register("fecha_inicio", { required: true })} /></div>
-                    </div>
-
-                    <div className="form-row">
                         <div className="form-col"><label className="form-label"><FaCalendarAlt /> Fecha de Fin</label><input type="date" className="form-input" {...register("fecha_fin")} /></div>
-                        <div className="form-col"><label className="form-label">Duración</label><input type="text" className="form-input" value={calcularDuracion(watch('fecha_inicio'), watch('fecha_fin'))} readOnly style={{backgroundColor: '#f0f0f0'}} /></div>
                     </div>
 
                     <div className="form-group map-section">
-                        <label className="form-label"><FaMapMarkerAlt /> Ubicación (Clic en mapa)</label>
+                        <label className="form-label"><FaMapMarkerAlt /> Ubicación (Clic en mapa para Ciudad y Dirección)</label>
                         <div className="map-wrapper">
                             <MapContainer center={defaultCenter} zoom={13} scrollWheelZoom={false} className="leaflet-container">
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -238,7 +268,7 @@ const CrearTour = () => {
                             <select className="form-input" {...register("id_hotel_base")}>
                                 <option value="">-- Sin Hotel --</option>
                                 {listaHoteles.map(h => (
-                                    <option key={h.id_hotel} value={h.id_hotel}>{h.nombre} ({h.estrellas}⭐)</option>
+                                    <option key={h.id_hotel} value={h.id_hotel}>{h.nombre}</option>
                                 ))}
                             </select>
                         </div>
@@ -247,9 +277,7 @@ const CrearTour = () => {
                             <select className="form-input" {...register("id_guia")}>
                                 <option value="">-- Sin asignar --</option>
                                 {listaGuias.map(g => (
-                                    <option key={g.id_guia} value={g.id_guia}>
-                                        {g.primer_nombre} {g.apellido_paterno} — {g.especialidad}
-                                    </option>
+                                    <option key={g.id_guia} value={g.id_guia}>{g.primer_nombre} {g.apellido_paterno}</option>
                                 ))}
                             </select>
                         </div>
@@ -262,8 +290,8 @@ const CrearTour = () => {
 
                     <div className="form-actions">
                         <Link to="/admin/tours" className="btn-cancel">Cancelar</Link>
-                        <button type="submit" className="btn-save" disabled={isSearchingCity}>
-                            <FaSave /> {isSearchingCity ? 'Cargando...' : 'Guardar Tour'}
+                        <button type="submit" className="btn-save" disabled={isSearching}>
+                            <FaSave /> {isSearching ? 'Buscando...' : 'Guardar Tour'}
                         </button>
                     </div>
                 </form>

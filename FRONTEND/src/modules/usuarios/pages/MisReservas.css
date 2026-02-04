@@ -378,3 +378,202 @@
     gap: 0.8vh;
   }
 }
+
+.btn-pdf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #e74c3c; /* Rojo elegante */
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.btn-pdf:hover {
+  background-color: #c0392b;
+}
+
+.mr-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.mr-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+  min-height: 80vh;
+}
+
+.mr-header-section {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.mr-header-section h1 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.mr-divider {
+  width: 80px;
+  height: 4px;
+  background: #3498db;
+  margin: 0 auto;
+  border-radius: 2px;
+}
+
+/* Cuadrícula de tarjetas */
+.mr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+.mr-card-new {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.mr-card-new:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.mr-card-header {
+  position: relative;
+  height: 200px;
+}
+
+.mr-card-header img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mr-badge-status {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #27ae60;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.mr-card-body {
+  padding: 20px;
+}
+
+.mr-card-title {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mr-card-info p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.mr-card-price {
+  margin: 20px 0;
+  padding-top: 15px;
+  border-top: 1px dashed #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mr-card-price strong {
+  font-size: 1.2rem;
+  color: #e67e22;
+}
+
+/* Botones de acción */
+.mr-card-footer {
+  display: flex;
+  gap: 10px;
+}
+
+.mr-btn-pdf-action {
+  flex: 2;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mr-btn-view {
+  flex: 1;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mr-btn-delete {
+  background: #fdf0f0;
+  color: #e74c3c;
+  border: 1px solid #f8d7da;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mr-btn-delete:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+/* Loading Spinner */
+.mr-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+}
+
+.mr-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

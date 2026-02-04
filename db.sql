@@ -1,5 +1,5 @@
 -- ============================================
--- SISTEMA DE GESTIÓN DE TOURS (VERSIÓN INTEGRAL)
+-- SISTEMA DE GESTIÓN DE TOURS (VERSIÓN 2026 - ACTUALIZADA)
 -- ============================================
 
 -- 1. LIMPIEZA
@@ -21,7 +21,7 @@ CREATE TABLE roles (
     nombre_rol VARCHAR(50) NOT NULL UNIQUE
 );
 
--- 3. TABLA: USUARIOS (Contiene datos compartidos y de contacto)
+-- 3. TABLA: USUARIOS
 CREATE TABLE usuarios (
     id_usuario SERIAL PRIMARY KEY,
     primer_nombre VARCHAR(50) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE usuarios (
     correo VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     telefono VARCHAR(20),
-    descripcion_perfil TEXT, -- Se usa como 'Bio' general
+    descripcion_perfil TEXT,
     foto_url VARCHAR(500),
     pais VARCHAR(100),
     ciudad VARCHAR(100),
@@ -72,25 +72,30 @@ CREATE TABLE categorias (
     descripcion TEXT
 );
 
--- 6. TABLA: GUIAS (Extensión de Usuarios para el rol Guía)
+-- 6. TABLA: GUIAS
 CREATE TABLE guias (
     id_guia SERIAL PRIMARY KEY,
     id_usuario INTEGER NOT NULL UNIQUE,
     id_hotel_asignado INTEGER, 
     especialidad VARCHAR(200),
-    bio TEXT, -- Biografía específica profesional
+    bio TEXT,
     CONSTRAINT fk_guia_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
     CONSTRAINT fk_guia_hotel FOREIGN KEY (id_hotel_asignado) REFERENCES hoteles(id_hotel) ON DELETE SET NULL
 );
 
--- 7. TABLA: TOURS
+-- 7. TABLA: TOURS (ACTUALIZADA CON NUEVOS CAMPOS)
 CREATE TABLE tours (
     id_tour SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
-    precio DECIMAL(10, 2) NOT NULL,
+    -- Precios diferenciados
+    precio DECIMAL(10, 2) NOT NULL DEFAULT 0.00,          -- Precio Adulto
+    precio_nino DECIMAL(10, 2) NOT NULL DEFAULT 0.00,     -- Precio Niño
+    precio_especial DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- Precio Discapacitados/3ra Edad
+    
     duracion VARCHAR(50) NOT NULL, 
-    ciudad_destino VARCHAR(100),   
+    ciudad_destino VARCHAR(100),
+    direccion VARCHAR(255),                               -- Dirección detectada por mapa
     fecha_inicio DATE,
     fecha_fin DATE,
     latitud DECIMAL(10, 8) DEFAULT 0,
@@ -116,14 +121,17 @@ CREATE TABLE tour_galeria (
     CONSTRAINT fk_galeria_tour FOREIGN KEY (id_tour) REFERENCES tours(id_tour) ON DELETE CASCADE
 );
 
--- 9. TABLA: RESERVAS
+-- 9. TABLA: RESERVAS (Ajustada para soportar desglose de personas)
 CREATE TABLE reservas (
     id_reserva SERIAL PRIMARY KEY,
     id_turista INTEGER NOT NULL,
     id_tour INTEGER NOT NULL,
     fecha_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actividad DATE NOT NULL,
-    cantidad_personas INTEGER DEFAULT 1,
+    -- Desglose opcional por tipos
+    cant_adultos INTEGER DEFAULT 1,
+    cant_ninos INTEGER DEFAULT 0,
+    cant_especial INTEGER DEFAULT 0,
     total DECIMAL(10, 2), 
     estado_reserva VARCHAR(20) DEFAULT 'Pendiente', 
     CONSTRAINT fk_reserva_turista FOREIGN KEY (id_turista) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
@@ -172,13 +180,9 @@ INSERT INTO hoteles (nombre, direccion, ciudad, estrellas, estado_convenio) VALU
 ('Hostal La Montaña', 'Calle Larga 456', 'Cuenca', 3, 'Disponible'),
 ('Resort Blue Ocean', 'Via Barbasquillo', 'Manta', 4, 'Disponible');
 
--- El password es 'admin123' (hash de ejemplo)
-INSERT INTO usuarios (primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, correo, password, id_rol, descripcion_perfil) 
-VALUES ('Super', 'Admin', 'Sistema', 'Principal', 'admin@toursystem.com', '$2b$10$76YVfH.fB3XG.X/y5jXpY.e.X7vO.aD/P.g0X.j/P.g0X.j/P.g0X', 1, 'Cuenta administradora');
+INSERT INTO usuarios (primer_nombre, apellido_paterno, correo, password, id_rol, descripcion_perfil) 
+VALUES ('Super', 'Admin', 'admin@toursystem.com', '$2b$10$76YVfH.fB3XG.X/y5jXpY.e.X7vO.aD/P.g0X.j/P.g0X.j/P.g0X', 1, 'Cuenta administradora');
 
 INSERT INTO insignias (nombre, descripcion, icono_url) VALUES
 ('Primer Viaje', 'Otorgada al completar la primera reserva y viaje', '/icons/medal.svg'),
-('Explorador', 'Explora 5 destinos distintos', '/icons/globe.svg'),
-('Fotógrafo', 'Sube 10 fotos a tu galería', '/icons/camera.svg'),
-('Aventurero', 'Realiza 3 tours de aventura', '/icons/mountain.svg'),
-('Gourmet', 'Participa en 2 tours gastronómicos', '/icons/utensils.svg');
+('Explorador', 'Explora 5 destinos distintos', '/icons/globe.svg');

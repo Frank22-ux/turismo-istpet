@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaSave, FaImages, FaMapMarkerAlt, FaCalendarAlt, FaHotel, FaUserTie } from 'react-icons/fa';
+import { FaSave, FaImages, FaMapMarkerAlt, FaCalendarAlt, FaHotel, FaUserTie, FaMoneyBillWave, FaCompass } from 'react-icons/fa';
 import { getTourRequest, updateTourRequest } from '../services/tour.service';
 import './EditarTour.css';
 
@@ -36,30 +36,25 @@ const EditarTour = () => {
     useEffect(() => {
         const cargarDatosIniciales = async () => {
             const token = localStorage.getItem('token');
-            const config = {
-                headers: { Authorization: `Bearer ${token}` }
-            };
+            const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            // 1. Cargar Hoteles
             try {
-                const resH = await axios.get(`${API_URL}/api/hoteles`);
+                // Cargar catálogos
+                const [resH, resG] = await Promise.all([
+                    axios.get(`${API_URL}/api/hoteles`),
+                    axios.get(`${API_URL}/api/usuarios/guias-lista`, config)
+                ]);
                 setListaHoteles(resH.data || []);
-            } catch (e) { console.error("Error hoteles:", e); }
-
-            // 2. Cargar Guías
-            try {
-                const resG = await axios.get(`${API_URL}/api/usuarios/guias-lista`, config);
                 setListaGuias(resG.data || []);
-            } catch (e) { console.error("Error guías:", e); }
 
-            // 3. Cargar el Tour para editar
-            try {
+                // Cargar el Tour
                 const tour = await getTourRequest(id);
                 if (tour) {
                     reset({
                         nombre: tour.nombre || '',
                         ciudad_destino: tour.ciudad_destino || '',
-                        precio: tour.precio || 0,
+                        direccion: tour.direccion || '',
+                        precio: tour.precio || 0, // Solo mantenemos el precio base
                         descripcion: tour.descripcion || '',
                         duracion: tour.duracion || '',
                         fecha_inicio: tour.fecha_inicio ? tour.fecha_inicio.split('T')[0] : '',
@@ -77,19 +72,31 @@ const EditarTour = () => {
                     }
                 }
             } catch (error) {
-                console.error("Error cargando el tour:", error);
+                console.error("Error cargando datos:", error);
             }
         };
-
         cargarDatosIniciales();
     }, [id, reset]);
+
+    const reverseGeocode = async (lat, lng) => {
+        try {
+            const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            if (res.data && res.data.display_name) {
+                setValue('direccion', res.data.display_name);
+            }
+        } catch (error) {
+            console.error("Error en geocodificación:", error);
+        }
+    };
 
     function LocationMarker() {
         useMapEvents({
             click(e) {
+                const { lat, lng } = e.latlng;
                 setPosition(e.latlng); 
-                setValue('latitud', e.latlng.lat.toFixed(6));
-                setValue('longitud', e.latlng.lng.toFixed(6));
+                setValue('latitud', lat.toFixed(6));
+                setValue('longitud', lng.toFixed(6));
+                reverseGeocode(lat, lng);
             },
         });
         return position ? <Marker position={position} /> : null;
@@ -98,17 +105,12 @@ const EditarTour = () => {
     const onSubmit = async (data) => {
         try {
             const formData = new FormData();
-            
-            // LIMPIEZA DE DATOS PARA POSTGRESQL
             for (const key in data) {
-                // Solo omitimos si es estrictamente vacío, null o undefined. 
-                // Los números (como el 0) deben pasar.
-                if (data[key] === null || data[key] === undefined || data[key] === "") {
-                    continue; 
-                }
+                if (data[key] === null || data[key] === undefined || data[key] === "") continue;
                 formData.append(key, data[key]);
             }
-
+            // Al enviar solo 'precio', el backend se encarga de actualizar precio_nino y precio_especial
+            
             if (imagenFile) formData.append('imagen_portada', imagenFile);
             if (galleryFiles.length > 0) {
                 galleryFiles.forEach(file => formData.append('galeria', file));
@@ -162,45 +164,60 @@ const EditarTour = () => {
 
                     <div className="form-row">
                         <div className="form-col">
-                            <label className="form-label">Nombre *</label>
+                            <label className="form-label">Nombre del Tour *</label>
                             <input type="text" className="form-input" {...register("nombre", { required: true })} />
                         </div>
                         <div className="form-col">
-                            <label className="form-label">Ciudad *</label>
+                            <label className="form-label">Ciudad Destino *</label>
                             <input type="text" className="form-input" {...register("ciudad_destino", { required: true })} />
                         </div>
                     </div>
 
+                    <div className="form-group">
+                        <label className="form-label"><FaCompass /> Dirección Específica</label>
+                        <input type="text" className="form-input" {...register("direccion")} placeholder="Ej: Calle 123 y Av. Amazonas" />
+                    </div>
+
+                    {/* PRECIO SIMPLIFICADO */}
                     <div className="form-row">
-                        <div className="form-col">
-                            <label className="form-label">Precio</label>
-                            <input type="number" step="0.01" className="form-input" {...register("precio")} />
-                        </div>
-                        <div className="form-col">
-                            <label className="form-label">Duración</label>
-                            <input type="text" className="form-input" {...register("duracion")} />
+                        <div className="form-col" style={{maxWidth: '350px'}}>
+                            <label className="form-label"><FaMoneyBillWave /> Precio Adultos ($) *</label>
+                            <input type="number" step="0.01" className="form-input highlight-input" {...register("precio", { required: true })} />
+                            <small className="form-help">
+                                Los precios de niños (30% desc) y especiales (50% desc) se recalcularán automáticamente.
+                            </small>
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-col">
-                            <label className="form-label"><FaCalendarAlt /> Inicio</label>
+                            <label className="form-label">Duración</label>
+                            <input type="text" className="form-input" {...register("duracion")} placeholder="Ej: 3 días, 2 noches" />
+                        </div>
+                        <div className="form-col">
+                            <label className="form-label"><FaCalendarAlt /> Fecha Inicio</label>
                             <input type="date" className="form-input" {...register("fecha_inicio")} />
                         </div>
                         <div className="form-col">
-                            <label className="form-label"><FaCalendarAlt /> Fin</label>
+                            <label className="form-label"><FaCalendarAlt /> Fecha Fin</label>
                             <input type="date" className="form-input" {...register("fecha_fin")} />
                         </div>
                     </div>
 
                     {/* Mapa */}
                     <div className="map-section">
-                        <label className="form-label"><FaMapMarkerAlt /> Ubicación Geográfica</label>
+                        <label className="form-label"><FaMapMarkerAlt /> Ubicación en el Mapa</label>
                         <div className="map-wrapper" style={{ height: '250px', marginBottom: '15px' }}>
-                            <MapContainer center={position || defaultCenter} zoom={13} style={{ height: '100%' }}>
-                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                <LocationMarker />
-                            </MapContainer>
+                            {/* Verificamos que position exista antes de renderizar el mapa para evitar errores de Leaflet al cargar */}
+                            {position && (
+                                <MapContainer center={position} zoom={13} style={{ height: '100%' }}>
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    <LocationMarker />
+                                </MapContainer>
+                            )}
+                        </div>
+                        <div className="coords-display">
+                            <span>Lat: {watch('latitud')}</span> | <span>Lng: {watch('longitud')}</span>
                         </div>
                         <input type="hidden" {...register("latitud")} />
                         <input type="hidden" {...register("longitud")} />
@@ -209,35 +226,24 @@ const EditarTour = () => {
                     <div className="form-row">
                         <div className="form-col">
                             <label className="form-label"><FaHotel /> Hotel Base</label>
-                            <select 
-                                className="form-input" 
-                                {...register("id_hotel_base", { setValueAs: v => v === "" ? null : parseInt(v) })}
-                            >
+                            <select className="form-input" {...register("id_hotel_base", { setValueAs: v => v === "" ? null : parseInt(v) })}>
                                 <option value="">-- Sin Hotel --</option>
-                                {listaHoteles.map(h => (
-                                    <option key={h.id_hotel} value={h.id_hotel}>{h.nombre}</option>
-                                ))}
+                                {listaHoteles.map(h => <option key={h.id_hotel} value={h.id_hotel}>{h.nombre}</option>)}
                             </select>
                         </div>
                         <div className="form-col">
                             <label className="form-label"><FaUserTie /> Guía Asignado</label>
-                            <select 
-                                className="form-input" 
-                                {...register("id_guia", { setValueAs: v => v === "" ? null : parseInt(v) })}
-                            >
+                            <select className="form-input" {...register("id_guia", { setValueAs: v => v === "" ? null : parseInt(v) })}>
                                 <option value="">-- Sin Asignar --</option>
                                 {listaGuias.map(g => (
-                                    /* CORRECCIÓN: Usar g.id_guia en lugar de g.id_usuario */
-                                    <option key={g.id_guia} value={g.id_guia}>
-                                        {g.primer_nombre} {g.apellido_paterno}
-                                    </option>
+                                    <option key={g.id_guia} value={g.id_guia}>{g.primer_nombre} {g.apellido_paterno}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Descripción</label>
+                        <label className="form-label">Descripción Detallada</label>
                         <textarea className="form-textarea" rows="3" {...register("descripcion")}></textarea>
                     </div>
 

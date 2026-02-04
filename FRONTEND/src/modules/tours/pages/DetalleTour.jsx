@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getTourRequest } from '../services/tour.service';
-import { FaArrowLeft, FaMapMarkerAlt, FaCalendarAlt, FaDollarSign, FaClock, FaHotel, FaUserTie } from 'react-icons/fa';
+import { FaArrowLeft, FaMapMarkerAlt, FaCalendarAlt, FaDollarSign, FaClock, FaHotel, FaUserTie, FaChild, FaUserFriends } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './DetalleTour.css';
@@ -17,7 +17,6 @@ const DetalleTour = () => {
     useEffect(() => {
         const cargarTour = async () => {
             try {
-                // Se obtiene la información del tour desde el servicio
                 const data = await getTourRequest(id);
                 setTour(data);
             } catch (error) {
@@ -42,8 +41,11 @@ const DetalleTour = () => {
                 <div className="header-info">
                     <h1>{tour.nombre}</h1>
                     <p className="destino"><FaMapMarkerAlt /> {tour.ciudad_destino}</p>
+                    {/* DIRECCIÓN: Nueva línea */}
+                    {tour.direccion && <p className="direccion-exacta"><strong>Punto de encuentro:</strong> {tour.direccion}</p>}
                 </div>
                 <div className="header-price">
+                    <span className="price-label">Desde</span>
                     <span className="price-tag">${Number(tour.precio).toFixed(2)}</span>
                 </div>
             </div>
@@ -68,6 +70,26 @@ const DetalleTour = () => {
 
                 {/* Columna Derecha: Información y Mapa */}
                 <div className="detalle-info">
+                    {/* NUEVA SECCIÓN: TARIFAS DIFERENCIADAS */}
+                    <div className="info-card precios-detalle-card">
+                        <h3>Tarifas</h3>
+                        <div className="precios-grid">
+                            <div className="precio-item">
+                                <FaUserFriends /> <span>Adultos:</span> <strong>${Number(tour.precio).toFixed(2)}</strong>
+                            </div>
+                            {Number(tour.precio_nino) > 0 && (
+                                <div className="precio-item">
+                                    <FaChild /> <span>Niños:</span> <strong>${Number(tour.precio_nino).toFixed(2)}</strong>
+                                </div>
+                            )}
+                            {Number(tour.precio_especial) > 0 && (
+                                <div className="precio-item">
+                                    <FaDollarSign /> <span>Especial:</span> <strong>${Number(tour.precio_especial).toFixed(2)}</strong>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="info-card">
                         <h3>Información General</h3>
                         <div className="info-item">
@@ -81,18 +103,14 @@ const DetalleTour = () => {
                                 <FaCalendarAlt /> <strong>Fecha Fin:</strong> {tour.fecha_fin?.split('T')[0]}
                             </div>
                         )}
-                        
-                        {/* HOTEL: Muestra nombre_hotel que debe venir del JOIN en el backend */}
                         <div className="info-item">
-                            <FaHotel /> <strong>Hotel Base:</strong> {tour.nombre_hotel || 'No incluido / No asignado'}
+                            <FaHotel /> <strong>Hotel Base:</strong> {tour.nombre_hotel || 'No incluido'}
                         </div>
-                        
-                        {/* GUÍA: Muestra nombre_guia que debe venir del JOIN en el backend */}
                         <div className="info-item">
                             <FaUserTie /> <strong>Guía Asignado:</strong> {
                                 tour.nombre_guia 
                                 ? `${tour.nombre_guia} ${tour.apellido_guia || ''}` 
-                                : 'No asignado'
+                                : 'Por confirmar'
                             }
                         </div>
                     </div>
@@ -104,7 +122,7 @@ const DetalleTour = () => {
 
                     {tour.latitud && tour.longitud && (
                         <div className="mapa-section">
-                            <h3>Ubicación Exacta</h3>
+                            <h3>Ubicación en el Mapa</h3>
                             <div className="mapa-wrapper">
                                 <MapContainer 
                                     center={[parseFloat(tour.latitud), parseFloat(tour.longitud)]} 
@@ -114,7 +132,9 @@ const DetalleTour = () => {
                                 >
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                     <Marker position={[parseFloat(tour.latitud), parseFloat(tour.longitud)]}>
-                                        <Popup>{tour.nombre}</Popup>
+                                        <Popup>
+                                            <strong>Punto de encuentro:</strong> <br /> {tour.direccion || tour.nombre}
+                                        </Popup>
                                     </Marker>
                                 </MapContainer>
                             </div>

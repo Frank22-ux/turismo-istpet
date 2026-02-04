@@ -5,18 +5,21 @@ const Tour = {
     create: async (data) => {
         const query = `
             INSERT INTO tours 
-            (nombre, ciudad_destino, descripcion, precio, duracion, 
-             fecha_inicio, fecha_fin, latitud, longitud, 
+            (nombre, ciudad_destino, direccion, descripcion, precio, precio_nino, precio_especial, 
+             duracion, fecha_inicio, fecha_fin, latitud, longitud, 
              imagen_portada, galeria, id_guia, id_hotel_base) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
             RETURNING *
         `;
         
         const values = [
             data.nombre,
             data.ciudad_destino,
+            data.direccion,      // $3
             data.descripcion,
-            data.precio,
+            data.precio,         // $5
+            data.precio_nino,    // $6
+            data.precio_especial,// $7
             data.duracion,
             data.fecha_inicio || null,
             data.fecha_fin || null,
@@ -24,15 +27,15 @@ const Tour = {
             data.longitud,
             data.imagen_portada,
             data.galeria && data.galeria.length > 0 ? data.galeria : null,
-            data.id_guia, // Ya viene limpio del controller
-            data.id_hotel_base // Ya viene limpio del controller
+            data.id_guia,
+            data.id_hotel_base
         ];
 
         const { rows } = await pool.query(query, values);
         return rows[0];
     },
 
-    // --- 2. OBTENER TODOS (Con JOIN para ver nombres en la lista) ---
+    // --- 2. OBTENER TODOS ---
     findAll: async () => {
         const query = `
             SELECT t.*, 
@@ -49,7 +52,7 @@ const Tour = {
         return rows;
     },
 
-    // --- 3. BUSCAR POR ID (Crucial para DetalleTour.jsx) ---
+    // --- 3. BUSCAR POR ID ---
     findById: async (id) => {
         const query = `
             SELECT t.*, 
@@ -72,36 +75,42 @@ const Tour = {
             UPDATE tours 
             SET nombre = $1, 
                 ciudad_destino = $2, 
-                descripcion = $3, 
-                precio = $4, 
-                duracion = $5, 
-                fecha_inicio = $6, 
-                fecha_fin = $7, 
-                latitud = $8, 
-                longitud = $9,
-                imagen_portada = COALESCE($10, imagen_portada),
-                galeria = COALESCE($11, galeria),
-                id_guia = $12, 
-                id_hotel_base = $13
-            WHERE id_tour = $14
+                direccion = $3, 
+                descripcion = $4, 
+                precio = $5, 
+                precio_nino = $6, 
+                precio_especial = $7, 
+                duracion = $8, 
+                fecha_inicio = $9, 
+                fecha_fin = $10, 
+                latitud = $11, 
+                longitud = $12,
+                imagen_portada = COALESCE($13, imagen_portada),
+                galeria = COALESCE($14, galeria),
+                id_guia = $15, 
+                id_hotel_base = $16
+            WHERE id_tour = $17
             RETURNING *
         `;
         
         const values = [
             data.nombre,
             data.ciudad_destino,
+            data.direccion,      // $3
             data.descripcion,
-            data.precio,
+            data.precio,         // $5
+            data.precio_nino,    // $6
+            data.precio_especial,// $7
             data.duracion,
             data.fecha_inicio || null,
             data.fecha_fin || null,
             data.latitud,
             data.longitud,
-            data.imagen_portada, // Si es null, COALESCE mantiene la anterior
-            data.galeria,        // Si es null, COALESCE mantiene la anterior
+            data.imagen_portada, 
+            data.galeria,        
             data.id_guia,
             data.id_hotel_base,
-            id
+            id                   // $17
         ];
 
         const { rows } = await pool.query(query, values);

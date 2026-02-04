@@ -246,3 +246,40 @@
     border: 1px dashed var(--color-primary);
     font-weight: bold;
 }
+
+.sub-section-title {
+    font-size: 1rem;
+    color: #022b3a;
+    margin: 20px 0 10px 0;
+    border-left: 4px solid #1f7a8c;
+    padding-left: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.pricing-row {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.highlight-input {
+    border: 2px solid #1f7a8c !important;
+    font-weight: bold;
+}
+
+.form-label svg {
+    margin-right: 5px;
+    color: #1f7a8c;
+}
+
+/* Ajuste para que se vean 3 columnas en la fila de precios */
+@media (min-width: 768px) {
+    .pricing-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
