@@ -1,117 +1,251 @@
-/* Contenedor Principal */
-.tours-container {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* Gestión Tours - Estilos Modernos */
+
+.tours-modern-wrapper {
+    padding: 2rem;
+    background-color: var(--color-lavender);
+    min-height: 100vh;
 }
 
-/* Encabezado */
-.tours-header {
+.tours-header-section {
+    margin-bottom: 2rem;
+}
+
+.header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 1.5rem;
 }
 
-.tours-title {
-    color: #022b3a;
-    font-size: 2rem;
-    margin: 0;
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    margin-bottom: 0.5rem;
 }
 
-.btn-create {
-    background-color: #2ecc71;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    display: flex;
+.page-subtitle {
+    font-size: 0.9375rem;
+    color: #64748b;
+}
+
+.btn-create-primary {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-weight: bold;
-    transition: background 0.3s ease;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #022b3a 0%, #1f7a8c 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-decoration: none;
 }
 
-.btn-create:hover {
-    background-color: #27ae60;
+.btn-create-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Tabla y Envoltorio */
-.table-wrapper {
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.quick-stat-card {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    overflow: hidden;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
-.tours-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #022b3a;
+    margin-bottom: 0.25rem;
 }
 
-.tours-table th, 
-.tours-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    vertical-align: middle;
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
 }
 
-.tours-table th {
-    background-color: #f8f9fa;
-    color: #333;
-    font-weight: 600;
-}
-
-/* Celda de Acciones */
-.actions-cell {
+.filters-bar {
     display: flex;
-    gap: 10px;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-box-modern {
+    flex: 1;
+    min-width: 300px;
+    position: relative;
+    display: flex;
     align-items: center;
 }
 
-.btn-action {
+.search-box-modern svg {
+    position: absolute;
+    left: 1rem;
+    color: #94a3b8;
+}
+
+.search-box-modern input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    background: white;
+}
+
+.search-box-modern input:focus {
+    outline: none;
+    border-color: #1f7a8c;
+    box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
+}
+
+.table-card-modern {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.modern-table-tours {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table-tours thead {
+    background: var(--color-lavender);
+}
+
+.modern-table-tours th {
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.modern-table-tours td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9375rem;
+    vertical-align: middle;
+}
+
+.modern-table-tours tbody tr {
+    transition: background 0.15s ease;
+}
+
+.modern-table-tours tbody tr:hover {
+    background: #f8fafc;
+}
+
+.tour-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.tour-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+}
+
+.no-image-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 2px solid #e2e8f0;
+}
+
+.tour-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.tour-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.tour-subtitle {
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.btn-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 38px;
     height: 38px;
-    border-radius: 8px;
+    background: none;
     border: none;
+    border-radius: 0.375rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
+    color: #64748b;
     text-decoration: none;
 }
 
-/* --- COLORES BASE FIJOS --- */
-
-/* BOTÓN VER (AZUL SIEMPRE) */
-.btn-view {
-    background-color: #007bff !important;
-    color: white !important;
+.btn-icon:hover {
+    background: #f1f5f9;
 }
 
-/* BOTÓN EDITAR (AMARILLO SIEMPRE) */
-.btn-edit {
-    background-color: #ffc107 !important;
-    color: #000000 !important; /* Texto negro para que resalte en amarillo */
+.btn-icon.view:hover {
+    color: #10b981;
 }
 
-/* BOTÓN ELIMINAR (ROJO SIEMPRE) */
-.btn-delete {
-    background-color: #dc3545 !important;
-    color: white !important;
+.btn-icon.edit:hover {
+    color: #3b82f6;
 }
 
-/* EFECTO AL PASAR EL MOUSE (Opcional: solo se oscurecen un poco) */
-.btn-view:hover { background-color: #0056b3 !important; transform: scale(1.05); }
-.btn-edit:hover { background-color: #e0a800 !important; transform: scale(1.05); }
-.btn-delete:hover { background-color: #a71d2a !important; transform: scale(1.05); }
+.btn-icon.delete:hover {
+    color: #ef4444;
+}
 
-.tour-thumbnail {
-    width: 55px;
-    height: 55px;
-    object-fit: cover;
-    border-radius: 8px;
+@media (max-width: 768px) {
+    .tours-modern-wrapper {
+        padding: 1rem;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .search-box-modern {
+        min-width: 100%;
+    }
 }

@@ -1,0 +1,363 @@
+/* ══════════════════════════════════════════════════════
+   TOUR DRAWER - ESTILOS PREMIUM (CANVAS)
+   ══════════════════════════════════════════════════════ */
+
+.tour-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 30, 52, 0);
+    backdrop-filter: blur(0);
+    z-index: 1000;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tour-drawer-overlay.open {
+    visibility: visible;
+    background: rgba(5, 30, 52, 0.6);
+    backdrop-filter: blur(8px);
+}
+
+.tour-drawer-content {
+    position: absolute;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    max-width: 500px;
+    height: 100%;
+    background: #f8fafc;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tour-drawer-content.open {
+    right: 0;
+}
+
+/* ── Botón Cerrar ── */
+.btn-drawer-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #1e293b;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.btn-drawer-close:hover {
+    transform: rotate(90deg);
+    background: white;
+}
+
+/* ── Cabecera con Imagen ── */
+.drawer-header-img {
+    position: relative;
+    height: 300px;
+    flex-shrink: 0;
+}
+
+.drawer-header-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.drawer-header-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, transparent 40%, rgba(248, 250, 252, 1) 100%);
+}
+
+.drawer-header-actions {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-drawer-action {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #64748b;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.btn-drawer-action:hover {
+    color: #f43f5e;
+    transform: scale(1.1);
+}
+
+/* ── Cuerpo del Drawer ── */
+.drawer-body {
+    padding: 24px;
+    flex: 1;
+}
+
+.drawer-category {
+    display: inline-block;
+    color: #10b981;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.drawer-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    margin-bottom: 8px;
+}
+
+.drawer-location {
+    font-size: 14px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.drawer-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.drawer-stars {
+    display: flex;
+    gap: 4px;
+    color: #f59e0b;
+    font-size: 14px;
+}
+
+.star-empty {
+    color: #e2e8f0;
+}
+
+.drawer-rating-num {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.drawer-resenas {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* Specs Grid */
+.drawer-specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.spec-icon {
+    font-size: 20px;
+    color: #147a8a;
+}
+
+.spec-label {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.spec-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Tabs */
+.drawer-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+}
+
+.drawer-tab {
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.drawer-tab.active {
+    color: #147a8a;
+    border-bottom-color: #147a8a;
+}
+
+.drawer-description {
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.drawer-itinerary h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drawer-itinerary ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.drawer-itinerary li {
+    font-size: 14px;
+    color: #64748b;
+    padding-left: 20px;
+    position: relative;
+}
+
+.drawer-itinerary li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: 800;
+}
+
+.include-list {
+    display: grid;
+    gap: 12px;
+}
+
+.include-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #475569;
+}
+
+.include-check {
+    color: #10b981;
+}
+
+/* Footer / CTA */
+.drawer-footer {
+    padding: 24px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    position: sticky;
+    bottom: 0;
+}
+
+.drawer-price-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.drawer-price-val {
+    font-size: 28px;
+    font-weight: 900;
+    color: #0a4f6e;
+}
+
+.btn-drawer-reserve {
+    flex: 1;
+    background: linear-gradient(135deg, #10b981, #147a8a);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-drawer-reserve:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+/* Animations */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .tour-drawer-content {
+        max-width: 100%;
+    }
+}

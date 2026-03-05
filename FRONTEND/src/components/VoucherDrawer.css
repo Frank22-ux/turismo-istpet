@@ -1,0 +1,379 @@
+.voucher-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 43, 58, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voucher-drawer-overlay.open {
+    visibility: visible;
+    opacity: 1;
+}
+
+.voucher-drawer-content {
+    position: absolute;
+    right: -100%;
+    top: 0;
+    height: 100%;
+    width: 600px;
+    background: var(--bg-lavender);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.voucher-drawer-content.open {
+    right: 0;
+}
+
+.voucher-header {
+    background: var(--navy-primary);
+    color: white;
+    padding: 40px;
+    position: relative;
+}
+
+.header-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 5px;
+}
+
+.header-icon {
+    font-size: 1.8rem;
+    color: var(--teal-secondary);
+}
+
+.voucher-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.voucher-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+
+.btn-close-voucher {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-close-voucher:hover {
+    background: var(--coral);
+    transform: rotate(90deg);
+}
+
+.voucher-body {
+    padding: 40px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* PREMIUM TICKET */
+.premium-ticket {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.ticket-top {
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafb;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.ticket-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ticket-logo img {
+    height: 30px;
+}
+
+.ticket-logo span {
+    font-weight: 800;
+    color: var(--navy-primary);
+    font-size: 1.1rem;
+}
+
+.ticket-status {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ticket-main {
+    display: flex;
+    padding: 30px;
+}
+
+.ticket-left {
+    flex: 1;
+}
+
+.tour-name-section {
+    margin-bottom: 30px;
+}
+
+.small-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.tour-name-section h3 {
+    font-size: 1.5rem;
+    color: var(--navy-primary);
+    line-height: 1.2;
+}
+
+.ticket-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.ticket-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.ticket-item svg {
+    font-size: 1.2rem;
+    color: var(--teal-secondary);
+}
+
+.item-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.item-value {
+    font-weight: 700;
+    color: var(--navy-primary);
+    font-size: 0.9rem;
+}
+
+.ticket-divider {
+    width: 20px;
+    position: relative;
+    margin: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ticket-divider .line {
+    width: 1px;
+    height: 80%;
+    border-left: 2px dashed #e2e8f0;
+}
+
+.ticket-divider .circle {
+    width: 25px;
+    height: 25px;
+    background: var(--bg-lavender);
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.ticket-divider .circle.top {
+    top: -45px;
+}
+
+.ticket-divider .circle.bottom {
+    bottom: -45px;
+}
+
+.ticket-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: 140px;
+}
+
+.qr-box {
+    text-align: center;
+    background: #f1f5f9;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.qr-icon {
+    font-size: 3rem;
+    margin-bottom: 5px;
+}
+
+.qr-id {
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--text-secondary);
+}
+
+.total-box {
+    text-align: center;
+}
+
+.item-value-total {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--teal-secondary);
+    display: block;
+}
+
+.ticket-footer {
+    padding: 20px 30px;
+    background: #f8fafb;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.guia-mini-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.guia-mini-info svg {
+    font-size: 2rem;
+    color: #cbd5e1;
+}
+
+.footer-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.footer-note span {
+    font-weight: 700;
+}
+
+/* ACTIONS */
+.voucher-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.btn-v-action {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-v-action.primary {
+    background: var(--teal-secondary);
+    color: white;
+}
+
+.btn-v-action.secondary {
+    background: var(--navy-primary);
+    color: white;
+}
+
+.btn-v-action.ghost {
+    background: white;
+    color: var(--text-secondary);
+    border: 1px solid #e2e8f0;
+    grid-column: span 2;
+}
+
+.btn-v-action:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.voucher-help {
+    text-align: center;
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #eef2f6;
+}
+
+.voucher-help h4 {
+    margin-bottom: 10px;
+    color: var(--navy-primary);
+}
+
+.voucher-help p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 650px) {
+    .voucher-drawer-content {
+        width: 100%;
+    }
+
+    .ticket-main {
+        flex-direction: column;
+    }
+
+    .ticket-divider {
+        display: none;
+    }
+
+    .ticket-right {
+        width: 100%;
+        margin-top: 20px;
+        flex-direction: row;
+        align-items: center;
+    }
+}

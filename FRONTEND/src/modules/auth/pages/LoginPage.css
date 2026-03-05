@@ -1,131 +1,653 @@
 /* frontend/src/modules/auth/pages/LoginPage.css */
 
+:root {
+  --navy: #022B3A;
+  --teal: #1F7A8C;
+  --sky: #BFDBF7;
+  --lavender: #E1E5F2;
+  --white: #FFFFFF;
+}
+
 .login-container {
   display: flex;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ========== LADO IZQUIERDO: CARRUSEL DE IMÁGENES ========== */
+.login-carousel-section {
+  flex: 0 0 50%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy) 100%);
+}
+
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.carousel-slide:nth-child(1) {
+  animation: fadeSlide1 15s infinite;
+}
+
+.carousel-slide:nth-child(2) {
+  animation: fadeSlide2 15s infinite;
+}
+
+.carousel-slide:nth-child(3) {
+  animation: fadeSlide3 15s infinite;
+}
+
+/* NOTA: Añade tus imágenes del carrusel en el componente JSX */
+/* Puedes usar rutas como: /assets/carousel/image1.jpg */
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Overlay sutil para mejorar legibilidad */
+.carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(31, 122, 140, 0.15) 0%, rgba(2, 43, 58, 0.25) 100%);
+  z-index: 2;
+}
+
+/* Animaciones de fade para el carrusel (3 imágenes, 5 segundos cada una) */
+@keyframes fadeSlide1 {
+  0%, 100% { opacity: 0; }
+  0%, 33.33% { opacity: 1; }
+  33.34%, 100% { opacity: 0; }
+}
+
+@keyframes fadeSlide2 {
+  0%, 33.33% { opacity: 0; }
+  33.34%, 66.66% { opacity: 1; }
+  66.67%, 100% { opacity: 0; }
+}
+
+@keyframes fadeSlide3 {
+  0%, 66.66% { opacity: 0; }
+  66.67%, 99.99% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ========== LADO DERECHO: FORMULARIO DE LOGIN ========== */
+.login-form-section {
+  flex: 0 0 50%;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  /* Ya no necesitamos background-color aquí porque está en el body global */
-  padding: 20px;
+  padding: 5vh 8%;
+  background-color: #FFFFFF;
+  position: relative;
+  overflow-y: auto;
 }
 
-.login-card {
-  background-color: var(--color-bg-card); /* USANDO VARIABLE */
-  padding: 2.5rem;
-  border-radius: var(--border-radius-main);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+.login-content-wrapper {
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
+  animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 95vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
-.login-title {
+.login-content-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.login-content-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.login-content-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.login-content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ========== LOGO Y BRANDING ========== */
+.login-brand {
   text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-logo-container {
+  margin-bottom: 1.2rem;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* NOTA: Coloca aquí tu logo/imagen del sitio */
+  /* Para usar una imagen, descomenta y ajusta: */
+  /* background-image: url('/assets/logo.png'); */
+  /* background-size: contain; */
+  /* background-repeat: no-repeat; */
+  /* background-position: center; */
+}
+
+.logo-placeholder {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(31, 122, 140, 0.25);
+  /* NOTA: Reemplaza este placeholder con tu logo real */
+  /* Cuando agregues tu logo, puedes ocultar este div */
+}
+
+.login-site-name {
+  font-size: 2.2rem;
+  font-weight: 700;
   color: var(--color-text-main);
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
+  margin: 0.8rem 0 0.5rem 0;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.login-site-description {
+  font-size: 1rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  font-weight: 400;
+}
+
+/* ========== FORMULARIO ========== */
+.login-form {
+  width: 100%;
 }
 
 .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
   color: var(--color-text-main);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  letter-spacing: -0.2px;
 }
 
-.form-input, .form-input-password {
+.form-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid transparent;
-  border-radius: var(--border-radius-input);
-  background-color: var(--color-input-bg); /* USANDO VARIABLE */
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #f8fafc;
   color: var(--color-text-main);
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
 }
 
-.form-input-password {
-  padding-right: 45px;
-}
-
-.form-input:focus, .form-input-password:focus {
+.form-input:focus {
   outline: none;
-  border-color: var(--color-primary); /* USANDO VARIABLE */
-  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.2); 
+  border-color: var(--color-primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(31, 122, 140, 0.1);
+  transform: translateY(-1px);
 }
 
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Password wrapper */
 .password-wrapper {
   position: relative;
   width: 100%;
 }
 
+.form-input-password {
+  width: 100%;
+  padding: 14px 50px 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  color: var(--color-text-main);
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.form-input-password:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(31, 122, 140, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-input-password::placeholder {
+  color: #94a3b8;
+}
+
 .eye-btn {
   position: absolute;
-  right: 12px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-primary); /* USANDO VARIABLE */
-  font-size: 1.2rem;
+  color: #94a3b8;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
-  transition: color 0.3s;
+  padding: 4px;
+  transition: all 0.3s ease;
+  border-radius: 6px;
 }
 
 .eye-btn:hover {
-  color: var(--color-secondary); /* USANDO VARIABLE */
+  color: var(--color-primary);
+  background-color: rgba(31, 122, 140, 0.08);
 }
 
+/* ========== BOTÓN DE LOGIN ========== */
 .btn-primary {
   width: 100%;
-  padding: 14px;
-  background-color: var(--color-primary); /* USANDO VARIABLE */
-  color: #FFFFFF; /* Este lo dejamos blanco fijo */
+  padding: 16px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  color: #FFFFFF;
   border: none;
-  border-radius: var(--border-radius-input);
-  font-size: 1rem;
-  font-weight: bold;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 14px rgba(31, 122, 140, 0.3);
+  letter-spacing: 0.3px;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-secondary); /* USANDO VARIABLE */
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(31, 122, 140, 0.4);
 }
 
-.error-msg {
-  background-color: var(--color-error-bg);
-  color: var(--color-error);
-  padding: 10px;
-  border-radius: var(--border-radius-input);
-  margin-bottom: 1rem;
-  text-align: center;
-  font-size: 0.9rem;
+.btn-primary:active {
+  transform: translateY(0);
 }
 
-.register-text {
-  margin-top: 1.5rem;
-  text-align: center;
+/* ========== BOTÓN DE LOGIN (Alias para .btn-primary) ========== */
+.login-button {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 14px rgba(31, 122, 140, 0.3);
+  letter-spacing: 0.3px;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(31, 122, 140, 0.4);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ========== PARA PÁGINAS DE RECUPERACIÓN: TÍTULO ========== */
+.login-page-title {
+  font-size: 2rem;
+  font-weight: 700;
   color: var(--color-text-main);
+  margin: 0.8rem 0 0.5rem 0;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+/* ========== MENSAJE DE ERROR ========== */
+.error-msg {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  text-align: center;
   font-size: 0.9rem;
+  border-left: 4px solid #dc2626;
+  animation: shakeError 0.4s ease;
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* ========== LINK DE REGISTRO ========== */
+.register-text {
+  margin-top: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .register-link {
-  color: var(--color-primary); /* USANDO VARIABLE */
-  font-weight: bold;
+  color: var(--color-primary);
+  font-weight: 700;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.register-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.register-link:hover::after {
+  width: 100%;
 }
 
 .register-link:hover {
   color: var(--color-secondary);
+}
+
+/* ========== ENLACES DE AUTENTICACIÓN ========== */
+.auth-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.auth-link a {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.auth-link a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.auth-link a:hover::after {
+  width: 100%;
+}
+
+.auth-link a:hover {
+  color: var(--color-secondary);
+}
+
+/* ========== MENSAJES DE ERROR DE VALIDACIÓN ========== */
+.error-text {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 968px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-carousel-section {
+    flex: 0 0 35vh;
+    min-height: 35vh;
+  }
+
+  .login-form-section {
+    flex: 1;
+    padding: 4vh 6%;
+  }
+
+  .login-site-name {
+    font-size: 1.8rem;
+  }
+
+  .login-content-wrapper {
+    max-width: 100%;
+  }
+}
+/* ========== NUEVOS ESTILOS PARA PASSWORD RESET ========== */
+.forgot-password-link {
+  display: inline-block;
+  color: #1f7a8c;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.forgot-password-link:hover {
+  color: #022b3a;
   text-decoration: underline;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1f7a8c;
+  text-decoration: none;
+  margin-bottom: 2rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-link:hover {
+  color: #022b3a;
+  gap: 0.75rem;
+}
+
+.form-subtitle {
+  color: #64748b;
+  font-size: 0.9375rem;
+  margin-top: 0.5rem;
+}
+
+.error-msg-box,
+.success-msg-box {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+  animation: slideDown 0.3s ease;
+}
+
+.error-msg-box {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.success-msg-box {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.info-box {
+  background-color: #f0f9ff;
+  border-left: 4px solid #3b82f6;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.info-box p {
+  margin: 0.5rem 0;
+}
+
+.info-box p:first-child {
+  margin-top: 0;
+}
+
+.password-requirements {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.password-requirements .req-title {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.password-requirements li {
+  color: #64748b;
+  padding: 0.375rem 0;
+  transition: color 0.3s ease;
+}
+
+.password-requirements li.valid {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .toggle-password {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 1.125rem;
+  transition: color 0.3s ease;
+}
+
+.password-input-wrapper .toggle-password:hover {
+  color: #1f7a8c;
+}
+
+/* ========== ANIMACIONES ========== */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 640px) {
+  .login-carousel-section {
+    flex: 0 0 30vh;
+    min-height: 30vh;
+  }
+
+  .login-form-section {
+    padding: 3vh 5%;
+  }
+
+  .login-site-name {
+    font-size: 1.6rem;
+  }
+
+  .login-site-description {
+    font-size: 0.9rem;
+  }
+
+  .logo-placeholder {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+
+  .login-logo-container {
+    height: 60px;
+  }
 }

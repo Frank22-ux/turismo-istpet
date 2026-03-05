@@ -1,66 +1,177 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { FaMapMarkedAlt, FaHotel, FaUserTie, FaClipboardList } from 'react-icons/fa';
+import { useEffect, useState, useCallback } from 'react';
+import api from '../../../core/api';
+import {
+    FaClipboardList,
+    FaDollarSign,
+    FaUsers,
+    FaChartLine,
+    FaArrowUp,
+    FaCalendarAlt,
+    FaEllipsisV
+} from 'react-icons/fa';
+import AdminLayout from '../layouts/AdminLayout';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    
-    // Recuperar nombre del admin del localStorage para saludar
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [stats, setStats] = useState({
+        totalReservas: 0,
+        ingresoTotal: 0,
+        totalGuias: 0,
+        totalTuristas: 0
+    });
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-    };
+    const [reservasRecientes, setReservasRecientes] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    return (
-        <div className="admin-container">
-            {/* Header del Dashboard */}
-            <div className="admin-header">
-                <div>
-                    <h1 className="admin-title">Panel de Administración</h1>
-                    <span className="user-info">Hola, {user.nombre || 'Administrador'}</span>
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [statsRes, recentRes] = await Promise.all([
+                api.get('/admin/stats'),
+                api.get('/admin/recent-reservations')
+            ]);
+            setStats({
+                totalReservas: statsRes.data.totalReservas,
+                ingresoTotal: statsRes.data.ingresosTotales,
+                totalGuias: statsRes.data.totalGuias,
+                totalTuristas: statsRes.data.totalTuristas
+            });
+            setReservasRecientes(recentRes.data);
+        } catch (error) {
+            console.error("Error fetching admin data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const content = (
+        <>
+            {/* STATS CARDS */}
+            <div className="stats-grid">
+                <div className="stat-card primary-card">
+                    <div className="stat-header">
+                        <div className="stat-info">
+                            <span className="stat-label">Total Reservas</span>
+                            <h2 className="stat-value">{stats.totalReservas.toLocaleString()}</h2>
+                        </div>
+                        <div className="stat-icon primary-icon">
+                            <FaClipboardList />
+                        </div>
+                    </div>
                 </div>
-                <button onClick={handleLogout} className="btn-logout">
-                    Cerrar Sesión
-                </button>
+
+                <div className="stat-card">
+                    <div className="stat-header">
+                        <div className="stat-info">
+                            <span className="stat-label">Ingresos Totales</span>
+                            <h2 className="stat-value">${stats.ingresoTotal.toLocaleString()}</h2>
+                        </div>
+                        <div className="stat-icon success-icon">
+                            <FaDollarSign />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="stat-card">
+                    <div className="stat-header">
+                        <div className="stat-info">
+                            <span className="stat-label">Total Guías</span>
+                            <h2 className="stat-value">{stats.totalGuias}</h2>
+                        </div>
+                        <div className="stat-icon info-icon">
+                            <FaUsers />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="stat-card">
+                    <div className="stat-header">
+                        <div className="stat-info">
+                            <span className="stat-label">Total Turistas</span>
+                            <h2 className="stat-value">{stats.totalTuristas}</h2>
+                        </div>
+                        <div className="stat-icon warning-icon">
+                            <FaUsers />
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Grid de Opciones */}
-            <div className="dashboard-grid">
-                
-                {/* 1. CREAR TOURS */}
-                <Link to="/admin/crear-tour" className="dashboard-card">
-                    <FaMapMarkedAlt className="card-icon" />
-                    <h3 className="card-title">Gestionar Tours</h3>
-                    <p className="card-desc">Crear, editar o eliminar paquetes turísticos.</p>
-                </Link>
-
-                {/* 2. CREAR HOTELES */}
-                <Link to="/admin/crear-hotel" className="dashboard-card">
-                    <FaHotel className="card-icon" />
-                    <h3 className="card-title">Gestionar Hoteles</h3>
-                    <p className="card-desc">Administrar alojamientos y habitaciones.</p>
-                </Link>
-
-                {/* 3. CREAR GUÍAS */}
-                <Link to="/admin/crear-guia" className="dashboard-card">
-                    <FaUserTie className="card-icon" />
-                    <h3 className="card-title">Gestionar Guías</h3>
-                    <p className="card-desc">Registrar personal y asignar tours.</p>
-                </Link>
-
-                {/* 4. VER RESERVAS (La opción nueva) */}
-                <Link to="/admin/reservas" className="dashboard-card">
-                    <FaClipboardList className="card-icon" />
-                    <h3 className="card-title">Reservas y Pagos</h3>
-                    <p className="card-desc">Ver quién ha reservado y validar pagos.</p>
-                </Link>
-
+            {/* RECENT RESERVATIONS TABLE */}
+            <div className="table-card">
+                <div className="card-header">
+                    <h3 className="card-title">Reservas Recientes</h3>
+                    <div className="header-actions">
+                        <Link to="/admin/reservas" className="view-all-btn">
+                            Ver todas →
+                        </Link>
+                    </div>
+                </div>
+                <div className="table-responsive">
+                    <table className="modern-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Turista</th>
+                                <th>Tour</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {reservasRecientes.map((reserva) => (
+                                <tr key={reserva.id_reserva}>
+                                    <td className="font-medium">RES-{reserva.id_reserva}</td>
+                                    <td>
+                                        <div className="customer-cell">
+                                            <img
+                                                src={`https://ui-avatars.com/api/?name=${reserva.primer_nombre}+${reserva.apellido_paterno}&background=random`}
+                                                alt={reserva.primer_nombre}
+                                                className="customer-avatar"
+                                            />
+                                            <span>{reserva.primer_nombre} {reserva.apellido_paterno}</span>
+                                        </div>
+                                    </td>
+                                    <td>{reserva.tour || 'N/A'}</td>
+                                    <td>
+                                        <span className="date-cell">
+                                            <FaCalendarAlt /> {new Date(reserva.fecha_reserva).toLocaleDateString()}
+                                        </span>
+                                    </td>
+                                    <td className="font-medium">${parseFloat(reserva.total_pagar).toFixed(2)}</td>
+                                    <td>
+                                        <span className={`status-badge ${reserva.estado === 'Confirmado' ? 'badge-success' : 'badge-warning'}`}>
+                                            {reserva.estado}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button className="action-menu-btn">
+                                            <FaEllipsisV />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {reservasRecientes.length === 0 && (
+                                <tr>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No hay reservas recientes.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </>
     );
+
+    return <AdminLayout>{content}</AdminLayout>;
 };
 
 export default AdminDashboard;

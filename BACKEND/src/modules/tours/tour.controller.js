@@ -3,29 +3,52 @@ const path = require('path');
 const fs = require('fs');
 
 const TourController = {
-    
+
     // --- 1. CREAR NUEVO TOUR ---
     createTour: async (req, res) => {
         try {
             console.log("--> Intentando crear tour...");
-            
+
             // Procesar archivos (Portada y Galería)
             const { imagen_portada_ruta, galeria_rutas } = await procesarArchivos(req);
+
+            // Helper para limpiar strings vacíos a null
+            const clean = (val) => (val === undefined || val === null || val === "" || val === "null" || val === "undefined") ? null : val;
+            const cleanInt = (val) => {
+                const c = clean(val);
+                return c ? parseInt(c) : null;
+            };
+            const cleanFloat = (val) => {
+                const c = clean(val);
+                return c ? parseFloat(c) : 0;
+            };
+
+            // Helper para parsear arrays desde FormData (vienen como JSON string)
+            const parseArr = (val) => {
+                if (!val) return null;
+                try { return JSON.parse(val); } catch { return null; }
+            };
 
             const tourData = {
                 nombre: req.body.nombre,
                 ciudad_destino: req.body.ciudad_destino,
                 descripcion: req.body.descripcion || '',
-                precio: parseFloat(req.body.precio) || 0,
+                precio: cleanFloat(req.body.precio),
                 duracion: req.body.duracion,
-                fecha_inicio: req.body.fecha_inicio || null,
-                fecha_fin: req.body.fecha_fin || null,
-                latitud: parseFloat(req.body.latitud) || 0,
-                longitud: parseFloat(req.body.longitud) || 0,
-                id_guia: req.body.id_guia || null,
-                id_hotel_base: req.body.id_hotel_base || null,
+                fecha_inicio: clean(req.body.fecha_inicio),
+                fecha_fin: clean(req.body.fecha_fin),
+                latitud: cleanFloat(req.body.latitud),
+                longitud: cleanFloat(req.body.longitud),
+                id_guia_asignado: cleanInt(req.body.id_guia),
+                id_hotel_base: cleanInt(req.body.id_hotel_base),
                 imagen_portada: imagen_portada_ruta,
-                galeria: galeria_rutas 
+                galeria: galeria_rutas.length > 0 ? JSON.stringify(galeria_rutas) : null,
+                // Nuevos campos de detalle
+                dificultad: req.body.dificultad || 'Moderada',
+                maximo_personas: cleanInt(req.body.maximo_personas) || 10,
+                idiomas: parseArr(req.body.idiomas),
+                incluye: parseArr(req.body.incluye),
+                puntos_interes: parseArr(req.body.puntos_interes)
             };
 
             const newTour = await Tour.create(tourData);
@@ -34,7 +57,10 @@ const TourController = {
 
         } catch (error) {
             console.error("❌ Error en createTour:", error);
-            res.status(500).json({ message: 'Error al guardar el tour' });
+            // Log to file for deep debugging
+            const logMsg = `[${new Date().toISOString()}] Error en createTour: ${error.stack || error.message}\n`;
+            fs.appendFileSync(path.join(process.cwd(), 'errors.log'), logMsg);
+            res.status(500).json({ message: 'Error al guardar el tour', error: error.message });
         }
     },
 
@@ -73,21 +99,42 @@ const TourController = {
             // Procesar archivos nuevos (si los hay)
             const { imagen_portada_ruta, galeria_rutas } = await procesarArchivos(req);
 
+            const parseArr = (val) => {
+                if (!val) return null;
+                try { return JSON.parse(val); } catch { return null; }
+            };
+
+            // Helper para limpiar strings vacíos a null
+            const clean = (val) => (val === undefined || val === null || val === "" || val === "null" || val === "undefined") ? null : val;
+            const cleanInt = (val) => {
+                const c = clean(val);
+                return c ? parseInt(c) : null;
+            };
+            const cleanFloat = (val) => {
+                const c = clean(val);
+                return c ? parseFloat(c) : 0;
+            };
+
             const tourData = {
                 nombre: req.body.nombre,
                 ciudad_destino: req.body.ciudad_destino,
                 descripcion: req.body.descripcion || '',
-                precio: parseFloat(req.body.precio) || 0,
+                precio: cleanFloat(req.body.precio),
                 duracion: req.body.duracion,
-                fecha_inicio: req.body.fecha_inicio || null,
-                fecha_fin: req.body.fecha_fin || null,
-                latitud: parseFloat(req.body.latitud) || 0,
-                longitud: parseFloat(req.body.longitud) || 0,
-                id_guia: req.body.id_guia || null,
-                id_hotel_base: req.body.id_hotel_base || null,
-                // Si el usuario no subió foto nueva, imagen_portada_ruta será null
-                imagen_portada: imagen_portada_ruta, 
-                galeria: galeria_rutas.length > 0 ? galeria_rutas : null
+                fecha_inicio: clean(req.body.fecha_inicio),
+                fecha_fin: clean(req.body.fecha_fin),
+                latitud: cleanFloat(req.body.latitud),
+                longitud: cleanFloat(req.body.longitud),
+                id_guia_asignado: cleanInt(req.body.id_guia),
+                id_hotel_base: cleanInt(req.body.id_hotel_base),
+                imagen_portada: imagen_portada_ruta,
+                galeria: galeria_rutas.length > 0 ? JSON.stringify(galeria_rutas) : null,
+                // Nuevos campos de detalle (COALESCE en modelo preserva los existentes si no vienen)
+                dificultad: clean(req.body.dificultad),
+                maximo_personas: cleanInt(req.body.maximo_personas),
+                idiomas: parseArr(req.body.idiomas),
+                incluye: parseArr(req.body.incluye),
+                puntos_interes: parseArr(req.body.puntos_interes)
             };
 
             const updatedTour = await Tour.update(id, tourData);
@@ -105,7 +152,7 @@ const TourController = {
         try {
             const { id } = req.params;
             const deletedTour = await Tour.delete(id);
-            
+
             if (!deletedTour) {
                 return res.status(404).json({ message: 'El tour no existe' });
             }
@@ -115,6 +162,52 @@ const TourController = {
         } catch (error) {
             console.error("❌ Error en deleteTour:", error);
             res.status(500).json({ message: 'Error al eliminar el tour' });
+        }
+    },
+
+    // --- 6. OBTENER TOURS DISPONIBLES PARA GUÍAS ---
+    getAvailableTours: async (req, res) => {
+        try {
+            const tours = await Tour.findAvailable();
+            res.json(tours);
+        } catch (error) {
+            console.error("❌ Error en getAvailableTours:", error);
+            res.status(500).json({ message: 'Error al obtener tours disponibles' });
+        }
+    },
+
+    // --- 7. OBTENER MIS TOURS (COMO GUÍA) ---
+    getGuiasTours: async (req, res) => {
+        try {
+            const id_guia = req.user.id;
+            const tours = await Tour.findByGuia(id_guia);
+            res.json(tours);
+        } catch (error) {
+            console.error("❌ Error en getGuiasTours:", error);
+            res.status(500).json({ message: 'Error al obtener mis tours' });
+        }
+    },
+
+    // --- 8. ASIGNARME UN TOUR ---
+    assignGuia: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const id_guia = req.user.id;
+
+            // Verificar si el tour ya tiene guía
+            const tour = await Tour.findById(id);
+            if (!tour) {
+                return res.status(404).json({ message: 'El tour no existe' });
+            }
+            if (tour.id_guia_asignado) {
+                return res.status(400).json({ message: 'Este tour ya tiene un guía asignado' });
+            }
+
+            const updatedTour = await Tour.assignGuia(id, id_guia);
+            res.json({ message: 'Te has asignado el tour exitosamente', tour: updatedTour });
+        } catch (error) {
+            console.error("❌ Error en assignGuia:", error);
+            res.status(500).json({ message: 'Error al asignarte el tour' });
         }
     }
 };

@@ -17,7 +17,8 @@ const verifyToken = (req, res, next) => {
     try {
         // 2. Verificar el token usando tu clave secreta
         // Asegúrate que 'JWT_SECRET' sea la misma que usaste en el login
-        const secret = process.env.JWT_SECRET || 'tu_clave_secreta_aqui';
+        // Debe coincidir con el default usado en AuthController (auth.controller.js)
+        const secret = process.env.JWT_SECRET || 'secreto_temporal_desarrollo';
         const decoded = jwt.verify(token, secret);
         
         // 3. Inyectar los datos del usuario en la petición (req)
@@ -32,4 +33,15 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-module.exports = { verifyToken };
+// Middleware para exigir roles específicos (IDs numéricos: 1=Admin, 2=Guía, 3=Turista)
+const requireRoles = (allowedRoles = []) => {
+    return (req, res, next) => {
+        const rol = req.user?.rol ?? req.user?.id_rol;
+        if (!rol || !allowedRoles.includes(parseInt(rol))) {
+            return res.status(403).json({ message: "Acceso denegado. Rol insuficiente." });
+        }
+        next();
+    };
+};
+
+module.exports = { verifyToken, requireRoles };

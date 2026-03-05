@@ -1,15 +1,29 @@
 /* frontend/src/core/styles/variables.css */
 :root {
-  /* PALETA DE COLORES */
-  --color-primary: #022b3a;       /* Botones primarios */
-  --color-secondary: #1F7A8C;     /* Hover / Sombreado */
-  --color-bg-card: #E1E5F2;       /* Fondo menú / Tarjetas */
-  --color-bg-general: #FFFFFF;    /* Fondo general */
-  --color-input-bg: #BFDBF7;      /* Inputs / Objetos menú */
-  --color-text-main: #000000;     /* Texto negro */
+  /* PALETA DE COLORES COOLORS */
+  --color-navy: #022B3A;
+  /* Sidebar / Navbars */
+  --color-teal: #1F7A8C;
+  /* Hovers / Selecciones */
+  --color-sky: #BFDBF7;
+  /* Combinación / Subcolor */
+  --color-lavender: #E1E5F2;
+  /* Fondos inputs / Background neutro */
+  --color-white: #FFFFFF;
+  /* Fondos formularios / Hojas */
+
+  /* VARIABLES DE USO SEMÁNTICO */
+  --color-primary: var(--color-navy);
+  --color-secondary: var(--color-teal);
+  --color-bg-general: var(--color-lavender);
+  --color-bg-card: var(--color-white);
+  --color-bg-input: var(--color-lavender);
+  --color-text-main: var(--color-navy);
+  --color-text-muted: #4a6070;
+  --color-border: rgba(2, 43, 58, 0.1);
   --color-error: #cc0000;
   --color-error-bg: #ffcccc;
-  
+
   /* FUENTES Y BORDES */
   --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   --border-radius-main: 12px;

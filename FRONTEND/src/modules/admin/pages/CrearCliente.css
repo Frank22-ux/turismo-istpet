@@ -1,0 +1,202 @@
+.crear-cliente-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: var(--color-lavender);
+    min-height: 100vh;
+}
+
+.crear-cliente-header {
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    color: var(--color-teal);
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: rgba(31, 122, 140, 0.1);
+}
+
+.btn-volver:hover {
+    background: rgba(31, 122, 140, 0.2);
+    transform: translateX(-5px);
+}
+
+.crear-cliente-title {
+    font-size: 2.5rem;
+    color: var(--color-navy);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.crear-cliente-title .emoji {
+    font-size: 2.8rem;
+}
+
+.crear-cliente-subtitle {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.crear-cliente-form {
+    background: var(--color-white);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(2, 43, 58, 0.08);
+}
+
+.form-section {
+    margin-bottom: 45px;
+    padding-bottom: 35px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 1.3rem;
+    color: var(--color-navy);
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid var(--color-teal);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--color-navy);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 12px 15px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-navy);
+    transition: all 0.3s ease;
+    background-color: var(--color-lavender);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--color-teal);
+    background-color: var(--color-white);
+    box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 45px;
+    padding-top: 30px;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--color-navy);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-teal);
+    transform: translateY(-3px);
+}
+
+.btn-secondary {
+    background: var(--color-lavender);
+    color: var(--color-navy);
+    border: 2px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-white);
+    border-color: var(--color-teal);
+}
+
+.alert {
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+}
+
+.alert-success {
+    background: #d4f4dd;
+    color: #1f7a8c;
+    border-left: 4px solid #1f7a8c;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

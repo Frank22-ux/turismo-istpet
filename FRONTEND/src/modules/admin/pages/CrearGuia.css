@@ -1,0 +1,734 @@
+/* ============================================
+   CREAR GUÍA - MAIN CONTAINER
+   ============================================ */
+
+.crear-guia-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: var(--color-lavender);
+    min-height: 100vh;
+}
+
+/* HEADER */
+.crear-guia-header {
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #e1e5f2;
+    animation: slideDown 0.6s ease-out;
+}
+
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    color: #1f7a8c;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: rgba(31, 122, 140, 0.1);
+}
+
+.btn-volver:hover {
+    background: rgba(31, 122, 140, 0.2);
+    transform: translateX(-5px);
+}
+
+.crear-guia-title {
+    font-size: 2.5rem;
+    color: #022b3a;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.crear-guia-title .emoji {
+    font-size: 2.8rem;
+}
+
+.crear-guia-subtitle {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ALERTS */
+.alert {
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    animation: slideDown 0.5s ease-out;
+}
+
+.alert-success {
+    background: #d4f4dd;
+    color: #1f7a8c;
+    border-left: 4px solid #1f7a8c;
+}
+
+.alert-success svg {
+    color: #1f7a8c;
+    font-size: 1.3rem;
+}
+
+.alert-error {
+    background: #fdd0d0;
+    color: #c8102e;
+    border-left: 4px solid #c8102e;
+}
+
+.alert-error svg {
+    color: #c8102e;
+    font-size: 1.3rem;
+}
+
+/* ============================================
+   FORMULARIO
+   ============================================ */
+
+.crear-guia-form {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(2, 43, 58, 0.08);
+    animation: slideUp 0.6s ease-out;
+}
+
+/* SECCIONES */
+.form-section {
+    margin-bottom: 45px;
+    padding-bottom: 35px;
+    border-bottom: 1px solid #e1e5f2;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 1.3rem;
+    color: #022b3a;
+    margin-bottom: 10px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #1f7a8c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-desc {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    margin-top: 0;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-row-full {
+    display: block;
+    margin-bottom: 25px;
+}
+
+.form-group-full {
+    display: flex;
+    flex-direction: column;
+}
+
+.label-especialidades,
+.label-especiales {
+    font-weight: 600;
+    color: #022b3a;
+    margin-bottom: 15px;
+    display: block;
+    font-size: 0.95rem;
+}
+
+/* FORM GROUPS */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #022b3a;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.form-group label svg {
+    color: #1f7a8c;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 12px 15px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-navy);
+    transition: all 0.3s ease;
+    background-color: var(--color-lavender);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #1f7a8c;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
+}
+
+.form-group input.error,
+.form-group textarea.error,
+.form-group select.error {
+    border-color: #c8102e;
+    background-color: #fff5f5;
+}
+
+.error-msg {
+    color: #c8102e;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+
+.error-msg::before {
+    content: '⚠️';
+}
+
+/* ============================================
+   ESPECIALIDADES GRID CHECKLIST
+   ============================================ */
+
+.especialidades-grid,
+.idiomas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.especialidades-grid .checkbox-wrapper,
+.idiomas-grid .checkbox-wrapper {
+    margin: 0;
+    padding: 10px 12px;
+}
+
+/* ============================================
+   DOCUMENTS SECTION (FOTO + CV LADO A LADO)
+   ============================================ */
+
+.documents-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.document-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.document-label {
+    font-weight: 700;
+    color: #022b3a;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* FOTO UPLOAD COMPACTO */
+.foto-upload-section {
+    background: linear-gradient(135deg, #fef4e4 0%, #fef1d9 100%);
+    border: 2px dashed #d97706;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.foto-upload-section:hover {
+    border-color: #ef6820;
+    background: linear-gradient(135deg, #fef1d9 0%, #feebcc 100%);
+}
+
+.foto-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.foto-upload-label:hover {
+    background: rgba(217, 119, 6, 0.05);
+}
+
+.upload-icon-small {
+    font-size: 2rem;
+    color: #d97706;
+    transition: all 0.3s ease;
+}
+
+.foto-upload-label:hover .upload-icon-small {
+    transform: scale(1.1) translateY(-3px);
+    color: #ef6820;
+}
+
+.upload-text-small {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #022b3a;
+}
+
+.upload-subtitle-small {
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.foto-input {
+    display: none;
+}
+
+/* FOTO PREVIEW COMPACTO */
+.foto-preview-container-small {
+    position: relative;
+    width: 100%;
+    max-width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.foto-preview-small {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.foto-buttons {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.btn-change-foto-small,
+.btn-remove-foto-small {
+    flex: 1;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-change-foto-small {
+    background: rgba(31, 122, 140, 0.9);
+    color: white;
+}
+
+.btn-change-foto-small:hover {
+    background: rgba(31, 122, 140, 1);
+}
+
+.btn-remove-foto-small {
+    background: rgba(200, 16, 46, 0.9);
+    color: white;
+}
+
+.btn-remove-foto-small:hover {
+    background: rgba(200, 16, 46, 1);
+}
+
+/* CV UPLOAD COMPACTO */
+.cv-upload-section-compact {
+    background: linear-gradient(135deg, #f0f8ff 0%, #e1f5ff 100%);
+    border: 2px dashed #1f7a8c;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.cv-upload-section-compact:hover {
+    border-color: #022b3a;
+    background: linear-gradient(135deg, #e8f4ff 0%, #d4f0ff 100%);
+}
+
+.cv-upload-label-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.cv-upload-label-compact:hover {
+    background: rgba(31, 122, 140, 0.05);
+}
+
+.cv-upload-label-compact:hover .upload-icon-small {
+    transform: scale(1.1) translateY(-3px);
+    color: #022b3a;
+}
+
+.cv-input {
+    display: none;
+}
+
+/* CV FILE INFO COMPACTO */
+.cv-file-info-compact {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid #1f7a8c;
+    animation: slideUp 0.3s ease-out;
+}
+
+.cv-icon-small {
+    font-size: 1.5rem;
+    color: #c8102e;
+    min-width: 35px;
+    text-align: center;
+}
+
+.cv-name-small {
+    font-weight: 700;
+    color: #022b3a;
+    margin: 0;
+    font-size: 0.8rem;
+    text-align: left;
+    word-break: break-word;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--color-lavender);
+}
+
+.checkbox-wrapper:hover {
+    border-color: #1f7a8c;
+    background: rgba(31, 122, 140, 0.05);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked+.checkbox-label {
+    color: #1f7a8c;
+    font-weight: 700;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked {
+    border-color: #1f7a8c;
+}
+
+.checkbox-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    border: 2px solid #d4dce8;
+    border-radius: 4px;
+    accent-color: #1f7a8c;
+}
+
+.checkbox-label {
+    font-size: 0.95rem;
+    color: #022b3a;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ============================================
+   BOTONES DE ACCIÓN
+   ============================================ */
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 45px;
+    padding-top: 30px;
+    border-top: 1px solid #e1e5f2;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #1f7a8c 0%, #155e7a 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(31, 122, 140, 0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #e1e5f2;
+    color: #022b3a;
+    border: 2px solid #d4dce8;
+}
+
+.btn-secondary:hover {
+    background: #d4dce8;
+    border-color: #1f7a8c;
+    color: #1f7a8c;
+    transform: translateY(-3px);
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .crear-guia-container {
+        padding: 20px 15px;
+    }
+
+    .crear-guia-form {
+        padding: 25px 20px;
+    }
+
+    .crear-guia-title {
+        font-size: 1.8rem;
+    }
+
+    .crear-guia-title .emoji {
+        font-size: 2rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .idiomas-grid,
+    .especialidades-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .documents-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .cv-upload-section,
+    .foto-upload-section {
+        padding: 30px 20px;
+    }
+
+    .cv-file-info {
+        flex-direction: column;
+        text-align: center;
+        border-left: none;
+        border-top: 4px solid #1f7a8c;
+    }
+
+    .cv-details {
+        text-align: center;
+    }
+
+    .foto-preview-container {
+        width: 150px;
+        height: 150px;
+    }
+
+    .btn-change-foto {
+        bottom: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .crear-guia-header {
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+
+    .crear-guia-title {
+        font-size: 1.5rem;
+        gap: 10px;
+    }
+
+    .crear-guia-title .emoji {
+        font-size: 1.5rem;
+    }
+
+    .btn-volver {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px;
+        /* Prevent zoom on iOS */
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+    }
+
+    .alert {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .idiomas-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .especialidades-grid,
+    .idiomas-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .checkbox-wrapper {
+        justify-content: center;
+    }
+
+    .documents-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .foto-preview-container-small {
+        max-width: 120px;
+        height: 120px;
+    }
+}
+
+/* ============================================
+   ESTILOS OSCUROS (dark mode)
+   ============================================ */
+
+/* Dark mode media query disabled to maintain requested light professional theme */
+/* @media (prefers-color-scheme: dark) { ... } */

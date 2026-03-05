@@ -5,7 +5,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "seed": "node src/seeders/index.js",
+    "migrate": "node script_base_de_datos.sql",
+    "setup": "npm run seed"
   },
   "keywords": [],
   "author": "",
@@ -24,5 +27,10 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "uploads/*"
+    ]
   }
 }

@@ -58,7 +58,7 @@ CREATE TABLE categorias (
     descripcion TEXT
 );
 
--- 6. TABLA: TOURS (Actualizada con Fechas y Galería Integrada)
+-- 6. TABLA: TOURS (Actualizada con Fechas, Galería Integrada y Detalles)
 CREATE TABLE tours (
     id_tour SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -79,10 +79,17 @@ CREATE TABLE tours (
     imagen_portada VARCHAR(255),
     galeria TEXT[], -- Array para guardar rutas de múltiples imágenes
     
+    -- Detalles del Tour
+    dificultad VARCHAR(50) DEFAULT 'Moderada',
+    maximo_personas INTEGER DEFAULT 10,
+    idiomas TEXT[],          -- Ej: {'Español','Inglés'}
+    incluye TEXT[],          -- Ej: {'Guía bilingüe','Transporte','Almuerzo'}
+    puntos_interes TEXT[],   -- Ej: {'Mirador principal','Laguna azul'}
+    
     -- Relaciones
     id_categoria INTEGER, 
     id_hotel_base INTEGER,
-    id_guia INTEGER,       
+    id_guia_asignado INTEGER,       
     
     estado VARCHAR(20) DEFAULT 'Activo',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

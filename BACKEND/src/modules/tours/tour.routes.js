@@ -1,12 +1,17 @@
-const router = require('express').Router(); 
-const TourController = require('./tour.controller'); 
+const router = require('express').Router();
+const TourController = require('./tour.controller');
+const { verifyToken } = require('../../middleware/auth.middleware');
 
-router.post('/', TourController.createTour); 
-router.get('/', TourController.getTours); 
+// Rutas protegidas (requieren token)
+// Rutas para Guías
+router.get('/available', verifyToken, TourController.getAvailableTours);
+router.get('/mis-tours', verifyToken, TourController.getGuiasTours);
+router.post('/:id/assign', verifyToken, TourController.assignGuia);
 
-// --- NUEVAS RUTAS ---
-router.get('/:id', TourController.getTourById);    // Obtener uno para el formulario
-router.put('/:id', TourController.updateTour);     // Guardar cambios
-router.delete('/:id', TourController.deleteTour);  // Eliminar
+router.post('/', verifyToken, TourController.createTour);
+router.get('/', verifyToken, TourController.getTours);
+router.get('/:id', verifyToken, TourController.getTourById);
+router.put('/:id', verifyToken, TourController.updateTour);
+router.delete('/:id', verifyToken, TourController.deleteTour);
 
 module.exports = router;

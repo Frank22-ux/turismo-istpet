@@ -1,148 +1,238 @@
-/* src/modules/hoteles/pages/GestionHoteles.css */
+/* Gestión Hoteles - Estilos Modernos */
 
-.hoteles-container {
+.hoteles-modern-wrapper {
     padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    background-color: var(--color-lavender);
     min-height: 100vh;
 }
 
-/* --- Cabecera --- */
-.hoteles-header {
+.hoteles-header-section {
+    margin-bottom: 2rem;
+}
+
+.header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.hoteles-title {
-    color: var(--color-primary);
-    font-size: 1.8rem;
-    margin: 0;
-}
-
-.btn-create {
-    background-color: var(--color-primary);
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--border-radius-input);
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.3s;
-}
-
-.btn-create:hover {
-    background-color: var(--color-secondary);
-}
-
-/* --- Buscador --- */
-.search-bar {
     margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 0.9375rem;
+    color: #64748b;
+}
+
+.btn-create-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #022b3a 0%, #1f7a8c 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-create-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.quick-stat-card {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #022b3a;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.filters-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-box-modern {
+    flex: 1;
+    min-width: 300px;
+    position: relative;
     display: flex;
     align-items: center;
-    background-color: var(--color-bg-card);
-    padding: 10px 15px;
-    border-radius: var(--border-radius-input);
-    max-width: 400px;
 }
 
-.search-input {
-    border: none;
-    background: transparent;
+.search-box-modern svg {
+    position: absolute;
+    left: 1rem;
+    color: #94a3b8;
+}
+
+.search-box-modern input {
     width: 100%;
-    margin-left: 10px;
-    font-size: 1rem;
-    color: var(--color-text-main);
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    background: white;
+}
+
+.search-box-modern input:focus {
     outline: none;
+    border-color: #1f7a8c;
+    box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
 }
 
-/* --- Tabla --- */
-.table-wrapper {
-    overflow-x: auto;
-    background-color: white;
-    border-radius: var(--border-radius-main);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+.table-card-modern {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
-.hoteles-table {
+.modern-table-hoteles {
     width: 100%;
     border-collapse: collapse;
-    min-width: 600px;
 }
 
-.hoteles-table th {
-    background-color: var(--color-bg-card);
-    color: var(--color-primary);
+.modern-table-hoteles thead {
+    background: var(--color-lavender);
+}
+
+.modern-table-hoteles th {
+    padding: 1rem;
     text-align: left;
-    padding: 15px;
-    font-weight: bold;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e2e8f0;
 }
 
-.hoteles-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    color: var(--color-text-main);
+.modern-table-hoteles td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9375rem;
 }
 
-.hoteles-table tr:hover {
-    background-color: #f9f9f9;
+.modern-table-hoteles tbody tr {
+    transition: background 0.15s ease;
 }
 
-/* --- Badges (Disponibilidad) --- */
+.modern-table-hoteles tbody tr:hover {
+    background: #f8fafc;
+}
+
+.hotel-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.hotel-cell img, .hotel-cell .icon-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 1.2rem;
+}
+
+.hotel-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.hotel-id {
+    font-size: 0.8125rem;
+    color: #94a3b8;
+}
+
 .status-badge {
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: bold;
+    padding: 0.25rem 0.625rem;
+    border-radius: 20rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
 }
 
 .status-available {
-    background-color: #d4edda;
-    color: #155724; /* Verde */
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
 }
 
 .status-full {
-    background-color: #f8d7da;
-    color: #721c24; /* Rojo */
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
 }
 
-/* --- Acciones --- */
-.actions-cell {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-action {
+.btn-icon {
+    padding: 0.5rem;
+    background: none;
     border: none;
-    background: transparent;
+    border-radius: 0.375rem;
     cursor: pointer;
-    font-size: 1.1rem;
-    padding: 5px;
-    transition: transform 0.2s;
+    transition: all 0.15s ease;
+    color: #64748b;
 }
 
-.btn-action:hover {
-    transform: scale(1.1);
+.btn-icon:hover {
+    background: #f1f5f9;
 }
 
-.btn-edit { color: #f0ad4e; }
-.btn-delete { color: var(--color-error); }
-
-.back-link {
-    display: inline-block;
-    margin-top: 2rem;
-    color: var(--color-primary);
-    font-weight: bold;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
+.btn-icon.edit:hover {
+    color: #3b82f6;
 }
-.back-link:hover {
-    text-decoration: underline;
+
+.btn-icon.delete:hover {
+    color: #ef4444;
+}
+
+@media (max-width: 768px) {
+    .hoteles-modern-wrapper {
+        padding: 1rem;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .search-box-modern {
+        min-width: 100%;
+    }
 }
