@@ -49,6 +49,21 @@ const HotelController = {
             };
 
             const newHotel = await Hotel.create(hotelData);
+            
+            // Procesar habitaciones si vienen en la petición
+            if (req.body.habitaciones) {
+                let habitaciones = [];
+                try {
+                    habitaciones = typeof req.body.habitaciones === 'string' 
+                        ? JSON.parse(req.body.habitaciones) 
+                        : req.body.habitaciones;
+                    
+                    await Hotel.setHabitaciones(newHotel.id_hotel, habitaciones);
+                } catch (e) {
+                    console.error("⚠️ Error al procesar habitaciones:", e);
+                }
+            }
+
             res.status(201).json({ message: 'Hotel creado exitosamente', hotel: newHotel });
 
         } catch (error) {
@@ -137,6 +152,21 @@ const HotelController = {
             };
 
             const updatedHotel = await Hotel.update(id, hotelData);
+
+            // Procesar habitaciones si vienen en la petición
+            if (req.body.habitaciones) {
+                let habitaciones = [];
+                try {
+                    habitaciones = typeof req.body.habitaciones === 'string' 
+                        ? JSON.parse(req.body.habitaciones) 
+                        : req.body.habitaciones;
+                    
+                    await Hotel.setHabitaciones(id, habitaciones);
+                } catch (e) {
+                    console.error("⚠️ Error al procesar habitaciones:", e);
+                }
+            }
+
             res.json({ message: 'Hotel actualizado exitosamente', hotel: updatedHotel });
 
         } catch (error) {

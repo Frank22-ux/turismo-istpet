@@ -1,228 +1,184 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FaCog,
   FaSave,
   FaUndo,
   FaToggleOn,
   FaToggleOff,
-  FaLock,
-  FaBell,
-  FaPalette,
-  FaDatabase,
   FaShieldAlt,
-  FaEnvelope,
+  FaDatabase,
+  FaDownload,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaGlobe,
+  FaUsers,
+  FaSpinner,
   FaKey
 } from 'react-icons/fa';
 import AdminLayout from '../layouts/AdminLayout';
+import api from '../../../core/api';
 import './Configuracion.css';
 
+const DEFAULTS = {
+  nombre_plataforma: 'ECORUT Travels',
+  descripcion: 'Plataforma de reserva de tours y experiencias en Ecuador',
+  telefono_contacto: '+593 2 1234567',
+  idioma: 'es',
+  permitir_registro: true,
+  modo_mantenimiento: false,
+  session_timeout: 30,
+  max_login_attempts: 5,
+};
+
 const Configuracion = () => {
-  const [settings, setSettings] = useState({
-    // General Settings
-    nombre_plataforma: 'ECURUT Travel',
-    descripcion: 'Plataforma de reserva de tours y experiencias en Ecuador',
-    email_contacto: 'info@ecurutravel.com',
-    telefono_contacto: '+593 2 1234567',
-
-    // Notificaciones
-    notificaciones_email: true,
-    notificaciones_sms: true,
-    notificaciones_push: true,
-
-    // Seguridad
-    two_factor: false,
-    session_timeout: 30,
-    max_login_attempts: 5,
-
-    // Apariencia
-    tema: 'light',
-    idioma: 'es',
-
-    // Características
-    permitir_registro: true,
-    validacion_email: true,
-    modo_mantenimiento: false,
-
-    // Base de datos
-    backup_automatico: true,
-    frecuencia_backup: 'daily',
-
-    // Correo
-    smtp_host: 'smtp.gmail.com',
-    smtp_port: 587,
-    smtp_usuario: 'tu_email@gmail.com'
-  });
-
+  const [settings, setSettings] = useState(DEFAULTS);
+  const [original, setOriginal] = useState(DEFAULTS);
   const [cambios, setCambios] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState('general');
 
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', msg }
+
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Load config from backend
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoadingConfig(true);
+        const { data } = await api.get('/admin/config');
+        const merged = { ...DEFAULTS, ...data };
+        setSettings(merged);
+        setOriginal(merged);
+      } catch (e) {
+        console.error('Error cargando configuración:', e);
+        // Fall back to defaults silently
+      } finally {
+        setLoadingConfig(false);
+      }
+    };
+    load();
+  }, []);
+
   const handleChange = (campo, valor) => {
-    setSettings({
-      ...settings,
-      [campo]: valor
-    });
+    setSettings(prev => ({ ...prev, [campo]: valor }));
     setCambios(true);
   };
 
-  const handleGuardar = () => {
-    console.log('Guardando configuración:', settings);
-    alert('✅ Configuración guardada correctamente');
-    setCambios(false);
+  const handleGuardar = async () => {
+    setSavingConfig(true);
+    try {
+      await api.post('/admin/config', settings);
+      setOriginal(settings);
+      setCambios(false);
+      setToast({ type: 'success', msg: 'Configuración guardada correctamente' });
+    } catch (e) {
+      setToast({ type: 'error', msg: e.response?.data?.message || 'Error al guardar la configuración' });
+    } finally {
+      setSavingConfig(false);
+    }
   };
 
   const handleCancelar = () => {
-    window.location.reload();
+    setSettings(original);
+    setCambios(false);
   };
 
+  const handleBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/admin/backup`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Error al conectar con el servidor');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const fecha = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `backup-ecorut-${fecha}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setToast({ type: 'success', msg: 'Backup descargado correctamente' });
+    } catch (e) {
+      setToast({ type: 'error', msg: 'No se pudo generar el backup. Intenta nuevamente.' });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  // ─── Toggle component ─────────────────────────────────────────────────────
+  const Toggle = ({ value, onChange }) => (
+    <button
+      type="button"
+      className={`toggle-switch ${value ? 'on' : 'off'}`}
+      onClick={() => onChange(!value)}
+      aria-checked={value}
+      role="switch"
+    >
+      <span className="toggle-thumb" />
+    </button>
+  );
+
+  // ─── Sections ─────────────────────────────────────────────────────────────
   const renderSeccion = () => {
     switch (seccionActiva) {
       case 'general':
         return (
           <div className="config-section">
-            <h3>⚙️ Configuración General</h3>
-            <div className="config-row">
-              <div className="config-group">
-                <label>Nombre de la Plataforma</label>
-                <input
-                  type="text"
-                  value={settings.nombre_plataforma}
-                  onChange={(e) => handleChange('nombre_plataforma', e.target.value)}
-                  className="config-input"
-                />
-              </div>
-              <div className="config-group">
-                <label>Email de Contacto</label>
-                <input
-                  type="email"
-                  value={settings.email_contacto}
-                  onChange={(e) => handleChange('email_contacto', e.target.value)}
-                  className="config-input"
-                />
+            <div className="section-header">
+              <FaGlobe />
+              <div>
+                <h3>Configuración General</h3>
+                <p>Datos básicos de la plataforma que se muestran a los usuarios.</p>
               </div>
             </div>
-            <div className="config-group">
-              <label>Teléfono de Contacto</label>
+
+            <div className="config-field">
+              <label>Nombre de la Plataforma</label>
               <input
-                type="tel"
-                value={settings.telefono_contacto}
-                onChange={(e) => handleChange('telefono_contacto', e.target.value)}
+                type="text"
+                value={settings.nombre_plataforma}
+                onChange={(e) => handleChange('nombre_plataforma', e.target.value)}
                 className="config-input"
-                style={{ maxWidth: '300px' }}
+                placeholder="Ej: ECORUT Travels"
               />
             </div>
-            <div className="config-group">
+
+            <div className="config-field">
               <label>Descripción</label>
               <textarea
                 value={settings.descripcion}
                 onChange={(e) => handleChange('descripcion', e.target.value)}
                 className="config-input"
-                rows="4"
+                rows="3"
+                placeholder="Breve descripción de la plataforma…"
               />
             </div>
-          </div>
-        );
 
-      case 'notificaciones':
-        return (
-          <div className="config-section">
-            <h3>🔔 Configuración de Notificaciones</h3>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Notificaciones por Email</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('notificaciones_email', !settings.notificaciones_email)}
-                >
-                  {settings.notificaciones_email ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
-            </div>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Notificaciones por SMS</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('notificaciones_sms', !settings.notificaciones_sms)}
-                >
-                  {settings.notificaciones_sms ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
-            </div>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Notificaciones Push</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('notificaciones_push', !settings.notificaciones_push)}
-                >
-                  {settings.notificaciones_push ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
-            </div>
-          </div>
-        );
-
-      case 'seguridad':
-        return (
-          <div className="config-section">
-            <h3>🔒 Configuración de Seguridad</h3>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Autenticación de Dos Factores</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('two_factor', !settings.two_factor)}
-                >
-                  {settings.two_factor ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
-            </div>
-            <div className="config-row">
-              <div className="config-group">
-                <label>Tiempo de Sesión (minutos)</label>
+            <div className="config-row-2">
+              <div className="config-field">
+                <label>Teléfono de Contacto</label>
                 <input
-                  type="number"
-                  value={settings.session_timeout}
-                  onChange={(e) => handleChange('session_timeout', parseInt(e.target.value))}
+                  type="tel"
+                  value={settings.telefono_contacto}
+                  onChange={(e) => handleChange('telefono_contacto', e.target.value)}
                   className="config-input"
-                  min="5"
-                  max="480"
+                  placeholder="+593 2 1234567"
                 />
               </div>
-              <div className="config-group">
-                <label>Máximo de Intentos de Login</label>
-                <input
-                  type="number"
-                  value={settings.max_login_attempts}
-                  onChange={(e) => handleChange('max_login_attempts', parseInt(e.target.value))}
-                  className="config-input"
-                  min="1"
-                  max="10"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'apariencia':
-        return (
-          <div className="config-section">
-            <h3>🎨 Apariencia</h3>
-            <div className="config-row">
-              <div className="config-group">
-                <label>Tema</label>
-                <select
-                  value={settings.tema}
-                  onChange={(e) => handleChange('tema', e.target.value)}
-                  className="config-input"
-                >
-                  <option value="light">Claro</option>
-                  <option value="dark">Oscuro</option>
-                  <option value="auto">Automático</option>
-                </select>
-              </div>
-              <div className="config-group">
-                <label>Idioma</label>
+              <div className="config-field">
+                <label>Idioma por defecto</label>
                 <select
                   value={settings.idioma}
                   onChange={(e) => handleChange('idioma', e.target.value)}
@@ -237,42 +193,73 @@ const Configuracion = () => {
           </div>
         );
 
-      case 'caracteristicas':
+      case 'seguridad':
         return (
           <div className="config-section">
-            <h3>✨ Características</h3>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Permitir Registro de Nuevos Usuarios</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('permitir_registro', !settings.permitir_registro)}
-                >
-                  {settings.permitir_registro ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
+            <div className="section-header">
+              <FaShieldAlt />
+              <div>
+                <h3>Seguridad</h3>
+                <p>Controla cómo se gestionan las sesiones y los accesos al sistema.</p>
+              </div>
             </div>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Validación de Email Requerida</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('validacion_email', !settings.validacion_email)}
-                >
-                  {settings.validacion_email ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
+
+            <div className="config-row-2">
+              <div className="config-field">
+                <label>Tiempo de sesión (minutos)</label>
+                <input
+                  type="number"
+                  value={settings.session_timeout}
+                  onChange={(e) => handleChange('session_timeout', parseInt(e.target.value, 10))}
+                  className="config-input"
+                  min="5"
+                  max="480"
+                />
+                <small>Tiempo máximo de inactividad antes de cerrar la sesión automáticamente.</small>
+              </div>
+              <div className="config-field">
+                <label>Máximo de intentos de login</label>
+                <input
+                  type="number"
+                  value={settings.max_login_attempts}
+                  onChange={(e) => handleChange('max_login_attempts', parseInt(e.target.value, 10))}
+                  className="config-input"
+                  min="1"
+                  max="10"
+                />
+                <small>La cuenta se bloqueará temporalmente después de este número de intentos fallidos.</small>
+              </div>
             </div>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Modo de Mantenimiento</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('modo_mantenimiento', !settings.modo_mantenimiento)}
-                >
-                  {settings.modo_mantenimiento ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
+          </div>
+        );
+
+      case 'plataforma':
+        return (
+          <div className="config-section">
+            <div className="section-header">
+              <FaUsers />
+              <div>
+                <h3>Funciones de la Plataforma</h3>
+                <p>Activa o desactiva funciones clave según el estado del sistema.</p>
+              </div>
+            </div>
+
+            <div className="toggle-list">
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <span className="toggle-title">Permitir registro de nuevos usuarios</span>
+                  <span className="toggle-desc">Si está desactivado, solo el admin puede crear cuentas.</span>
+                </div>
+                <Toggle value={settings.permitir_registro} onChange={(v) => handleChange('permitir_registro', v)} />
+              </div>
+
+              <div className="toggle-row danger-toggle">
+                <div className="toggle-info">
+                  <span className="toggle-title">Modo Mantenimiento</span>
+                  <span className="toggle-desc">⚠️ Los usuarios no podrán acceder a la plataforma mientras esté activo.</span>
+                </div>
+                <Toggle value={settings.modo_mantenimiento} onChange={(v) => handleChange('modo_mantenimiento', v)} />
+              </div>
             </div>
           </div>
         );
@@ -280,75 +267,41 @@ const Configuracion = () => {
       case 'basedatos':
         return (
           <div className="config-section">
-            <h3>💾 Base de Datos</h3>
-            <div className="config-group">
-              <label>
-                <span className="toggle-label">Backup Automático</span>
-                <button
-                  className="toggle-btn"
-                  onClick={() => handleChange('backup_automatico', !settings.backup_automatico)}
-                >
-                  {settings.backup_automatico ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </label>
+            <div className="section-header">
+              <FaDatabase />
+              <div>
+                <h3>Base de Datos y Backup</h3>
+                <p>Descarga un respaldo completo de los datos del sistema en formato JSON.</p>
+              </div>
             </div>
-            <div className="config-group">
-              <label>Frecuencia de Backup</label>
-              <select
-                value={settings.frecuencia_backup}
-                onChange={(e) => handleChange('frecuencia_backup', e.target.value)}
-                className="config-input"
-              >
-                <option value="daily">Diariamente</option>
-                <option value="weekly">Semanalmente</option>
-                <option value="monthly">Mensualmente</option>
-              </select>
-            </div>
-            <div className="config-group">
-              <button className="btn-secondary" style={{ marginTop: '20px' }}>
-                <FaDatabase /> Hacer Backup Ahora
-              </button>
-            </div>
-          </div>
-        );
 
-      case 'correo':
-        return (
-          <div className="config-section">
-            <h3>📧 Configuración de Correo</h3>
-            <div className="config-row-3">
-              <div className="config-group">
-                <label>Host SMTP</label>
-                <input
-                  type="text"
-                  value={settings.smtp_host}
-                  onChange={(e) => handleChange('smtp_host', e.target.value)}
-                  className="config-input"
-                />
+            <div className="backup-card">
+              <div className="backup-icon">
+                <FaDatabase />
               </div>
-              <div className="config-group">
-                <label>Puerto SMTP</label>
-                <input
-                  type="number"
-                  value={settings.smtp_port}
-                  onChange={(e) => handleChange('smtp_port', parseInt(e.target.value))}
-                  className="config-input"
-                />
+              <div className="backup-info">
+                <h4>Respaldo de datos</h4>
+                <p>El archivo incluirá: <strong>usuarios, tours, hoteles, reservas, guías</strong> y tipos de habitación.</p>
+                <p className="backup-date">Último backup: hoy a las {new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-              <div className="config-group">
-                <label>Usuario SMTP</label>
-                <input
-                  type="email"
-                  value={settings.smtp_usuario}
-                  onChange={(e) => handleChange('smtp_usuario', e.target.value)}
-                  className="config-input"
-                />
-              </div>
-            </div>
-            <div className="config-group">
-              <button className="btn-secondary" style={{ marginTop: '20px' }}>
-                <FaEnvelope /> Probar Conexión
+              <button
+                className="btn-backup"
+                onClick={handleBackup}
+                disabled={backupLoading}
+              >
+                {backupLoading ? (
+                  <><FaSpinner className="spin-icon" /> Generando...</>
+                ) : (
+                  <><FaDownload /> Descargar Backup</>
+                )}
               </button>
+            </div>
+
+            <div className="backup-note">
+              <FaKey />
+              <span>
+                El backup contiene datos sensibles. Guárdalo en un lugar seguro y no lo compartas.
+              </span>
             </div>
           </div>
         );
@@ -358,83 +311,86 @@ const Configuracion = () => {
     }
   };
 
+  const MENU_ITEMS = [
+    { key: 'general',    icon: <FaGlobe />,      label: 'General' },
+    { key: 'seguridad',  icon: <FaShieldAlt />,  label: 'Seguridad' },
+    { key: 'plataforma', icon: <FaUsers />,       label: 'Plataforma' },
+    { key: 'basedatos',  icon: <FaDatabase />,    label: 'Base de Datos' },
+  ];
+
   const content = (
     <div className="configuracion-container">
+      {/* TOAST */}
+      {toast && (
+        <div className={`config-toast ${toast.type}`}>
+          {toast.type === 'success' ? <FaCheckCircle /> : <FaExclamationCircle />}
+          {toast.msg}
+        </div>
+      )}
+
       <div className="configuracion-header">
-        <h1>⚙️ Configuración del Sistema</h1>
+        <div>
+          <h1 className="page-title">⚙️ Configuración del Sistema</h1>
+          <p className="page-subtitle">Gestiona las opciones globales de la plataforma ECORUT Travels</p>
+        </div>
+        {cambios && (
+          <div className="unsaved-badge">
+            <span>● Cambios sin guardar</span>
+          </div>
+        )}
       </div>
 
-      <div className="configuracion-content">
-        {/* SIDEBAR */}
-        <aside className="config-sidebar">
-          <nav className="config-menu">
-            <button
-              className={`config-menu-item ${seccionActiva === 'general' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('general')}
-            >
-              <FaCog /> General
-            </button>
-            <button
-              className={`config-menu-item ${seccionActiva === 'notificaciones' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('notificaciones')}
-            >
-              <FaBell /> Notificaciones
-            </button>
-            <button
-              className={`config-menu-item ${seccionActiva === 'seguridad' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('seguridad')}
-            >
-              <FaShieldAlt /> Seguridad
-            </button>
-            <button
-              className={`config-menu-item ${seccionActiva === 'apariencia' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('apariencia')}
-            >
-              <FaPalette /> Apariencia
-            </button>
-            <button
-              className={`config-menu-item ${seccionActiva === 'caracteristicas' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('caracteristicas')}
-            >
-              <FaKey /> Características
-            </button>
-            <button
-              className={`config-menu-item ${seccionActiva === 'basedatos' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('basedatos')}
-            >
-              <FaDatabase /> Base de Datos
-            </button>
-            <button
-              className={`config-menu-item ${seccionActiva === 'correo' ? 'active' : ''}`}
-              onClick={() => setSeccionActiva('correo')}
-            >
-              <FaEnvelope /> Correo
-            </button>
-          </nav>
-        </aside>
+      {loadingConfig ? (
+        <div className="config-loading">
+          <FaSpinner className="spin-icon" /> Cargando configuración...
+        </div>
+      ) : (
+        <div className="configuracion-content">
+          {/* SIDEBAR */}
+          <aside className="config-sidebar">
+            <nav className="config-menu">
+              {MENU_ITEMS.map(item => (
+                <button
+                  key={item.key}
+                  className={`config-menu-item ${seccionActiva === item.key ? 'active' : ''}`}
+                  onClick={() => setSeccionActiva(item.key)}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-        {/* MAIN CONTENT */}
-        <div className="config-main">
-          {renderSeccion()}
+          {/* MAIN */}
+          <div className="config-main">
+            {renderSeccion()}
 
-          {/* SAVE BUTTONS */}
-          <div className="config-actions">
-            <button
-              className="btn-primary"
-              onClick={handleGuardar}
-              disabled={!cambios}
-            >
-              <FaSave /> Guardar Cambios
-            </button>
-            <button
-              className="btn-secondary"
-              onClick={handleCancelar}
-            >
-              <FaUndo /> Cancelar
-            </button>
+            {/* Actions — hide for basedatos tab (no settings to save) */}
+            {seccionActiva !== 'basedatos' && (
+              <div className="config-actions">
+                <button
+                  className="btn-primary"
+                  onClick={handleGuardar}
+                  disabled={!cambios || savingConfig}
+                >
+                  {savingConfig
+                    ? <><FaSpinner className="spin-icon" /> Guardando...</>
+                    : <><FaSave /> Guardar Cambios</>
+                  }
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={handleCancelar}
+                  disabled={!cambios}
+                >
+                  <FaUndo /> Restablecer
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 

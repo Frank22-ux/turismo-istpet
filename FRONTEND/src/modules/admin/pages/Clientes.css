@@ -1,0 +1,423 @@
+/* Gestión Clientes - Estilos Modernos (Consistent with GestionGuias) */
+
+.clientes-modern-wrapper {
+    padding: 2rem;
+    background-color: var(--color-lavender);
+    min-height: 100vh;
+}
+
+/* ========================================
+   HEADER
+======================================== */
+.clientes-header-section {
+    margin-bottom: 2rem;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    margin-bottom: 0.35rem;
+}
+
+.page-subtitle {
+    font-size: 0.9375rem;
+    color: #64748b;
+}
+
+.btn-create-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #022b3a 0%, #1f7a8c 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.btn-create-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   STAT CARDS
+======================================== */
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.quick-stat-card {
+    background: white;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.stat-icon-blue {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.stat-icon-green {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.stat-icon-amber {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.825rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* ========================================
+   FILTERS BAR
+======================================== */
+.filters-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-box-modern {
+    flex: 1;
+    min-width: 280px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box-modern svg {
+    position: absolute;
+    left: 1rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.search-box-modern input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    background: white;
+    color: var(--color-navy);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.search-box-modern input:focus {
+    border-color: #1f7a8c;
+    box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
+}
+
+.filters-bar select {
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: white;
+    font-size: 0.9375rem;
+    color: var(--color-navy);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filters-bar select:focus {
+    border-color: #1f7a8c;
+}
+
+/* ========================================
+   FEEDBACK
+======================================== */
+.table-feedback {
+    padding: 1rem 1.5rem;
+    background: white;
+    border-radius: 0.75rem;
+    color: #64748b;
+    font-size: 0.9375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.table-feedback.error {
+    color: #ef4444;
+    background: #fef2f2;
+}
+
+/* ========================================
+   TABLE
+======================================== */
+.table-card-modern {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.modern-table-clientes {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table-clientes thead {
+    background: var(--color-lavender);
+}
+
+.modern-table-clientes th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.modern-table-clientes td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9375rem;
+    color: var(--color-navy);
+    vertical-align: middle;
+}
+
+.modern-table-clientes tbody tr {
+    transition: background 0.15s ease;
+}
+
+.modern-table-clientes tbody tr:hover {
+    background: #f8fafc;
+}
+
+.modern-table-clientes tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ========================================
+   CELL STYLES
+======================================== */
+.guide-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.guide-cell img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.guide-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.9375rem;
+}
+
+.guide-id {
+    font-size: 0.775rem;
+    color: #94a3b8;
+    margin-top: 0.15rem;
+}
+
+.contact-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.contact-cell div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contact-cell svg {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.reservas-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.08);
+    color: #3b82f6;
+    font-weight: 700;
+    font-size: 0.9375rem;
+}
+
+.gasto-cell {
+    font-weight: 600;
+    color: #10b981;
+}
+
+.date-label {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.badge-inactive {
+    background: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+
+/* ========================================
+   ACTION BUTTONS
+======================================== */
+.actions-row {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.btn-icon:hover {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.btn-icon.edit:hover {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.btn-icon.delete:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ========================================
+   EMPTY STATE
+======================================== */
+.empty-row {
+    padding: 3rem !important;
+    text-align: center;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: #94a3b8;
+}
+
+.empty-state svg {
+    font-size: 2.5rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+@media (max-width: 768px) {
+    .clientes-modern-wrapper {
+        padding: 1rem;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .filters-bar {
+        flex-direction: column;
+    }
+
+    .search-box-modern {
+        min-width: 100%;
+    }
+
+    .quick-stats {
+        grid-template-columns: 1fr;
+    }
+}

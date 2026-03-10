@@ -9,13 +9,26 @@ import {
     FaFileAlt,
     FaCheckCircle,
     FaExclamationCircle,
-    FaPhone,
     FaMapMarkerAlt,
     FaDollarSign,
     FaStar,
     FaImage,
-    FaTimes
+    FaTimes,
+    FaPlus,
+    FaTrash
 } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix Leaflet icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
 import AdminLayout from '../../admin/layouts/AdminLayout';
 import './CrearHotel.css';
 
@@ -46,6 +59,74 @@ const CrearHotel = () => {
     const [pdfFileName, setPdfFileName] = useState('');
     const [imagenes, setImagenes] = useState([]);
     const [previews, setPreviews] = useState([]);
+    const [position, setPosition] = useState([-0.1807, -78.4678]); // Quito default
+    const [rating, setRating] = useState(3);
+    const [rooms, setRooms] = useState([
+        { tipo: 'Sencilla', cantidad: 1, precio: 50 }
+    ]);
+    const [selectedAmenities, setSelectedAmenities] = useState([]);
+
+    const amenitiesOptions = [
+        'WiFi Gratis', 'Piscina', 'Gimnasio', 'Restaurante',
+        'Parqueadero', 'Aire Acondicionado', 'Spa', 'Bar'
+    ];
+
+    const handleAmenityChange = (amenity) => {
+        if (selectedAmenities.includes(amenity)) {
+            setSelectedAmenities(prev => prev.filter(item => item !== amenity));
+        } else {
+            setSelectedAmenities(prev => [...prev, amenity]);
+        }
+    };
+
+    const addRoom = () => {
+        setRooms([...rooms, { tipo: '', cantidad: 1, precio: 0 }]);
+    };
+
+    const removeRoom = (index) => {
+        setRooms(rooms.filter((_, i) => i !== index));
+    };
+
+    const updateRoom = (index, field, value) => {
+        const newRooms = [...rooms];
+        newRooms[index][field] = value;
+        setRooms(newRooms);
+    };
+
+    // Componente para manejar clicks en el mapa
+    const LocationMarker = () => {
+        useMapEvents({
+            click(e) {
+                const { lat, lng } = e.latlng;
+                setPosition([lat, lng]);
+                reverseGeocode(lat, lng);
+            },
+        });
+
+        return <Marker position={position} draggable={true} eventHandlers={{
+            dragend: (e) => {
+                const marker = e.target;
+                const { lat, lng } = marker.getLatLng();
+                setPosition([lat, lng]);
+                reverseGeocode(lat, lng);
+            }
+        }} />;
+    };
+
+    const reverseGeocode = async (lat, lng) => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await response.json();
+            if (data.display_name) {
+                setValue('direccion', data.display_name);
+                // Intentar extraer la ciudad si Nominatim la provee
+                const city = data.address.city || data.address.town || data.address.village || data.address.county;
+                if (city) setValue('ciudad', city);
+            }
+        } catch (error) {
+            console.error("Error in reverse geocoding:", error);
+        }
+    };
 
     // Cargar datos si es edición
     useEffect(() => {
@@ -53,22 +134,42 @@ const CrearHotel = () => {
             const fetchHotel = async () => {
                 try {
                     setFetching(true);
-                    const { data } = await api.get('/hoteles');
-                    const hotel = data.find(h => String(h.id) === String(id));
+                    const { data: hotel } = await api.get(`/hoteles/${id}`);
 
                     if (hotel) {
                         setValue('nombre', hotel.nombre || '');
                         setValue('direccion', hotel.direccion || '');
                         setValue('ciudad', hotel.ciudad || '');
                         setValue('estrellas', hotel.estrellas || 3);
-                        setValue('habitaciones', hotel.habitaciones_disponibles || 10);
-                        setValue('precioNoche', hotel.precio_noche || 50);
+                        setRating(hotel.estrellas || 3);
                         setValue('descripcion', hotel.descripcion || '');
-                        setValue('amenidades', hotel.amenidades || '');
+                        
+                        // Cargar Coordenadas
+                        if (hotel.latitud && hotel.longitud) {
+                            setPosition([parseFloat(hotel.latitud), parseFloat(hotel.longitud)]);
+                        }
 
-                        // Si hay fotos existentes, podríamos mostrarlas como previews
-                        // Nota: El backend actual no devuelve URLs de fotos en el listado general /hoteles
-                        // Asumimos que el admin solo puede editar campos de texto por ahora o que las fotos son reemplazadas
+                        // Cargar Habitaciones
+                        if (hotel.habitaciones_lista && hotel.habitaciones_lista.length > 0) {
+                            setRooms(hotel.habitaciones_lista.map(h => ({
+                                tipo: h.tipo,
+                                cantidad: h.cantidad,
+                                precio: h.precio
+                            })));
+                        } else {
+                            // Si no hay lista detallada, usar el resumen para una sola fila
+                            setRooms([{ 
+                                tipo: 'Estándar', 
+                                cantidad: hotel.habitaciones_disponibles || 1, 
+                                precio: hotel.precio_noche || 0 
+                            }]);
+                        }
+
+                        // Cargar Amenidades
+                        if (hotel.amenidades) {
+                            const ams = hotel.amenidades.split(',').map(a => a.trim());
+                            setSelectedAmenities(ams.filter(a => amenitiesOptions.includes(a)));
+                        }
                     }
                 } catch (err) {
                     setError('Error al cargar datos del hotel');
@@ -161,15 +262,24 @@ const CrearHotel = () => {
                 return;
             }
 
+            // Calcular campos de resumen para la tabla hoteles principal
+            const totalHabitaciones = rooms.reduce((sum, r) => sum + (parseInt(r.cantidad) || 0), 0);
+            const precioMinimo = rooms.length > 0 
+                ? Math.min(...rooms.map(r => parseFloat(r.precio) || 0)) 
+                : 0;
+
             const formDataToSend = new FormData();
             formDataToSend.append('nombre', data.nombre);
             formDataToSend.append('direccion', data.direccion);
             formDataToSend.append('ciudad', data.ciudad);
-            formDataToSend.append('estrellas', data.estrellas);
-            formDataToSend.append('habitaciones_disponibles', data.habitaciones);
-            formDataToSend.append('precio_noche', data.precioNoche);
+            formDataToSend.append('estrellas', rating);
+            formDataToSend.append('latitud', position[0]);
+            formDataToSend.append('longitud', position[1]);
+            formDataToSend.append('habitaciones_disponibles', totalHabitaciones);
+            formDataToSend.append('precio_noche', precioMinimo);
+            formDataToSend.append('habitaciones', JSON.stringify(rooms)); // Detalle para tabla relacionada
+            formDataToSend.append('amenidades', selectedAmenities.join(', '));
             formDataToSend.append('descripcion', data.descripcion);
-            formDataToSend.append('amenidades', data.amenidades);
             formDataToSend.append('convenio', pdfFile);
 
             imagenes.forEach((img) => {
@@ -270,31 +380,56 @@ const CrearHotel = () => {
                         </div>
                         <div className="form-group">
                             <label>
-                                <FaStar /> Estrellas *
+                                <FaStar /> Categoría *
                             </label>
-                            <select
-                                {...register('estrellas', { required: 'Estrellas requeridas' })}
-                                className={errors.estrellas ? 'error' : ''}
-                            >
-                                <option value="">Selecciona estrellas...</option>
-                                <option value="1">⭐ 1 Estrella</option>
-                                <option value="2">⭐ 2 Estrellas</option>
-                                <option value="3">⭐ 3 Estrellas</option>
-                                <option value="4">⭐ 4 Estrellas</option>
-                                <option value="5">⭐ 5 Estrellas</option>
-                            </select>
-                            {errors.estrellas && <span className="error-msg">{errors.estrellas.message}</span>}
+                            <div className="star-rating-selector">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <FaStar
+                                        key={star}
+                                        className={`star-icon ${star <= rating ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setRating(star);
+                                            setValue('estrellas', star);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                            <input type="hidden" {...register('estrellas')} value={rating} />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
                             <label>
-                                <FaMapMarkerAlt /> Dirección *
+                                <FaMapMarkerAlt /> Ubicación Geográfica *
+                            </label>
+                            <p className="map-instruction">
+                                <FaMapMarkerAlt /> Haz clic en el mapa o arrastra el marcador para fijar la ubicación exacta.
+                            </p>
+                            <div className="map-container-wrapper">
+                                <MapContainer
+                                    center={position}
+                                    zoom={15}
+                                    style={{ height: '100%', width: '100%' }}
+                                >
+                                    <TileLayer
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                    />
+                                    <LocationMarker />
+                                </MapContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>
+                                <FaMapMarkerAlt /> Dirección Exacta (Autocompletada) *
                             </label>
                             <textarea
                                 {...register('direccion', { required: 'Dirección requerida' })}
-                                placeholder="Av. Principal 123, Ciudad"
+                                placeholder="La dirección se completará al marcar el punto en el mapa..."
                                 rows="2"
                                 className={errors.direccion ? 'error' : ''}
                             />
@@ -309,54 +444,86 @@ const CrearHotel = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Número de Habitaciones *</label>
-                            <input
-                                type="number"
-                                {...register('habitaciones', {
-                                    required: 'Requerido',
-                                    min: { value: 1, message: 'Mínimo 1 habitación' }
-                                })}
-                                placeholder="ej: 50"
-                                className={errors.habitaciones ? 'error' : ''}
-                            />
-                            {errors.habitaciones && <span className="error-msg">{errors.habitaciones.message}</span>}
-                        </div>
-                        <div className="form-group">
-                            <label>
-                                <FaDollarSign /> Precio por Noche (USD) *
-                            </label>
-                            <input
-                                type="number"
-                                {...register('precioNoche', {
-                                    required: 'Requerido',
-                                    min: { value: 1, message: 'Precio válido requerido' }
-                                })}
-                                placeholder="ej: 85"
-                                className={errors.precioNoche ? 'error' : ''}
-                            />
-                            {errors.precioNoche && <span className="error-msg">{errors.precioNoche.message}</span>}
+                            <label>Gestión de Habitaciones *</label>
+                            <div className="rooms-management">
+                                <div className="room-header">
+                                    <span>Tipos de Habitaciones</span>
+                                    <button type="button" className="btn-add-room" onClick={addRoom}>
+                                        <FaPlus /> Agregar
+                                    </button>
+                                </div>
+                                <div className="rooms-list">
+                                    {rooms.map((room, index) => (
+                                        <div key={index} className="room-row">
+                                            <div className="form-group">
+                                                <label>Tipo (ej. Suite)</label>
+                                                <input
+                                                    type="text"
+                                                    value={room.tipo}
+                                                    onChange={(e) => updateRoom(index, 'tipo', e.target.value)}
+                                                    placeholder="Tipo de habitación"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Cantidad</label>
+                                                <input
+                                                    type="number"
+                                                    value={room.cantidad}
+                                                    onChange={(e) => updateRoom(index, 'cantidad', e.target.value)}
+                                                    min="1"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Precio/Noche</label>
+                                                <input
+                                                    type="number"
+                                                    value={room.precio}
+                                                    onChange={(e) => updateRoom(index, 'precio', e.target.value)}
+                                                    min="1"
+                                                />
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                className="btn-remove-room" 
+                                                onClick={() => removeRoom(index)}
+                                                disabled={rooms.length === 1}
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Descripción</label>
+                            <label>Descripción General (Texto Enriquecido)</label>
                             <textarea
                                 {...register('descripcion')}
                                 placeholder="Describe el hotel y sus características principales..."
-                                rows="3"
+                                rows="5"
+                                style={{ border: '2px solid #1f7a8c' }}
                             />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Amenidades (separadas por comas)</label>
-                            <textarea
-                                {...register('amenidades')}
-                                placeholder="ej: WiFi, Piscina, Restaurante, Spa"
-                                rows="2"
-                            />
+                            <label>Amenidades</label>
+                            <div className="amenities-grid">
+                                {amenitiesOptions.map((amenity) => (
+                                    <label key={amenity} className="amenity-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedAmenities.includes(amenity)}
+                                            onChange={() => handleAmenityChange(amenity)}
+                                        />
+                                        <span>{amenity}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -365,11 +532,21 @@ const CrearHotel = () => {
                 <div className="form-section">
                     <h2 className="section-title">🖼️ Fotos del Hotel (Máximo 4)</h2>
 
-                    <div className="images-upload-section">
+                    <div 
+                        className="images-upload-section"
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }}
+                        onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('drag-over');
+                            const files = Array.from(e.dataTransfer.files);
+                            handleImagenChange({ target: { files } });
+                        }}
+                    >
                         <label className="images-upload-label">
                             <FaImage className="upload-icon" />
                             <span className="upload-text">
-                                Seleccionar Imágenes
+                                Arrastra y suelta tus fotos aquí o haz clic para seleccionar
                             </span>
                             <span className="upload-subtitle">
                                 JPG, PNG, hasta 5MB cada una ({imagenes.length}/4)

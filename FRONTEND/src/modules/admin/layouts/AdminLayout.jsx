@@ -176,46 +176,22 @@ const AdminLayout = ({ children, title = "Panel de Administración" }) => {
                                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                             >
                                 <FaBell />
-                                <span className="notification-badge">3</span>
+                                <span className="notification-badge">0</span>
                             </button>
 
                             {isNotificationsOpen && (
                                 <div className="notifications-dropdown">
                                     <div className="notifications-header">
                                         <h4>Notificaciones</h4>
-                                        <button className="mark-read-btn">Marcar todas leídas</button>
+                                        <button className="mark-read-btn">Limpiar</button>
                                     </div>
                                     <div className="notifications-list">
-                                        <div className="notification-item unread">
-                                            <div className="notification-icon bg-blue">
-                                                <FaUsers />
-                                            </div>
-                                            <div className="notification-content">
-                                                <p><strong>Nuevo cliente registrado</strong>: Juan Pérez</p>
-                                                <span className="notification-time">Hace 5 min</span>
-                                            </div>
-                                        </div>
-                                        <div className="notification-item unread">
-                                            <div className="notification-icon bg-yellow">
-                                                <FaClipboardList />
-                                            </div>
-                                            <div className="notification-content">
-                                                <p><strong>Reserva #1023</strong> requiere aprobación de pago</p>
-                                                <span className="notification-time">Hace 2 horas</span>
-                                            </div>
-                                        </div>
-                                        <div className="notification-item">
-                                            <div className="notification-icon bg-green">
-                                                <FaHotel />
-                                            </div>
-                                            <div className="notification-content">
-                                                <p>Hotel <strong>"Gran Paraíso"</strong> registrado exitosamente</p>
-                                                <span className="notification-time">Ayer a las 15:30</span>
-                                            </div>
+                                        <div className="no-notifications">
+                                            <p>No tienes notificaciones pendientes</p>
                                         </div>
                                     </div>
                                     <div className="notifications-footer">
-                                        <Link to="/admin" onClick={() => setIsNotificationsOpen(false)}>Ver todas</Link>
+                                        <Link to="/admin" onClick={() => setIsNotificationsOpen(false)}>Ver historial</Link>
                                     </div>
                                 </div>
                             )}

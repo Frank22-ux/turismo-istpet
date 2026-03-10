@@ -33,10 +33,10 @@ const AdminDashboard = () => {
                 api.get('/admin/recent-reservations')
             ]);
             setStats({
-                totalReservas: statsRes.data.totalReservas,
-                ingresoTotal: statsRes.data.ingresosTotales,
-                totalGuias: statsRes.data.totalGuias,
-                totalTuristas: statsRes.data.totalTuristas
+                totalReservas: statsRes.data.reservas ?? 0,
+                ingresoTotal: statsRes.data.ingresos ?? 0,
+                totalGuias: statsRes.data.guias ?? 0,
+                totalTuristas: statsRes.data.turistas ?? 0
             });
             setReservasRecientes(recentRes.data);
         } catch (error) {
@@ -58,7 +58,7 @@ const AdminDashboard = () => {
                     <div className="stat-header">
                         <div className="stat-info">
                             <span className="stat-label">Total Reservas</span>
-                            <h2 className="stat-value">{stats.totalReservas.toLocaleString()}</h2>
+                            <h2 className="stat-value">{(stats.totalReservas ?? 0).toLocaleString()}</h2>
                         </div>
                         <div className="stat-icon primary-icon">
                             <FaClipboardList />
@@ -70,7 +70,7 @@ const AdminDashboard = () => {
                     <div className="stat-header">
                         <div className="stat-info">
                             <span className="stat-label">Ingresos Totales</span>
-                            <h2 className="stat-value">${stats.ingresoTotal.toLocaleString()}</h2>
+                            <h2 className="stat-value">${(stats.ingresoTotal ?? 0).toLocaleString()}</h2>
                         </div>
                         <div className="stat-icon success-icon">
                             <FaDollarSign />
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
                                             <FaCalendarAlt /> {new Date(reserva.fecha_reserva).toLocaleDateString()}
                                         </span>
                                     </td>
-                                    <td className="font-medium">${parseFloat(reserva.total_pagar).toFixed(2)}</td>
+                                    <td className="font-medium">${parseFloat(reserva.total_pagado ?? 0).toFixed(2)}</td>
                                     <td>
                                         <span className={`status-badge ${reserva.estado === 'Confirmado' ? 'badge-success' : 'badge-warning'}`}>
                                             {reserva.estado}

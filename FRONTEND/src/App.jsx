@@ -275,6 +275,11 @@ function App() {
             <CrearCliente />
           </ProtectedRoute>
         } />
+        <Route path="/admin/clientes/:id" element={
+          <ProtectedRoute requiredRoles={[ROLES.ADMIN]}>
+            <CrearCliente />
+          </ProtectedRoute>
+        } />
         <Route path="/admin/configuracion" element={
           <ProtectedRoute requiredRoles={[ROLES.ADMIN]}>
             <Configuracion />

@@ -39,11 +39,51 @@ const Hotel = {
         return rows;
     },
 
-    // 3. BUSCAR POR ID
+    // 3. BUSCAR POR ID (Incluyendo Habitaciones)
     findById: async (id) => {
-        const query = 'SELECT * FROM hoteles WHERE id_hotel = $1';
-        const { rows } = await pool.query(query, [id]);
-        return rows[0];
+        const queryHotel = 'SELECT * FROM hoteles WHERE id_hotel = $1';
+        const { rows: hotelRows } = await pool.query(queryHotel, [id]);
+        
+        if (hotelRows.length === 0) return null;
+        
+        const hotel = hotelRows[0];
+        
+        const queryHabitaciones = 'SELECT * FROM hotel_habitaciones WHERE id_hotel = $1';
+        const { rows: habitacionesRows } = await pool.query(queryHabitaciones, [id]);
+        
+        return {
+            ...hotel,
+            habitaciones_lista: habitacionesRows
+        };
+    },
+
+    // 6. GESTIONAR HABITACIONES (Reemplazar todas las habitaciones de un hotel)
+    setHabitaciones: async (id_hotel, habitaciones) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Eliminar habitaciones actuales
+            await client.query('DELETE FROM hotel_habitaciones WHERE id_hotel = $1', [id_hotel]);
+            
+            // Insertar nuevas
+            if (habitaciones && habitaciones.length > 0) {
+                for (const hab of habitaciones) {
+                    const query = `
+                        INSERT INTO hotel_habitaciones (id_hotel, tipo, cantidad, precio)
+                        VALUES ($1, $2, $3, $4)
+                    `;
+                    await client.query(query, [id_hotel, hab.tipo, hab.cantidad, hab.precio]);
+                }
+            }
+            
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
+        }
     },
 
     // 4. ACTUALIZAR
