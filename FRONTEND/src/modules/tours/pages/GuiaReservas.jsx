@@ -5,12 +5,15 @@ import api from '../../../core/api';
 // import { guiasMock, reservasMock } from '../../../core/mockData'; // Eliminado mock data
 import {
     FaHome, FaCalendarAlt, FaCoins, FaUsers, FaStar, FaSignOutAlt,
-    FaChartLine, FaEdit, FaUserCircle, FaBell, FaSearch, FaCheckCircle, FaTimesCircle, FaClock, FaMapMarkerAlt
+    FaChartLine, FaEdit, FaUserCircle, FaBell, FaSearch, FaCheckCircle, FaTimesCircle, FaClock, FaMapMarkerAlt, FaMinusCircle
 } from 'react-icons/fa';
 import './GuiaDashboard.css';
 import './GuiaMisTours.css';
 import TourDrawer from '../../../components/TourDrawer';
-import { tourosMock } from '../../../core/mockData';
+import GuiaNavbar from '../../../components/guia/GuiaNavbar';
+import GuiaSidebar from '../../../components/guia/GuiaSidebar';
+
+const API_URL = 'http://localhost:4000';
 
 const GuiaReservas = () => {
     const navigate = useNavigate();
@@ -18,9 +21,20 @@ const GuiaReservas = () => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [filtroEstado, setFiltroEstado] = useState('Todas');
     const [selectedTour, setSelectedTour] = useState(null);
+    const [profile, setProfile] = useState(null);
     const [guideReservas, setGuideReservas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const fetchProfile = async () => {
+        try {
+            const res = await api.get(`/guias/${user.id_usuario}/profile`);
+            setProfile(res.data);
+        } catch (error) {
+            console.error("Error fetching profile:", error);
+        }
+    };
 
     const fetchReservas = async () => {
         setLoading(true);
@@ -47,12 +61,14 @@ const GuiaReservas = () => {
 
     useEffect(() => {
         fetchReservas();
+        if (user.id_usuario) fetchProfile();
     }, []);
 
     const handleConfirm = async (res) => {
         try {
-            await api.post(`/tours/${res.id_tour}/assign`);
-            alert('¡Tour asignado y confirmado exitosamente!');
+            const tourId = res.id_tour || res.id;
+            await api.post(`/tours/${tourId}/assign`);
+            alert('¡Te has asignado el tour exitosamente!');
             fetchReservas(); // Recargar datos
         } catch (error) {
             console.error("Error al confirmar tour:", error);
@@ -60,12 +76,32 @@ const GuiaReservas = () => {
         }
     };
 
+    const handleUnassign = async (res) => {
+        try {
+            const tourId = res.id_tour || res.id;
+            if (!window.confirm('¿Estás seguro que deseas desasignarte de este tour?')) return;
+            await api.delete(`/tours/${tourId}/assign`);
+            alert('Te has desasignado del tour correctamente');
+            fetchReservas(); // Recargar datos
+        } catch (error) {
+            console.error("Error al desasignar tour:", error);
+            alert(error.response?.data?.message || 'No se pudo desasignar el tour');
+        }
+    };
+
     const currentGuide = {
-        nombre: user.primer_nombre || 'Guía',
-        apellido: user.apellido_paterno || '',
-        imagen: user.foto_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
-        especialidad: user.descripcion_perfil || 'Especialista Ecoturismo',
-        calificacion: 4.9,
+        nombre: profile?.primer_nombre || user.primer_nombre || 'Guía',
+        apellido: profile?.apellido_paterno || user.apellido_paterno || '',
+        imagen: (profile?.foto_url || user.foto_url)
+            ? ((profile?.foto_url || user.foto_url).startsWith('http') ? (profile?.foto_url || user.foto_url) : `${API_URL}${profile?.foto_url || user.foto_url}`) 
+            : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+        especialidad: profile?.especialidades || user.descripcion_perfil || 'Especialista Ecoturismo',
+        calificacion: parseFloat(profile?.calificacion) || 4.9,
+        toursGuiados: parseInt(profile?.tours) || 0,
+        experiencia: profile?.experiencia_anios || 0,
+        idiomas: Array.isArray(profile?.idiomas) ? profile.idiomas : ['Español'],
+        disponible: profile?.disponibilidad?.trim().toLowerCase() === 'disponible',
+        total_resenas: parseInt(profile?.total_resenas) || 0
     };
 
     const handleLogout = async () => {
@@ -74,11 +110,20 @@ const GuiaReservas = () => {
     };
 
     const estados = ['Todas', 'Pagado', 'Pendiente', 'Cancelado', 'Disponibles'];
-    const filtradas = filtroEstado === 'Todas'
+    
+    // First apply status filter
+    const filtradasPorEstado = filtroEstado === 'Todas'
         ? guideReservas
         : filtroEstado === 'Disponibles'
             ? guideReservas.filter(r => !r.asignada_a_mi)
             : guideReservas.filter(r => r.estadoPago === filtroEstado);
+
+    // Then apply search filter
+    const filtradas = filtradasPorEstado.filter(r => 
+        r.tour?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        r.turista?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.id.toString().includes(searchTerm)
+    );
 
     const getStatusIcon = (estado) => {
         if (estado === 'Pagado') return <FaCheckCircle className="status-icon pagado" />;
@@ -86,90 +131,29 @@ const GuiaReservas = () => {
         return <FaClock className="status-icon pendiente" />;
     };
 
-    const handleVerDetalles = (res) => {
-        const tourBase = tourosMock.find(t => t.nombre === res.tour) || {};
-        const tourData = {
-            ...tourBase,
-            id_tour: res.id_tour,
-            nombre: res.tour,
-            ciudad_destino: tourBase.ciudad_destino || 'Ecuador',
-            precio: res.total,
-            calificacion: tourBase.calificacion || 4.8,
-            resenas: tourBase.resenas || 12,
-            duracion: tourBase.duracion || 'Full Day',
-            isGuideView: true
-        };
-        setSelectedTour(tourData);
-        setIsDrawerOpen(true);
+    const handleVerDetalles = async (res) => {
+        try {
+            const response = await api.get(`/tours/${res.id_tour}`);
+            const tourData = {
+                ...response.data,
+                isGuideView: true
+            };
+            setSelectedTour(tourData);
+            setIsDrawerOpen(true);
+        } catch (error) {
+            console.error("Error al obtener detalles del tour:", error);
+        }
     };
 
     return (
         <div className="guia-layout">
-            <nav className="navbar-guia">
-                <div className="nav-container-guia">
-                    <div className="nav-logo-guia">
-                        <img src="/uploads/logo.png" alt="Logo" className="logo-img-guia" style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }} />
-                        <span className="logo-text-guia">ECRUT Travels</span>
-                    </div>
-                    <div className="nav-search-guia">
-                        <FaSearch />
-                        <input type="text" placeholder="Buscar reservas..." className="search-input-guia" />
-                    </div>
-                    <div className="nav-actions-guia">
-                        <button className="nav-badge-guia"><FaBell /> {guideReservas.length}</button>
-                        <div className="user-menu-container-guia">
-                            <button className="btn-user-menu-guia" onClick={() => setShowUserMenu(!showUserMenu)}>
-                                <FaUserCircle /> {currentGuide.nombre}
-                            </button>
-                            {showUserMenu && (
-                                <div className="dropdown-menu-guia">
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/editar-perfil'); }}><FaEdit /> Editar Perfil</button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/disponibilidad'); }}><FaCalendarAlt /> Mi Disponibilidad</button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/mis-resenas'); }}><FaStar /> Mis Reseñas</button>
-                                    <hr />
-                                    <button onClick={handleLogout} className="menu-item-guia logout-guia"><FaSignOutAlt /> Cerrar Sesión</button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <div className="guia-sidebar">
-                <div className="sidebar-profile-guia">
-                    <div className="profile-avatar-guia">
-                        <img src={currentGuide.imagen} alt={currentGuide.nombre} />
-                    </div>
-                    <h3 className="profile-name-guia">{currentGuide.nombre} {currentGuide.apellido}</h3>
-                    <p className="profile-specialty-guia">{currentGuide.especialidad}</p>
-                    <div className="profile-rating-guia"><FaStar /> {currentGuide.calificacion}</div>
-                </div>
-                <nav className="sidebar-nav-guia">
-                    <div className="sidebar-group-label">PRINCIPAL</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia')}>
-                        <FaHome /> Dashboard
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/disponibilidad')}>
-                        <FaCalendarAlt /> Mi Disponibilidad
-                    </button>
-
-                    <div className="sidebar-group-label">MI ACTIVIDAD</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/mis-tours')}>
-                        <FaMapMarkerAlt /> Mis Tours
-                    </button>
-                    <button className="nav-item-guia active" onClick={() => navigate('/guia/reservas')}>
-                        <FaUsers /> Reservas
-                    </button>
-
-                    <div className="sidebar-group-label">REPORTE Y VENTAS</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/ganancias')}>
-                        <FaCoins /> Ganancias
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/estadisticas')}>
-                        <FaChartLine /> Estadísticas
-                    </button>
-                </nav>
-            </div>
+            <GuiaNavbar 
+                currentGuide={currentGuide} 
+                notificationsCount={guideReservas.length} 
+                onSearch={setSearchTerm}
+                reservations={guideReservas}
+            />
+            <GuiaSidebar currentGuide={currentGuide} />
 
             <main className="guia-main-content">
                 <div className="guia-header">
@@ -245,8 +229,12 @@ const GuiaReservas = () => {
                                     <span className="total-amount">${res.total}</span>
                                     <div className="reserva-guia-actions" style={{ display: 'flex', gap: '8px' }}>
                                         <button className="btn-confirm" title="Ver detalles del tour" onClick={() => handleVerDetalles(res)} style={{ background: '#64748b' }}>Detalles</button>
-                                        {!res.asignada_a_mi && (
+                                        {!res.asignada_a_mi ? (
                                             <button className="btn-confirm" onClick={() => handleConfirm(res)}>Confirmar</button>
+                                        ) : (
+                                            <button className="btn-confirm" onClick={() => handleUnassign(res)} style={{ background: '#ef4444' }}>
+                                                <FaMinusCircle /> Desconfirmar
+                                            </button>
                                         )}
                                     </div>
                                 </div>

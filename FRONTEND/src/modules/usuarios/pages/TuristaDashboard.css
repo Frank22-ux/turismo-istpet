@@ -363,12 +363,14 @@ body {
 
 .hero-search-row {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
+    width: 100%;
 }
 
 .hero-input-group {
     flex: 1;
+    min-width: 0; /* Allow shrinking */
     display: flex;
     align-items: center;
     gap: 10px;
@@ -424,6 +426,43 @@ body {
 .hero-search-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.hero-geo-btn-modern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: white;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-geo-btn-modern .geo-icon {
+    font-size: 16px;
+    transition: transform 0.3s;
+}
+
+.hero-geo-btn-modern:hover {
+    border-color: var(--teal);
+    color: var(--teal);
+    background: var(--sky);
+}
+
+.hero-geo-btn-modern:hover .geo-icon {
+    transform: rotate(15deg) scale(1.1);
+}
+
+.hero-geo-btn-modern.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+    box-shadow: 0 8px 20px rgba(26, 122, 138, 0.35);
 }
 
 /* CTA buttons */
@@ -549,8 +588,7 @@ body {
 .cats-section {
     background: white;
     border-bottom: 1px solid var(--border);
-    padding: 30px 0;
-    margin-top: -30px;
+    padding: 60px 0 30px; /* Increased top padding to accommodate hero stats */
     position: relative;
     z-index: 10;
     border-radius: 40px 40px 0 0;
@@ -1502,8 +1540,43 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid var(--border);
-    padding-top: 14px;
+    margin-top: 15px;
+}
+
+.hotel-actions-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-hotel-ver, .btn-hotel-reservar {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-hotel-ver {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.btn-hotel-ver:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.btn-hotel-reservar {
+    background: #0f172a;
+    color: white;
+}
+
+.btn-hotel-reservar:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
 }
 
 .hotel-desde {

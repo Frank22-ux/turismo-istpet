@@ -94,7 +94,7 @@ const UserModel = {
     async update(id, data) {
         const {
             primer_nombre, segundo_nombre, apellido_paterno,
-            apellido_materno, correo, codigo_pais, numero_celular, foto_url
+            apellido_materno, correo, codigo_pais, numero_celular, foto_url, password
         } = data;
 
         const query = `
@@ -106,15 +106,16 @@ const UserModel = {
                 correo = $5,
                 codigo_pais = $6, 
                 numero_celular = $7,
-                foto_url = COALESCE($8, foto_url)
-            WHERE id_usuario = $9
+                foto_url = COALESCE($8, foto_url),
+                password = COALESCE($9, password)
+            WHERE id_usuario = $10
             RETURNING *;
         `;
 
         const values = [
             primer_nombre, segundo_nombre, apellido_paterno,
             apellido_materno, correo, codigo_pais, numero_celular,
-            foto_url, id
+            foto_url, password || null, id
         ];
 
         const { rows } = await pool.query(query, values);

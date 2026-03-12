@@ -10,6 +10,10 @@ import {
 import './GuiaDashboard.css';
 import './GuiaMisTours.css';
 import TourDrawer from '../../../components/TourDrawer';
+import GuiaNavbar from '../../../components/guia/GuiaNavbar';
+import GuiaSidebar from '../../../components/guia/GuiaSidebar';
+
+const API_URL = 'http://localhost:4000';
 
 const GuiaMisTours = () => {
     const navigate = useNavigate();
@@ -18,12 +22,23 @@ const GuiaMisTours = () => {
     const [selectedTour, setSelectedTour] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+    const [loading, setLoading] = useState(true);
+    const [guideTours, setGuideTours] = useState([]);
     const [filterStatus, setFilterStatus] = useState('Todos');
+    const [guideReservas, setGuideReservas] = useState([]);
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    const [guideTours, setGuideTours] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
+
+    const fetchProfile = async () => {
+        try {
+            const res = await api.get(`/guias/${user.id_usuario}/profile`);
+            setProfile(res.data);
+        } catch (error) {
+            console.error("Error fetching profile:", error);
+        }
+    };
 
     const fetchMisTours = async () => {
         setLoading(true);
@@ -38,15 +53,38 @@ const GuiaMisTours = () => {
     };
 
     useEffect(() => {
+        const fetchReservas = async () => {
+            try {
+                const response = await api.get('/reservas/guia');
+                const mapped = response.data.map(r => ({
+                    id: r.id_reserva,
+                    tour: r.tour_nombre,
+                    turista: `${r.turista_nombre} ${r.turista_apellido}`,
+                    fecha: new Date(r.fecha_actividad).toLocaleDateString()
+                }));
+                setGuideReservas(mapped);
+            } catch (error) {
+                console.error("Error fetching reservas for notifications:", error);
+            }
+        };
         fetchMisTours();
+        fetchReservas();
+        if (user.id_usuario) fetchProfile();
     }, []);
 
     const currentGuide = {
-        nombre: user.primer_nombre || 'Guía',
-        apellido: user.apellido_paterno || '',
-        imagen: user.foto_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
-        especialidad: user.descripcion_perfil || 'Especialista Ecoturismo',
-        calificacion: 4.9,
+        nombre: profile?.primer_nombre || user.primer_nombre || 'Guía',
+        apellido: profile?.apellido_paterno || user.apellido_paterno || '',
+        imagen: (profile?.foto_url || user.foto_url)
+            ? ((profile?.foto_url || user.foto_url).startsWith('http') ? (profile?.foto_url || user.foto_url) : `${API_URL}${profile?.foto_url || user.foto_url}`) 
+            : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+        especialidad: profile?.especialidades || user.descripcion_perfil || 'Especialista Ecoturismo',
+        calificacion: parseFloat(profile?.calificacion) || 4.9,
+        total_resenas: parseInt(profile?.total_resenas) || 0,
+        toursGuiados: parseInt(profile?.tours) || 0,
+        experiencia: profile?.experiencia_anios || 0,
+        idiomas: Array.isArray(profile?.idiomas) ? profile.idiomas : ['Español'],
+        disponible: profile?.disponibilidad?.trim().toLowerCase() === 'disponible',
     };
 
     const handleLogout = async () => {
@@ -76,87 +114,12 @@ const GuiaMisTours = () => {
 
     return (
         <div className="guia-layout">
-            {/* NAVBAR */}
-            <nav className="navbar-guia">
-                <div className="nav-container-guia">
-                    <div className="nav-logo-guia">
-                        <img src="/uploads/logo.png" alt="Logo" className="logo-img-guia" style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }} />
-                        <span className="logo-text-guia">ECRUT Travels</span>
-                    </div>
-                    <div className="nav-search-guia">
-                        <FaSearch />
-                        <input
-                            type="text"
-                            placeholder="Busca tus tours..."
-                            className="search-input-guia"
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="nav-actions-guia">
-                        <button className="nav-badge-guia"><FaBell /> 3</button>
-                        <div className="user-menu-container-guia">
-                            <button className="btn-user-menu-guia" onClick={() => setShowUserMenu(!showUserMenu)}>
-                                <FaUserCircle /> {currentGuide.nombre}
-                            </button>
-                            {showUserMenu && (
-                                <div className="dropdown-menu-guia">
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/editar-perfil'); }}>
-                                        <FaEdit /> Editar Perfil
-                                    </button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/disponibilidad'); }}>
-                                        <FaCalendarAlt /> Mi Disponibilidad
-                                    </button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/mis-resenas'); }}>
-                                        <FaStar /> Mis Reseñas
-                                    </button>
-                                    <hr />
-                                    <button onClick={handleLogout} className="menu-item-guia logout-guia">
-                                        <FaSignOutAlt /> Cerrar Sesión
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            {/* SIDEBAR */}
-            <div className="guia-sidebar">
-                <div className="sidebar-profile-guia">
-                    <div className="profile-avatar-guia">
-                        <img src={currentGuide.imagen} alt={currentGuide.nombre} />
-                    </div>
-                    <h3 className="profile-name-guia">{currentGuide.nombre} {currentGuide.apellido}</h3>
-                    <p className="profile-specialty-guia">{currentGuide.especialidad}</p>
-                    <div className="profile-rating-guia"><FaStar /> {currentGuide.calificacion}</div>
-                </div>
-                <nav className="sidebar-nav-guia">
-                    <div className="sidebar-group-label">PRINCIPAL</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia')}>
-                        <FaHome /> Dashboard
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/disponibilidad')}>
-                        <FaCalendarAlt /> Mi Disponibilidad
-                    </button>
-
-                    <div className="sidebar-group-label">MI ACTIVIDAD</div>
-                    <button className="nav-item-guia active" onClick={() => navigate('/guia/mis-tours')}>
-                        <FaMapMarkerAlt /> Mis Tours
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/reservas')}>
-                        <FaUsers /> Reservas
-                    </button>
-
-                    <div className="sidebar-group-label">REPORTE Y VENTAS</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/ganancias')}>
-                        <FaCoins /> Ganancias
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/estadisticas')}>
-                        <FaChartLine /> Estadísticas
-                    </button>
-                </nav>
-            </div>
+            <GuiaNavbar 
+                currentGuide={currentGuide} 
+                onSearch={setSearchTerm}
+                reservations={guideReservas}
+            />
+            <GuiaSidebar currentGuide={currentGuide} />
 
             {/* MAIN */}
             <main className="guia-main-content">

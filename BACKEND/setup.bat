@@ -43,9 +43,9 @@ if not exist .env (
         echo # Database Configuration
         echo DB_HOST=localhost
         echo DB_PORT=5432
-        echo DB_NAME=turismo_db
+        echo DB_NAME=DB_Turismo_C
         echo DB_USER=postgres
-        echo DB_PASS=postgres
+        echo DB_PASS=1234
         echo.
         echo # JWT Secret
         echo JWT_SECRET=your-secret-key-change-in-production

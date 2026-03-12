@@ -5,14 +5,15 @@ const Reserva = {
     create: async (data) => {
         const query = `
             INSERT INTO reservas 
-            (id_turista, id_tour, fecha_actividad, cantidad_personas, total_pagado, estado_reserva) 
-            VALUES ($1, $2, $3, $4, $5, $6) 
+            (id_turista, id_tour, id_hotel, fecha_actividad, cantidad_personas, total_pagado, estado_reserva) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7) 
             RETURNING *
         `;
 
         const values = [
             data.id_turista,
             data.id_tour || null,
+            data.id_hotel || null,
             data.fecha_actividad,
             data.cantidad_personas || 1,
             data.total_pagado || null,
@@ -26,10 +27,14 @@ const Reserva = {
     // 2. OBTENER RESERVAS DE UN USUARIO
     findByUser: async (id_turista) => {
         const query = `
-            SELECT r.*, t.nombre as tour_nombre, h.nombre as hotel_nombre
+            SELECT r.*, 
+                   t.nombre as tour_nombre, t.imagen_portada as tour_imagen, t.duracion as tour_duracion, t.ciudad_destino as tour_ciudad, t.id_hotel_base as hotel_asociado_id,
+                   h.nombre as hotel_nombre,
+                   ug.id_usuario as id_guia, ug.primer_nombre as guia_nombre, ug.apellido_paterno as guia_apellido, ug.foto_url as guia_foto
             FROM reservas r
             LEFT JOIN tours t ON r.id_tour = t.id_tour
             LEFT JOIN hoteles h ON t.id_hotel_base = h.id_hotel
+            LEFT JOIN usuarios ug ON t.id_guia_asignado = ug.id_usuario
             WHERE r.id_turista = $1
             ORDER BY r.fecha_reserva DESC
         `;
@@ -87,6 +92,17 @@ const Reserva = {
         `;
         const { rows } = await pool.query(query);
         return rows;
+    },
+
+    // 7. OBTENER CUPOS OCUPADOS DE UN TOUR
+    getOccupiedSpots: async (id_tour) => {
+        const query = `
+            SELECT COALESCE(SUM(cantidad_personas), 0) as ocupados 
+            FROM reservas 
+            WHERE id_tour = $1 AND estado_reserva != 'Cancelada'
+        `;
+        const { rows } = await pool.query(query, [id_tour]);
+        return parseInt(rows[0].ocupados);
     }
 };
 

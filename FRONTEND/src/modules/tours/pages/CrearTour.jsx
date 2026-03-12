@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { createTourRequest } from '../services/tour.service';
 import { useNavigate, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../../core/api';
 import {
     FaSave,
@@ -28,7 +28,7 @@ import AdminLayout from '../../admin/layouts/AdminLayout';
 import './CrearTour.css';
 
 // --- CONFIGURACIÓN DEL MAPA ---
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -72,10 +72,16 @@ const CrearTour = () => {
     const [galleryPreviews, setGalleryPreviews] = useState([]);
 
     const [listaGuias, setListaGuias] = useState([]);
-    const [listaHoteles, setListaHoteles] = useState([]);
+    const [listaHoteles, setListaHoteles] = useState([]); // todos los hoteles (con ciudad)
     const [position, setPosition] = useState(null);
     const [direccion, setDireccion] = useState(null);
     const [loadingDireccion, setLoadingDireccion] = useState(false);
+
+    // Geocoding directa (texto → mapa)
+    const [geocoding, setGeocoding] = useState(false);
+    const [geocodeMsg, setGeocodeMsg] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const geocodeTimerRef = useRef(null);
 
     // --- ESTADOS PARA CAMPOS DE DETALLE ---
     const [idiomas, setIdiomas] = useState([]);
@@ -84,14 +90,38 @@ const CrearTour = () => {
     const [incluyeInput, setIncluyeInput] = useState('');
     const [puntosInteres, setPuntosInteres] = useState([]);
     const [puntoInput, setPuntoInput] = useState('');
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('Aventura');
+
+    const CATEGORIAS = [
+        { icon: '🏔️', nombre: 'Aventura' },
+        { icon: '🌿', nombre: 'Naturaleza' },
+        { icon: '🏖️', nombre: 'Playa' },
+        { icon: '🎭', nombre: 'Cultura' },
+        { icon: '🍽️', nombre: 'Gastronomía' },
+        { icon: '🏨', nombre: 'Lujo' },
+        { icon: '🐾', nombre: 'Fauna' },
+        { icon: '🚵', nombre: 'Deportes' },
+    ];
 
     const defaultCenter = [-0.1807, -78.4678];
+    const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD para min de inputs
 
-    // Watch para coordenadas manuales
+    // Watch para coordenadas manuales y ciudad destino
     const latitudManual = watch('latitud');
     const longitudManual = watch('longitud');
     const fechaInicioWatch = watch('fecha_inicio');
     const fechaFinWatch = watch('fecha_fin');
+    const ciudadDestinoWatch = watch('ciudad_destino');
+
+    // Hoteles filtrados por ciudad del tour (insensible a mayúsculas/tildes)
+    // Si no hay ciudad escrita, no se muestra ningún hotel
+    const normalize = (str) => (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const hotelesFiltrados = ciudadDestinoWatch
+        ? listaHoteles.filter(h =>
+            normalize(h.ciudad).includes(normalize(ciudadDestinoWatch)) ||
+            normalize(ciudadDestinoWatch).includes(normalize(h.ciudad))
+          )
+        : [];
 
     useEffect(() => {
         const fetchAsignaciones = async () => {
@@ -107,10 +137,11 @@ const CrearTour = () => {
                     nombre: `${g.primer_nombre} ${g.apellido_paterno}`
                 })));
 
-                // Mapear hoteles
+                // Mapear hoteles (guardar ciudad para filtrar)
                 setListaHoteles(hotelesRes.data.map(h => ({
                     id: h.id_hotel,
-                    nombre: h.nombre
+                    nombre: h.nombre,
+                    ciudad: h.ciudad
                 })));
             } catch (err) {
                 console.error('Error cargando asignaciones:', err);
@@ -167,6 +198,15 @@ const CrearTour = () => {
     }, [position]);
 
     function LocationMarker() {
+        const map = useMap();
+
+        // Volar al marcador cuando cambia la posición (desde geocoding de texto)
+        useEffect(() => {
+            if (position) {
+                map.flyTo([position.lat, position.lng], 15, { duration: 1.2 });
+            }
+        }, [position, map]);
+
         useMapEvents({
             click(e) {
                 setPosition(e.latlng);
@@ -176,6 +216,37 @@ const CrearTour = () => {
         });
         return position ? <Marker position={position} /> : null;
     }
+
+    // Geocodificación directa: texto → coordenadas
+    const geocodeAddress = useCallback(async (address) => {
+        if (!address || address.length < 4) return;
+        setGeocoding(true);
+        setGeocodeMsg('🔍 Buscando ubicación...');
+        try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+            const results = await resp.json();
+            if (results.length > 0) {
+                const { lat, lon } = results[0];
+                const newPos = { lat: parseFloat(lat), lng: parseFloat(lon) };
+                setPosition(newPos);
+                setValue('latitud', parseFloat(lat).toFixed(6));
+                setValue('longitud', parseFloat(lon).toFixed(6));
+                setGeocodeMsg('✅ Ubicación encontrada en el mapa');
+                // Autocompletar ciudad destino
+                const rev = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const revData = await rev.json();
+                const city = revData?.address?.city || revData?.address?.town || revData?.address?.village || revData?.address?.county;
+                if (city) setValue('ciudad_destino', city);
+            } else {
+                setGeocodeMsg('⚠️ No se encontró. Intenta con más detalles.');
+            }
+        } catch {
+            setGeocodeMsg('❌ Error al buscar la ubicación');
+        } finally {
+            setGeocoding(false);
+            setTimeout(() => setGeocodeMsg(''), 5000);
+        }
+    }, [setValue]);
 
     const handleCoverChange = (e) => {
         const file = e.target.files[0];
@@ -267,6 +338,10 @@ const CrearTour = () => {
             if (idiomas.length > 0) formData.append('idiomas', JSON.stringify(idiomas));
             if (incluye.length > 0) formData.append('incluye', JSON.stringify(incluye));
             if (puntosInteres.length > 0) formData.append('puntos_interes', JSON.stringify(puntosInteres));
+            formData.append('categoria', categoriaSeleccionada);
+
+            formData.append('en_oferta', data.en_oferta ? 'true' : 'false');
+            formData.append('descuento', data.descuento || 0);
 
             if (data.id_guia && data.id_guia !== "") {
                 formData.append('id_guia', data.id_guia);
@@ -397,6 +472,7 @@ const CrearTour = () => {
                             </label>
                             <input
                                 type="date"
+                                min={today}
                                 {...register('fecha_inicio', { required: 'Fecha de inicio requerida' })}
                                 className={errors.fecha_inicio ? 'error' : ''}
                             />
@@ -408,6 +484,7 @@ const CrearTour = () => {
                             </label>
                             <input
                                 type="date"
+                                min={fechaInicioWatch || today}
                                 {...register('fecha_fin')}
                             />
                         </div>
@@ -423,6 +500,36 @@ const CrearTour = () => {
                                 <FaClock className="input-icon" />
                             </div>
                         </div>
+                    </div>
+
+                    {/* 🔥 SECCIÓN DE OFERTA ESPECIAL */}
+                    <div className="form-row offer-row" style={{ backgroundColor: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #fde68a', marginTop: '14px', marginBottom: '14px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label style={{ color: '#b45309', marginBottom: '8px', display: 'block' }}>🔥 Oferta Especial</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="en_oferta" 
+                                    {...register('en_oferta')} 
+                                    style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#b45309' }} 
+                                />
+                                <label htmlFor="en_oferta" style={{ cursor: 'pointer', fontSize: '15px', color: '#b45309', fontWeight: 500, marginBottom: 0 }}>Activar descuento para este tour</label>
+                            </div>
+                        </div>
+                        {watch('en_oferta') && (
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label style={{ color: '#b45309' }}>Porcentaje Descuento (%) *</label>
+                                <input 
+                                    type="number" 
+                                    step="1" 
+                                    min="1" 
+                                    max="99" 
+                                    {...register('descuento', { required: watch('en_oferta') })} 
+                                    placeholder="Ej: 15" 
+                                    style={{ borderColor: '#fcd34d' }} 
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="form-row">
@@ -441,12 +548,37 @@ const CrearTour = () => {
                 <div className="form-section">
                     <h2 className="section-title">📍 Ubicación del Tour</h2>
 
+                    {/* Buscador de dirección - bloque independiente */}
+                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                        <label><FaMapMarkerAlt /> Buscar por dirección o lugar</label>
+                        <div className="address-search-bar">
+                            <FaMapMarkerAlt className="search-icon-map" />
+                            <input
+                                type="text"
+                                value={searchInput}
+                                onChange={(e) => {
+                                    setSearchInput(e.target.value);
+                                    if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+                                    geocodeTimerRef.current = setTimeout(() => geocodeAddress(e.target.value), 1000);
+                                }}
+                                placeholder="Escribe una dirección o lugar para ubicar en el mapa..."
+                                className="address-search-input"
+                            />
+                        </div>
+                        {geocodeMsg && (
+                            <span className="geocode-msg-tour" style={{ marginTop: '6px', display: 'inline-block', color: geocodeMsg.startsWith('✅') ? '#16a34a' : geocodeMsg.startsWith('❌') ? '#dc2626' : '#0369a1' }}>
+                                {geocodeMsg}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Mapa - bloque independiente */}
                     <div className="map-container-wrapper">
-                        <p className="map-instructions">Haz clic en el mapa para marcar el punto de encuentro o ubicación principal.</p>
+                        <p className="map-instructions"><FaMapMarkerAlt /> O haz clic directamente en el mapa para marcar el punto de encuentro.</p>
 
                         <div className="map-wrapper">
                             <MapContainer
-                                center={position || defaultCenter}
+                                center={position ? [position.lat, position.lng] : defaultCenter}
                                 zoom={13}
                                 scrollWheelZoom={false}
                                 className="leaflet-container"
@@ -488,6 +620,7 @@ const CrearTour = () => {
                 {/* SECCIÓN 3: MULTIMEDIA */}
                 <div className="form-section">
                     <h2 className="section-title">📸 Galería y Portada</h2>
+
 
                     <div className="multimedia-grid">
                         {/* Portada */}
@@ -584,6 +717,23 @@ const CrearTour = () => {
                                 className={errors.maximo_personas ? 'error' : ''}
                             />
                             {errors.maximo_personas && <span className="error-msg">{errors.maximo_personas.message}</span>}
+                        </div>
+                    </div>
+
+                    {/* Categoría del Tour */}
+                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                        <label style={{ marginBottom: '12px' }}>🏷️ Categoría del Tour * <small style={{ fontWeight: 400, color: '#64748b' }}>(Esta categoría se usa para filtrar en el buscador del turista)</small></label>
+                        <div className="categoria-pills">
+                            {CATEGORIAS.map(cat => (
+                                <button
+                                    key={cat.nombre}
+                                    type="button"
+                                    className={`cat-pill-admin ${categoriaSeleccionada === cat.nombre ? 'active' : ''}`}
+                                    onClick={() => setCategoriaSeleccionada(cat.nombre)}
+                                >
+                                    <span>{cat.icon}</span> {cat.nombre}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -716,10 +866,30 @@ const CrearTour = () => {
                                 {...register('id_hotel_base')}
                             >
                                 <option value="">-- Seleccionar Hotel (Opcional) --</option>
-                                {listaHoteles.map(hotel => (
-                                    <option key={hotel.id} value={hotel.id}>{hotel.nombre}</option>
+                                {ciudadDestinoWatch && hotelesFiltrados.map(hotel => (
+                                    <option key={hotel.id} value={hotel.id}>
+                                        🏨 {hotel.nombre} — {hotel.ciudad}
+                                    </option>
                                 ))}
+                                {ciudadDestinoWatch && hotelesFiltrados.length === 0 && (
+                                    <option disabled value="">⚠️ Sin hoteles en "{ciudadDestinoWatch}"</option>
+                                )}
                             </select>
+                            {!ciudadDestinoWatch && (
+                                <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px', display: 'block' }}>
+                                    Escribe la ciudad destino para ver los hoteles disponibles.
+                                </span>
+                            )}
+                            {ciudadDestinoWatch && hotelesFiltrados.length === 0 && (
+                                <span style={{ fontSize: '0.8rem', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                                    ⚠️ No hay hoteles registrados en "{ciudadDestinoWatch}". Puedes registrar uno primero o dejar este campo vacío.
+                                </span>
+                            )}
+                            {ciudadDestinoWatch && hotelesFiltrados.length > 0 && (
+                                <span style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '4px', display: 'block' }}>
+                                    ✅ {hotelesFiltrados.length} hotel(es) disponible(s) cerca de "{ciudadDestinoWatch}"
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>

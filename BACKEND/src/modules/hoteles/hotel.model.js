@@ -7,8 +7,9 @@ const Hotel = {
             INSERT INTO hoteles 
             (nombre, direccion, ciudad, latitud, longitud, estrellas, 
              habitaciones_disponibles, precio_noche, amenidades, descripcion, 
-             fotos_galeria, convenio_pdf_url, estado_convenio) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+             fotos_galeria, convenio_pdf_url, estado_convenio,
+             hora_entrada, hora_salida, telefono, correo_electronico) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
             RETURNING *
         `;
 
@@ -25,7 +26,11 @@ const Hotel = {
             data.descripcion,
             data.fotos_galeria,
             data.convenio_pdf_url,
-            data.estado_convenio || 'Activo'
+            data.estado_convenio || 'Activo',
+            data.hora_entrada || null,
+            data.hora_salida || null,
+            data.telefono || null,
+            data.correo_electronico || null
         ];
 
         const { rows } = await pool.query(query, values);
@@ -102,8 +107,12 @@ const Hotel = {
                 descripcion = $10,
                 fotos_galeria = COALESCE($11, fotos_galeria),
                 convenio_pdf_url = COALESCE($12, convenio_pdf_url),
-                estado_convenio = $13
-            WHERE id_hotel = $14
+                estado_convenio = $13,
+                hora_entrada = $14,
+                hora_salida = $15,
+                telefono = $16,
+                correo_electronico = $17
+            WHERE id_hotel = $18
             RETURNING *
         `;
 
@@ -121,6 +130,10 @@ const Hotel = {
             data.fotos_galeria,
             data.convenio_pdf_url,
             data.estado_convenio,
+            data.hora_entrada || null,
+            data.hora_salida || null,
+            data.telefono || null,
+            data.correo_electronico || null,
             id
         ];
 

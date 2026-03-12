@@ -7,6 +7,7 @@ const { verifyToken } = require('../../middleware/auth.middleware');
 router.get('/available', verifyToken, TourController.getAvailableTours);
 router.get('/mis-tours', verifyToken, TourController.getGuiasTours);
 router.post('/:id/assign', verifyToken, TourController.assignGuia);
+router.delete('/:id/assign', verifyToken, TourController.unassignGuia);
 
 router.post('/', verifyToken, TourController.createTour);
 router.get('/', verifyToken, TourController.getTours);

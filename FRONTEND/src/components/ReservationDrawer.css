@@ -143,6 +143,31 @@
     border-radius: 10px;
 }
 
+.prefilled-dates-notice {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #0369a1;
+    font-size: 14px;
+    background: #f0f9ff;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #bae6fd;
+}
+
+.fixed-dates-range {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: #022b3a;
+    background: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    justify-content: center;
+}
+
 .btn-drawer-next {
     margin-top: 10px;
     padding: 16px;

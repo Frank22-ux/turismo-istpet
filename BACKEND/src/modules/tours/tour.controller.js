@@ -1,4 +1,6 @@
 const Tour = require('./tour.model');
+const Notificacion = require('../admin/notificacion.model');
+const pool = require('../../config/db');
 const path = require('path');
 const fs = require('fs');
 
@@ -43,12 +45,15 @@ const TourController = {
                 id_hotel_base: cleanInt(req.body.id_hotel_base),
                 imagen_portada: imagen_portada_ruta,
                 galeria: galeria_rutas.length > 0 ? JSON.stringify(galeria_rutas) : null,
-                // Nuevos campos de detalle
+                // Campos de detalle
                 dificultad: req.body.dificultad || 'Moderada',
                 maximo_personas: cleanInt(req.body.maximo_personas) || 10,
                 idiomas: parseArr(req.body.idiomas),
                 incluye: parseArr(req.body.incluye),
-                puntos_interes: parseArr(req.body.puntos_interes)
+                puntos_interes: parseArr(req.body.puntos_interes),
+                categoria: clean(req.body.categoria) || 'Aventura',
+                en_oferta: req.body.en_oferta,
+                descuento: req.body.descuento
             };
 
             const newTour = await Tour.create(tourData);
@@ -129,12 +134,15 @@ const TourController = {
                 id_hotel_base: cleanInt(req.body.id_hotel_base),
                 imagen_portada: imagen_portada_ruta,
                 galeria: galeria_rutas.length > 0 ? JSON.stringify(galeria_rutas) : null,
-                // Nuevos campos de detalle (COALESCE en modelo preserva los existentes si no vienen)
+                // Campos de detalle (COALESCE en modelo preserva los existentes si no vienen)
                 dificultad: clean(req.body.dificultad),
                 maximo_personas: cleanInt(req.body.maximo_personas),
                 idiomas: parseArr(req.body.idiomas),
                 incluye: parseArr(req.body.incluye),
-                puntos_interes: parseArr(req.body.puntos_interes)
+                puntos_interes: parseArr(req.body.puntos_interes),
+                categoria: clean(req.body.categoria),
+                en_oferta: req.body.en_oferta !== undefined ? req.body.en_oferta : null,
+                descuento: req.body.descuento !== undefined ? req.body.descuento : null
             };
 
             const updatedTour = await Tour.update(id, tourData);
@@ -204,10 +212,52 @@ const TourController = {
             }
 
             const updatedTour = await Tour.assignGuia(id, id_guia);
+
+            // --- CREAR NOTIFICACIÓN PARA EL ADMINISTRADOR ---
+            try {
+                // Obtener todos los administradores (id_rol = 1)
+                const { rows: admins } = await pool.query('SELECT id_usuario FROM usuarios WHERE id_rol = 1');
+                
+                const guiaNombre = updatedTour.nombre_guia || 'Un guía';
+                const guiaApellido = updatedTour.apellido_guia || '';
+                const tourNombre = updatedTour.nombre || 'un tour';
+                const tourId = parseInt(id) || updatedTour.id_tour;
+
+                for (const admin of admins) {
+                    await Notificacion.create({
+                        id_usuario_destino: admin.id_usuario,
+                        titulo: 'Tour Confirmado por Guía',
+                        mensaje: `El guía <strong>${guiaNombre} ${guiaApellido}</strong> ha confirmado el tour <strong>${tourNombre}</strong>.`,
+                        tipo: 'confirmacion_tour',
+                        id_referencia: tourId
+                    });
+                }
+                console.log(`🔔 Notificación enviada a ${admins.length} administradores`);
+            } catch (notifError) {
+                console.error("❌ Error al crear notificación:", notifError);
+            }
+
             res.json({ message: 'Te has asignado el tour exitosamente', tour: updatedTour });
         } catch (error) {
             console.error("❌ Error en assignGuia:", error);
             res.status(500).json({ message: 'Error al asignarte el tour' });
+        }
+    },
+
+    // --- 9. DESASIGNARME UN TOUR ---
+    unassignGuia: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const id_guia = req.user.id;
+
+            const updatedTour = await Tour.unassignGuia(id, id_guia);
+            if (!updatedTour) {
+                return res.status(400).json({ message: 'No puedes desasignarte de un tour que no tienes asignado' });
+            }
+            res.json({ message: 'Te has desasignado del tour correctamente', tour: updatedTour });
+        } catch (error) {
+            console.error("❌ Error en unassignGuia:", error);
+            res.status(500).json({ message: 'Error al desasignarte del tour' });
         }
     }
 };

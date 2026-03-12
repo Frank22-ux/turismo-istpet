@@ -2,6 +2,7 @@ const User = require('../usuarios/user.model');
 const PasswordReset = require('./password-reset.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const pool = require('../../config/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_temporal_desarrollo';
 
@@ -79,10 +80,15 @@ const AuthController = {
                 });
             }
 
-            // --- 5. VALIDAR SI YA EXISTE ---
+            // --- 5. VALIDAR SI YA EXISTE CORREO O CÉDULA ---
             const existingUser = await User.findByEmail(cleanCorreo);
             if (existingUser) {
                 return res.status(400).json({ message: 'El correo ya está registrado' });
+            }
+            
+            const existingCedula = await pool.query('SELECT id_usuario FROM usuarios WHERE cedula = $1', [cleanCedula]);
+            if (existingCedula.rows.length > 0) {
+                return res.status(400).json({ message: 'La cédula ingresada ya se encuentra registrada.' });
             }
 
             // --- 6. ENCRIPTAR Y CREAR ---
@@ -112,6 +118,12 @@ const AuthController = {
 
         } catch (error) {
             console.error('❌ Error en registro:', error);
+            
+            // Manejar error de Cédula Duplicada (PostgreSQL unique constraint)
+            if (error.code === '23505' && error.constraint === 'usuarios_cedula_key') {
+                return res.status(400).json({ message: 'La cédula ingresada ya se encuentra registrada en el sistema.' });
+            }
+
             const fs = require('fs');
             const path = require('path');
             const logMsg = `[${new Date().toISOString()}] Error en Registro: ${error.stack || error.message}\n`;

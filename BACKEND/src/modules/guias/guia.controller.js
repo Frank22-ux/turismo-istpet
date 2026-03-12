@@ -53,11 +53,14 @@ const GuiaController = {
 
             // 3. Crear los Detalles del Guía
             const guiaData = {
-                idiomas: req.body.idiomas, // Se espera JSON string o array
+                idiomas: Array.isArray(req.body.idiomas) ? JSON.stringify(req.body.idiomas) : (req.body.idiomas || '[]'),
                 experiencia_anios: parseInt(req.body.experiencia) || 0,
-                especialidades: req.body.especialidades,
-                bio: req.body.bio,
-                disponibilidad: req.body.disponibilidad,
+                especialidades: Array.isArray(req.body.especialidades) ? JSON.stringify(req.body.especialidades) : (req.body.especialidades || '[]'),
+                bio: req.body.bio || null,
+                disponibilidad: req.body.disponibilidad || 'Disponible',
+                dias_activos: Array.isArray(req.body.dias_activos) ? JSON.stringify(req.body.dias_activos) : (req.body.dias_activos || '[]'),
+                hora_inicio: req.body.hora_inicio || null,
+                hora_fin: req.body.hora_fin || null,
                 cv_pdf_url,
                 id_hotel_asignado: req.body.id_hotel_asignado || null
             };
@@ -112,14 +115,14 @@ const GuiaController = {
 
             // Actualizar tabla usuarios
             const userData = {
-                primer_nombre: req.body.primer_nombre,
-                segundo_nombre: req.body.segundo_nombre,
-                apellido_paterno: req.body.apellido_paterno,
-                apellido_materno: req.body.apellido_materno,
-                correo: req.body.correo,
-                codigo_pais: req.body.codigo_pais,
-                numero_celular: req.body.numero_celular,
-                foto_url
+                primer_nombre: req.body.primer_nombre || null,
+                segundo_nombre: req.body.segundo_nombre || null,
+                apellido_paterno: req.body.apellido_paterno || null,
+                apellido_materno: req.body.apellido_materno || null,
+                correo: req.body.correo || null,
+                codigo_pais: req.body.codigo_pais || '+593',
+                numero_celular: req.body.numero_celular || null,
+                foto_url: foto_url || null
             };
 
             // Solo actualizar password si se proporciona una nueva
@@ -132,14 +135,31 @@ const GuiaController = {
 
             // Actualizar tabla guias_detalles
             const experienciaParsed = parseInt(req.body.experiencia);
+            
+            // Asegurar que idiomas y especialidades sean JSON strings para ::jsonb
+            const idiomas = Array.isArray(req.body.idiomas) 
+                ? JSON.stringify(req.body.idiomas) 
+                : (typeof req.body.idiomas === 'string' ? req.body.idiomas : '[]');
+                
+            const especialidades = Array.isArray(req.body.especialidades)
+                ? JSON.stringify(req.body.especialidades)
+                : (typeof req.body.especialidades === 'string' ? req.body.especialidades : '[]');
+
+            const dias_activos = Array.isArray(req.body.dias_activos)
+                ? JSON.stringify(req.body.dias_activos)
+                : (typeof req.body.dias_activos === 'string' ? req.body.dias_activos : '[]');
+
             const guiaData = {
-                idiomas: req.body.idiomas,
+                idiomas,
                 experiencia_anios: Number.isFinite(experienciaParsed) ? experienciaParsed : 0,
-                especialidades: req.body.especialidades,
-                bio: req.body.bio,
-                disponibilidad: req.body.disponibilidad,
-                cv_pdf_url,
-                id_hotel_asignado: req.body.id_hotel_asignado
+                especialidades,
+                bio: req.body.bio || null,
+                disponibilidad: req.body.disponibilidad || 'Disponible',
+                dias_activos,
+                hora_inicio: req.body.hora_inicio || null,
+                hora_fin: req.body.hora_fin || null,
+                cv_pdf_url: cv_pdf_url || null,
+                id_hotel_asignado: req.body.id_hotel_asignado || null
             };
             await GuiaDetalle.upsert(id, guiaData);
 
@@ -158,6 +178,19 @@ const GuiaController = {
             res.json({ message: 'Guía eliminado correctamente' });
         } catch (error) {
             res.status(500).json({ message: 'Error al eliminar el guía' });
+        }
+    },
+
+    // --- 5. OBTENER PERFIL DE GUÍA POR ID ---
+    getGuiaProfile: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const profile = await GuiaDetalle.getFullProfile(id);
+            if (!profile) return res.status(404).json({ message: 'Guía no encontrado' });
+            res.json(profile);
+        } catch (error) {
+            console.error("❌ Error en getGuiaProfile:", error);
+            res.status(500).json({ message: 'Error al obtener el perfil del guía' });
         }
     }
 };

@@ -40,9 +40,9 @@ if [ ! -f .env ]; then
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=turismo_db
+DB_NAME=DB_Turismo_C
 DB_USER=postgres
-DB_PASS=postgres
+DB_PASS=1234
 
 # JWT Secret
 JWT_SECRET=your-secret-key-change-in-production

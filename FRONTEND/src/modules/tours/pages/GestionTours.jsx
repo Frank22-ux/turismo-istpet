@@ -100,6 +100,7 @@ const GestionTours = () => {
                             <th>Precio</th>
                             <th>Duración</th>
                             <th>Ciudad</th>
+                            <th>Guía Asignado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -127,6 +128,24 @@ const GestionTours = () => {
                                     <td>${Number(tour.precio).toFixed(2)}</td>
                                     <td>{tour.duracion}</td>
                                     <td>{tour.ciudad_destino}</td>
+                                    <td>
+                                        <div className="guide-cell-simple" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div className="guide-avatar-mini" style={{ width: '24px', height: '24px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#e2e8f0' }}>
+                                                {tour.foto_guia ? (
+                                                    <img 
+                                                        src={tour.foto_guia.startsWith('http') ? tour.foto_guia : `${API_URL}${tour.foto_guia}`} 
+                                                        alt="G" 
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <div style={{ fontSize: '12px', textAlign: 'center' }}>👤</div>
+                                                )}
+                                            </div>
+                                            <span style={{ fontSize: '0.85rem' }}>
+                                                {tour.nombre_guia ? `${tour.nombre_guia} ${tour.apellido_guia || ''}` : <i style={{ color: '#94a3b8' }}>Pendiente</i>}
+                                            </span>
+                                        </div>
+                                    </td>
                                     <td className="actions-cell">
                                         <Link
                                             to={`/admin/detalle-tour/${tour.id_tour}`}
@@ -154,7 +173,7 @@ const GestionTours = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                                <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
                                     No hay tours registrados.
                                 </td>
                             </tr>

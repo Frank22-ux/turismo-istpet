@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { logoutRequest } from '../../../modules/auth/services/auth.service';
+import * as NotificacionService from '../services/notificacion.service';
 import {
     FaMapMarkedAlt,
     FaHotel,
@@ -12,7 +13,9 @@ import {
     FaCog,
     FaSignOutAlt,
     FaBell,
-    FaSearch
+    FaSearch,
+    FaCheck,
+    FaTrash
 } from 'react-icons/fa';
 import './AdminLayout.css';
 
@@ -21,7 +24,53 @@ const AdminLayout = ({ children, title = "Panel de Administración" }) => {
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [notificaciones, setNotificaciones] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    useEffect(() => {
+        cargarNotificaciones();
+        // Polling para nuevas notificaciones cada 10 segundos
+        const interval = setInterval(cargarNotificaciones, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const cargarNotificaciones = async () => {
+        try {
+            const data = await NotificacionService.getNotificaciones();
+            setNotificaciones(data);
+            setUnreadCount(data.filter(n => !n.leida).length);
+        } catch (error) {
+            console.error('Error al cargar notificaciones:', error);
+        }
+    };
+
+    const handleMarkAsRead = async (id) => {
+        try {
+            await NotificacionService.marcarComoLeida(id);
+            cargarNotificaciones();
+        } catch (error) {
+            console.error('Error al marcar como leída:', error);
+        }
+    };
+
+    const handleMarkAllRead = async () => {
+        try {
+            await NotificacionService.marcarTodasComoLeidas();
+            cargarNotificaciones();
+        } catch (error) {
+            console.error('Error al marcar todas como leídas:', error);
+        }
+    };
+
+    const handleClearAll = async () => {
+        try {
+            await NotificacionService.eliminarTodas();
+            cargarNotificaciones();
+        } catch (error) {
+            console.error('Error al eliminar notificaciones:', error);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -176,19 +225,43 @@ const AdminLayout = ({ children, title = "Panel de Administración" }) => {
                                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                             >
                                 <FaBell />
-                                <span className="notification-badge">0</span>
+                                {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
                             </button>
 
                             {isNotificationsOpen && (
                                 <div className="notifications-dropdown">
                                     <div className="notifications-header">
-                                        <h4>Notificaciones</h4>
-                                        <button className="mark-read-btn">Limpiar</button>
+                                        <h4>Notificaciones ({unreadCount})</h4>
+                                        <div className="notif-header-actions">
+                                            <button className="text-btn" onClick={handleMarkAllRead}>Leídas</button>
+                                            <button className="mark-read-btn" onClick={handleClearAll}>Limpiar</button>
+                                        </div>
                                     </div>
                                     <div className="notifications-list">
-                                        <div className="no-notifications">
-                                            <p>No tienes notificaciones pendientes</p>
-                                        </div>
+                                        {notificaciones.length > 0 ? (
+                                            notificaciones.map((notif) => (
+                                                <div key={notif.id_notificacion} className={`notification-item ${notif.leida ? 'read' : 'unread'}`}>
+                                                    <div className="notif-content">
+                                                        <p className="notif-title">{notif.titulo}</p>
+                                                        <p className="notif-message" dangerouslySetInnerHTML={{ __html: notif.mensaje }}></p>
+                                                        <span className="notif-time">{new Date(notif.fecha_creacion).toLocaleString()}</span>
+                                                    </div>
+                                                    {!notif.leida && (
+                                                        <button 
+                                                            className="mark-as-read-btn" 
+                                                            onClick={() => handleMarkAsRead(notif.id_notificacion)}
+                                                            title="Marcar como leída"
+                                                        >
+                                                            <FaCheck />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="no-notifications">
+                                                <p>No tienes notificaciones pendientes</p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="notifications-footer">
                                         <Link to="/admin" onClick={() => setIsNotificationsOpen(false)}>Ver historial</Link>

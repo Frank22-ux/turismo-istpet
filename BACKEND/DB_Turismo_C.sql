@@ -5,6 +5,8 @@
 -- ==========================================================
 
 -- Limpieza inicial para asegurar una instalación limpia
+DROP TABLE IF EXISTS notificaciones CASCADE;
+DROP TABLE IF EXISTS hotel_habitaciones CASCADE;
 DROP TABLE IF EXISTS seguimiento_guia CASCADE;
 DROP TABLE IF EXISTS pagos CASCADE;
 DROP TABLE IF EXISTS reservas CASCADE;
@@ -80,7 +82,11 @@ CREATE TABLE hoteles (
     descripcion TEXT,
     fotos_galeria JSONB, -- [url1, url2...]
     convenio_pdf_url VARCHAR(500),
-    estado_convenio VARCHAR(20) DEFAULT 'Activo'
+    estado_convenio VARCHAR(20) DEFAULT 'Activo',
+    hora_entrada TIME,           -- Hora de check-in
+    hora_salida TIME,            -- Hora de check-out
+    telefono VARCHAR(20),        -- Número de contacto del hotel
+    correo_electronico VARCHAR(150) -- Email de contacto del hotel
 );
 
 -- 5. TABLA: CATEGORIAS
@@ -115,6 +121,10 @@ CREATE TABLE tours (
     incluye JSONB,
     puntos_interes JSONB,
     
+    -- Ofertas Especiales
+    en_oferta BOOLEAN DEFAULT false,
+    descuento INTEGER DEFAULT 0,
+    
     -- Relaciones
     id_categoria INTEGER,
     id_hotel_base INTEGER,
@@ -134,6 +144,9 @@ CREATE TABLE guias_detalles (
     especialidades JSONB, -- ["Aventura", "Cultura"]
     bio TEXT,
     disponibilidad VARCHAR(50), -- Tiempo completo, Flexible
+    dias_activos JSONB, -- ["Lunes", "Martes"]
+    hora_inicio TIME,
+    hora_fin TIME,
     cv_pdf_url VARCHAR(500),
     id_hotel_asignado INTEGER,
     
@@ -145,7 +158,8 @@ CREATE TABLE guias_detalles (
 CREATE TABLE reservas (
     id_reserva SERIAL PRIMARY KEY,
     id_turista INTEGER NOT NULL,
-    id_tour INTEGER NOT NULL,
+    id_tour INTEGER,
+    id_hotel INTEGER,
     fecha_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actividad DATE NOT NULL,
     cantidad_personas INTEGER DEFAULT 1,
@@ -153,7 +167,9 @@ CREATE TABLE reservas (
     estado_reserva VARCHAR(50) DEFAULT 'Pendiente', -- Pendiente, Confirmada, Cancelada
     
     CONSTRAINT fk_reserva_turista FOREIGN KEY (id_turista) REFERENCES usuarios(id_usuario),
-    CONSTRAINT fk_reserva_tour FOREIGN KEY (id_tour) REFERENCES tours(id_tour)
+    CONSTRAINT fk_reserva_tour FOREIGN KEY (id_tour) REFERENCES tours(id_tour),
+    CONSTRAINT fk_reserva_hotel FOREIGN KEY (id_hotel) REFERENCES hoteles(id_hotel),
+    CONSTRAINT chk_tour_or_hotel CHECK (id_tour IS NOT NULL OR id_hotel IS NOT NULL)
 );
 
 -- 9. TABLA: PAGOS
@@ -208,3 +224,53 @@ VALUES ('Jorge', 'Andrés', 'Guzmán', 'Mendoza', '1700000002', 'jorge.guia@ecru
 -- Turista de prueba (El usuario logueado actualmente)
 INSERT INTO usuarios (primer_nombre, apellido_paterno, cedula, correo, password, codigo_pais, numero_celular, id_rol) 
 VALUES ('Cristian', 'Traveler', '1700000003', 'cristian@turista.com', '$2b$10$Xm7vIubR9UuT7m/C6Zt7.uUXkH/f9X1L2LzBw7q1RUp7O8yB9q5y2', '+593', '0977777777', 3);
+
+-- 11. TABLA: HOTEL_HABITACIONES
+CREATE TABLE hotel_habitaciones (
+    id_habitacion SERIAL PRIMARY KEY,
+    id_hotel INTEGER NOT NULL REFERENCES hoteles(id_hotel) ON DELETE CASCADE,
+    tipo VARCHAR(100) NOT NULL,
+    cantidad INTEGER NOT NULL DEFAULT 1,
+    precio DECIMAL(10, 2) NOT NULL
+);
+
+-- 12. TABLA: NOTIFICACIONES
+CREATE TABLE notificaciones (
+    id_notificacion SERIAL PRIMARY KEY,
+    id_usuario_destino INTEGER NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    mensaje TEXT NOT NULL,
+    leida BOOLEAN DEFAULT FALSE,
+    tipo VARCHAR(50), 
+    id_referencia INTEGER,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notificacion_usuario FOREIGN KEY (id_usuario_destino) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- 13. TABLAS DE RESEÑAS
+CREATE TABLE resenas_tours (
+    id_resena SERIAL PRIMARY KEY,
+    id_tour INT REFERENCES tours(id_tour) ON DELETE CASCADE,
+    id_turista INT REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    calificacion INT CHECK (calificacion BETWEEN 1 AND 5) NOT NULL,
+    comentario TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE resenas_guias (
+    id_resena SERIAL PRIMARY KEY,
+    id_guia INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    id_turista INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    calificacion INTEGER NOT NULL CHECK (calificacion BETWEEN 1 AND 5),
+    comentario TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE resenas_hoteles (
+    id_resena SERIAL PRIMARY KEY,
+    id_hotel INTEGER NOT NULL REFERENCES hoteles(id_hotel) ON DELETE CASCADE,
+    id_turista INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    calificacion INTEGER NOT NULL CHECK (calificacion BETWEEN 1 AND 5),
+    comentario TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

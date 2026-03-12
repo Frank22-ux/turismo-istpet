@@ -3,7 +3,7 @@ const pool = require('../../config/db');
 const AdminController = {
     getStats: async (req, res) => {
         try {
-            const [tours, hoteles, guias, usuarios, reservas, topTours, trend] = await Promise.all([
+            const [tours, hoteles, guias, usuarios, reservas, topTours, trend, usersDist, revenueByCategory, destDist] = await Promise.all([
                 pool.query('SELECT COUNT(*) FROM tours'),
                 pool.query('SELECT COUNT(*) FROM hoteles'),
                 pool.query('SELECT COUNT(*) FROM guias_detalles'),
@@ -26,6 +26,38 @@ const AdminController = {
                     WHERE fecha_actividad >= NOW() - INTERVAL '6 months'
                     GROUP BY mes, DATE_TRUNC('month', fecha_actividad)
                     ORDER BY DATE_TRUNC('month', fecha_actividad)
+                `),
+                // 1. Distribución de usuarios
+                pool.query(`
+                    SELECT 
+                        CASE WHEN id_rol = 2 THEN 'Guías' ELSE 'Turistas' END as name,
+                        COUNT(*)::int as value
+                    FROM usuarios
+                    WHERE id_rol IN (2, 3)
+                    GROUP BY id_rol
+                `),
+                // 2. Ingresos por Categoría (Reemplaza Estado de Reservas)
+                pool.query(`
+                    SELECT 
+                        t.categoria as name,
+                        SUM(r.total_pagado)::float as value
+                    FROM reservas r
+                    JOIN tours t ON r.id_tour = t.id_tour
+                    WHERE t.categoria IS NOT NULL
+                    GROUP BY t.categoria
+                    ORDER BY value DESC
+                `),
+                // 3. Destinos más populares
+                pool.query(`
+                    SELECT 
+                        t.ciudad_destino as name,
+                        COUNT(r.id_reserva)::int as value
+                    FROM reservas r
+                    JOIN tours t ON r.id_tour = t.id_tour
+                    WHERE t.ciudad_destino IS NOT NULL
+                    GROUP BY t.ciudad_destino
+                    ORDER BY value DESC
+                    LIMIT 5
                 `)
             ]);
 
@@ -38,6 +70,9 @@ const AdminController = {
                 ingresos: parseFloat(reservas.rows[0].sum || 0),
                 topTours: topTours.rows,
                 trend: trend.rows,
+                usersDistribution: usersDist.rows,
+                revenueByCategory: revenueByCategory.rows,
+                destinations: destDist.rows,
                 fechaActualizacion: new Date()
             });
         } catch (error) {

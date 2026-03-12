@@ -4,11 +4,12 @@ import { logoutRequest } from '../../auth/services/auth.service';
 import api from '../../../core/api';
 // import { tourosMock } from '../../../core/mockData'; // Eliminado mock data
 import {
-    FaArrowLeft, FaHeart, FaMapMarkerAlt, FaClock, FaUsers, FaStar,
+    FaArrowLeft, FaArrowRight, FaHeart, FaMapMarkerAlt, FaClock, FaUsers, FaStar,
     FaSearch, FaFilter, FaTrash, FaEye, FaUserCircle, FaSuitcase,
-    FaSignOutAlt, FaUserEdit, FaChevronDown, FaTimes
+    FaSignOutAlt, FaUserEdit, FaChevronDown, FaTimes, FaCalendarAlt
 } from 'react-icons/fa';
 import './TuristaPages.css';
+import './TuristaDashboard.css';
 import TourDrawer from '../../../components/TourDrawer';
 import ReservationDrawer from '../../../components/ReservationDrawer';
 import PaymentDrawer from '../../../components/PaymentDrawer';
@@ -36,20 +37,38 @@ const MisFavoritos = () => {
         try {
             const response = await api.get('/favoritos');
             // Mapeamos los datos del backend al formato esperado por la vista
-            const mapped = response.data.map(f => ({
-                id_tour: f.id_tour || f.id_hotel,
-                id_hotel: f.id_hotel,
-                nombre: f.tour_nombre || f.hotel_nombre,
-                precio: parseFloat(f.tour_precio || f.hotel_precio) || 0,
-                ciudad_destino: 'Ecuador', // Podríamos traerlo en el JOIN
-                imagen: f.tour_img
-                    ? `http://localhost:4000${f.tour_img}`
-                    : `https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=70&sig=${f.id_tour || f.id_hotel}`,
-                calificacion: 5.0,
-                duracion: 'Todo el día',
-                maximo_personas: 10,
-                resenas: 0
-            }));
+            const mapped = response.data.map(f => {
+                let imgUrl = `https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=70&sig=${f.id_tour || f.id_hotel}`;
+                
+                if (f.id_tour && f.tour_img) {
+                    imgUrl = `http://localhost:4000${f.tour_img}`;
+                } else if (f.id_hotel && f.hotel_fotos) {
+                    try {
+                        const galeria = typeof f.hotel_fotos === 'string' ? JSON.parse(f.hotel_fotos) : f.hotel_fotos;
+                        if (Array.isArray(galeria) && galeria.length > 0) {
+                            imgUrl = `http://localhost:4000${galeria[0]}`;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing hotel photos:", e);
+                    }
+                }
+
+                return {
+                    id_tour: f.id_tour,
+                    id_hotel: f.id_hotel,
+                    nombre: f.tour_nombre || f.hotel_nombre,
+                    precio: f.tour_precio || f.hotel_precio || 0,
+                    imagen: imgUrl,
+                    calificacion: f.tour_calificacion || f.hotel_estrellas || 4.5,
+                    resenas: f.tour_resenas || 10,
+                    duracion: f.tour_duracion || '1 día',
+                    maximo_personas: f.maximo_personas || 15,
+                    dificultad: f.dificultad || (f.id_hotel ? 'Hotel' : 'Moderada'),
+                    ciudad_destino: f.ciudad_destino || f.hotel_ciudad || 'Ecuador',
+                    categoria: f.categoria || 'Hospedaje',
+                    es_hotel: !!f.id_hotel
+                };
+            });
             setFavTours(mapped);
         } catch (error) {
             console.error("Error fetching favoritos:", error);
@@ -93,7 +112,7 @@ const MisFavoritos = () => {
         try {
             const payload = idHotel ? { id_hotel: id } : { id_tour: id };
             await api.delete('/favoritos', { data: payload });
-            setFavTours(prev => prev.filter(f => f.id_tour !== id));
+            setFavTours(prev => prev.filter(f => (f.id_tour !== id && f.id_hotel !== id)));
         } catch (error) {
             console.error("Error al quitar favorito:", error);
             alert("No se pudo quitar de favoritos");
@@ -256,40 +275,42 @@ const MisFavoritos = () => {
                         )}
                     </div>
                 ) : (
-                    <div className="favoritos-grid">
+                    <div className="tours-grid">
                         {filtrados.map(tour => (
-                            <div key={tour.id_tour} className="fav-card">
-                                <div className="fav-card-img">
+                            <div key={tour.id_tour || tour.id_hotel} className="tour-card">
+                                <div className="tour-card-img">
                                     <img
-                                        src={`https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=70&sig=${tour.id_tour}`}
+                                        src={tour.imagen}
                                         alt={tour.nombre}
+                                        onError={e => { e.target.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80'; }}
                                     />
-                                    {/* Badge rating */}
-                                    <div className="fav-rating-badge">
-                                        <FaStar /> {tour.calificacion}
-                                    </div>
-                                    {/* Botón quitar */}
-                                    <button className="btn-quitar-fav" onClick={() => quitarFavorito(tour.id_tour, tour.id_hotel)} title="Quitar de favoritos">
+                                    <span className="tour-dificultad" style={{ background: tour.es_hotel ? 'var(--ocean)' : 'rgba(0,0,0,0.55)' }}>
+                                        {tour.dificultad}
+                                    </span>
+                                    <button className="btn-fav fav-on" onClick={() => quitarFavorito(tour.id_tour, tour.id_hotel)} title="Quitar de favoritos">
                                         <FaHeart />
                                     </button>
-                                    {/* Badge precio */}
-                                    <div className="fav-precio-badge">${tour.precio}</div>
+                                    <div className="tour-precio-badge">${tour.precio}</div>
                                 </div>
-                                <div className="fav-card-body">
-                                    <h3 className="fav-nombre">{tour.nombre}</h3>
-                                    <p className="fav-ciudad"><FaMapMarkerAlt /> {tour.ciudad_destino}</p>
-                                    <div className="fav-meta">
+                                <div className="tour-card-body">
+                                    <div className="tour-rating-row">
+                                        <span className="tour-stars">{'⭐'.repeat(Math.round(tour.calificacion || 0))}</span>
+                                        <span className="tour-rating-num">{tour.calificacion} <small>({tour.resenas} reseñas)</small></span>
+                                    </div>
+                                    <h3 className="tour-nombre">{tour.nombre}</h3>
+                                    <p className="tour-loc"><FaMapMarkerAlt /> {tour.ciudad_destino}</p>
+                                    <div className="tour-meta-row">
                                         <span><FaClock /> {tour.duracion}</span>
-                                        <span><FaUsers /> Máx. {tour.maximo_personas}</span>
+                                        <span><FaUsers /> {tour.es_hotel ? 'Check-in' : `Máx. ${tour.maximo_personas}`}</span>
                                     </div>
-                                    <div className="fav-resenas">
-                                        {'⭐'.repeat(Math.round(tour.calificacion))}
-                                        <span>{tour.calificacion} · {tour.resenas} reseñas</span>
-                                    </div>
-                                    <div className="fav-acciones">
-                                        <button className="btn-reservar-fav" onClick={() => handleOpenReservation(tour)}>Reservar ahora</button>
-                                        <button className="btn-ver-fav" onClick={() => handleVerDetalles(tour)} title="Ver detalles"><FaEye /></button>
-                                        <button className="btn-eliminar-fav" onClick={() => quitarFavorito(tour.id_tour, tour.id_hotel)} title="Eliminar"><FaTrash /></button>
+                                    <div className="tour-card-footer">
+                                        <div>
+                                            <p className="tour-desde">Categoría</p>
+                                            <p className="tour-price-small" style={{ color: 'var(--ocean)', fontWeight: 700, fontSize: '12px' }}>{tour.categoria}</p>
+                                        </div>
+                                        <div className="tour-actions-flex">
+                                            <button className="btn-reservar" onClick={() => handleVerDetalles(tour)}>Ver detalles</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -307,6 +328,8 @@ const MisFavoritos = () => {
             <TourDrawer
                 tour={selectedTour}
                 isOpen={isDrawerOpen}
+                isFavorite={selectedTour && favTours.some(f => f.id_tour === (selectedTour.id_tour || selectedTour.id))}
+                onToggleFavorite={(id) => quitarFavorito(id, selectedTour?.id_hotel)}
                 onClose={() => setIsDrawerOpen(false)}
                 onReserve={(t) => {
                     setIsDrawerOpen(false);

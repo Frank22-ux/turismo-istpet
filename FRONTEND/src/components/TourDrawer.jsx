@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
     FaTimes, FaMapMarkerAlt, FaClock, FaUsers,
     FaStar, FaCheck, FaLanguage, FaMountain,
-    FaCalendarAlt, FaInfoCircle, FaHeart, FaShareAlt, FaArrowLeft
+    FaCalendarAlt, FaInfoCircle, FaHeart, FaShareAlt, FaArrowLeft, FaUserCircle
 } from 'react-icons/fa';
 import './TourDrawer.css';
 
-const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
+const TourDrawer = ({ tour, isOpen, onClose, onReserve, isFavorite, onToggleFavorite }) => {
     const [activeTab, setActiveTab] = useState('info');
 
     // Cerrar con la tecla Esc
@@ -17,6 +17,28 @@ const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
     }, [onClose]);
 
     if (!tour) return null;
+
+    // Helper para parsear arrays que vengan como string JSON de la base de datos
+    const parseArray = (data, fallback) => {
+        if (!data) return fallback;
+        if (Array.isArray(data)) return data;
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            return fallback;
+        }
+    };
+
+    const idiomasParsed = parseArray(tour.idiomas, ['Español', 'Inglés']);
+    const puntosInteresParsed = parseArray(tour.puntos_interes, []);
+    const incluyeParsed = parseArray(tour.incluye, []);
+    
+    // Construir la URL de la imagen
+    const imageUrl = tour.imagen_portada 
+        ? (tour.imagen_portada.startsWith('http') ? tour.imagen_portada : `http://localhost:4000${tour.imagen_portada}`)
+        : tour.imagen 
+            ? (tour.imagen.startsWith('http') ? tour.imagen : `http://localhost:4000${tour.imagen}`)
+            : `https://images.unsplash.com/photo-1551854304-25049c10e254?w=800&q=80&sig=${tour.id_tour || 1}`;
 
     return (
         <div className={`tour-drawer-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
@@ -30,12 +52,18 @@ const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
                 {/* ── Cabecera con Imagen ── */}
                 <div className="drawer-header-img">
                     <img
-                        src={tour.imagen_portada || tour.imagen || `https://images.unsplash.com/photo-1551854304-25049c10e254?w=800&q=80&sig=${tour.id_tour || 1}`}
+                        src={imageUrl}
                         alt={tour.nombre}
                     />
                     <div className="drawer-header-overlay" />
                     <div className="drawer-header-actions">
-                        <button className="btn-drawer-action"><FaHeart /></button>
+                        <button 
+                            className={`btn-drawer-action ${isFavorite ? 'fav-on' : ''}`} 
+                            onClick={() => onToggleFavorite?.(tour.id_tour || tour.id)}
+                            title={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
+                        >
+                            <FaHeart />
+                        </button>
                         <button className="btn-drawer-action"><FaShareAlt /></button>
                     </div>
                 </div>
@@ -72,11 +100,59 @@ const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
                         </div>
                         <div className="spec-item">
                             <FaUsers className="spec-icon" />
-                            <div><p className="spec-label">Capacidad</p><p className="spec-val">{tour.maximo_personas || '12'} pax</p></div>
+                            <div>
+                                <p className="spec-label">Capacidad</p>
+                                <p className="spec-val">
+                                    {tour.maximo_personas ? (
+                                        `${(tour.maximo_personas - (tour.cupos_ocupados || 0))} / ${tour.maximo_personas}`
+                                    ) : '12'} pax
+                                </p>
+                            </div>
                         </div>
                         <div className="spec-item">
                             <FaLanguage className="spec-icon" />
-                            <div><p className="spec-label">Idiomas</p><p className="spec-val">{tour.idiomas?.join(', ') || 'Español, Inglés'}</p></div>
+                            <div><p className="spec-label">Idiomas</p><p className="spec-val">{idiomasParsed.join(', ')}</p></div>
+                        </div>
+                    </div>
+
+                    {/* ── Guía Asignado ── */}
+                    <div className="drawer-guide-info" style={{ 
+                        margin: '1.5rem 0', 
+                        padding: '1rem', 
+                        backgroundColor: '#f8fafc', 
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        border: '1px solid #e2e8f0'
+                    }}>
+                        <div className="guide-avatar-mini" style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            borderRadius: '50%', 
+                            backgroundColor: '#10b981',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '1.2rem',
+                            overflow: 'hidden'
+                        }}>
+                            {tour.foto_guia ? (
+                                <img 
+                                    src={tour.foto_guia.startsWith('http') ? tour.foto_guia : `http://localhost:4000${tour.foto_guia}`} 
+                                    alt={tour.nombre_guia} 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <FaUserCircle style={{ color: 'white' }} />
+                            )}
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Guía Especialista</p>
+                            <p style={{ margin: 0, fontSize: '1rem', color: '#1e293b', fontWeight: '600' }}>
+                                {tour.nombre_guia ? `${tour.nombre_guia} ${tour.apellido_guia || ''}` : 'Por asignar'}
+                            </p>
                         </div>
                     </div>
 
@@ -105,8 +181,8 @@ const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
                                 <div className="drawer-itinerary">
                                     <h4><FaCalendarAlt /> Puntos de interés</h4>
                                     <ul>
-                                        {(tour.puntos_interes && tour.puntos_interes.length > 0)
-                                            ? tour.puntos_interes.map((punto, i) => <li key={i}>{punto}</li>)
+                                        {puntosInteresParsed.length > 0
+                                            ? puntosInteresParsed.map((punto, i) => <li key={i}>{punto}</li>)
                                             : (
                                                 <>
                                                     <li>Caminata guiada por senderos naturales</li>
@@ -124,8 +200,8 @@ const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
                         {activeTab === 'include' && (
                             <div className="animate-fade-in">
                                 <div className="include-list">
-                                    {(tour.incluye && tour.incluye.length > 0
-                                        ? tour.incluye
+                                    {(incluyeParsed.length > 0
+                                        ? incluyeParsed
                                         : ['Transporte privado', 'Guía bilingüe', 'Almuerzo típico', 'Entradas', 'Seguro de viaje']
                                     ).map((item, idx) => (
                                         <div key={idx} className="include-item">
@@ -146,9 +222,16 @@ const TourDrawer = ({ tour, isOpen, onClose, onReserve }) => {
                         <p className="drawer-price-val">${tour.price || tour.precio || '85'}</p>
                     </div>
                     <button className="btn-drawer-reserve" onClick={() => { onReserve?.(tour); onClose(); }}>
-                        {tour.isGuideView ? 'Confirmar Tour' : 'Reservar Ahora'}
+                        {tour.isGuideView 
+                            ? (tour.id_guia_asignado ? 'Desconfirmar Tour' : 'Confirmar Tour') 
+                            : 'Reservar Ahora'}
                         <FaArrowLeft style={{ transform: 'rotate(180deg)', marginLeft: '8px' }} />
                     </button>
+                    {tour.estado === 'Completada' && (
+                        <button className="btn-drawer-rate" onClick={() => { window.location.href = '/mis-reservas'; }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 24px', borderRadius: '12px', background: '#fcd34d', border: 'none', color: '#92400e', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s' }}>
+                            <FaStar /> Calificar Experiencia
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

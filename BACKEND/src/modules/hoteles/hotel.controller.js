@@ -45,7 +45,11 @@ const HotelController = {
                 descripcion: req.body.descripcion || '',
                 fotos_galeria: JSON.stringify(fotos_galeria),
                 convenio_pdf_url,
-                estado_convenio: req.body.estado_convenio || 'Activo'
+                estado_convenio: req.body.estado_convenio || 'Activo',
+                hora_entrada: req.body.hora_entrada || null,
+                hora_salida: req.body.hora_salida || null,
+                telefono: req.body.telefono || null,
+                correo_electronico: req.body.correo_electronico || null
             };
 
             const newHotel = await Hotel.create(hotelData);
@@ -148,7 +152,11 @@ const HotelController = {
                 descripcion: req.body.descripcion !== undefined ? req.body.descripcion : existingHotel.descripcion,
                 fotos_galeria: JSON.stringify(fotos_galeria),
                 convenio_pdf_url,
-                estado_convenio: req.body.estado_convenio || existingHotel.estado_convenio
+                estado_convenio: req.body.estado_convenio || existingHotel.estado_convenio,
+                hora_entrada: req.body.hora_entrada !== undefined ? req.body.hora_entrada : existingHotel.hora_entrada,
+                hora_salida: req.body.hora_salida !== undefined ? req.body.hora_salida : existingHotel.hora_salida,
+                telefono: req.body.telefono !== undefined ? req.body.telefono : existingHotel.telefono,
+                correo_electronico: req.body.correo_electronico !== undefined ? req.body.correo_electronico : existingHotel.correo_electronico
             };
 
             const updatedHotel = await Hotel.update(id, hotelData);

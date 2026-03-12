@@ -42,6 +42,7 @@ import GuiaReservas from './modules/tours/pages/GuiaReservas';
 import GuiaGanancias from './modules/tours/pages/GuiaGanancias';
 import GuiaEstadisticas from './modules/tours/pages/GuiaEstadisticas';
 import GuiaEditarPerfil from './modules/tours/pages/GuiaEditarPerfil';
+import MisResenas from './modules/resenas/pages/MisResenas';
 import GuiaDisponibilidad from './modules/tours/pages/GuiaDisponibilidad';
 import GuiaMisResenas from './modules/tours/pages/GuiaMisResenas';
 
@@ -141,6 +142,11 @@ function App() {
         <Route path="/mis-reservas" element={
           <ProtectedRoute requiredRoles={[ROLES.TURISTA]}>
             <MisReservas />
+          </ProtectedRoute>
+        } />
+        <Route path="/mis-resenas" element={
+          <ProtectedRoute requiredRoles={[ROLES.TURISTA]}>
+            <MisResenas />
           </ProtectedRoute>
         } />
         <Route path="/hotel/:id" element={

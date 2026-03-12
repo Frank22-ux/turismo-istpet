@@ -16,6 +16,7 @@ import './GestionReservas.css';
 const GestionReservas = () => {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detalleReserva, setDetalleReserva] = useState(null);
 
   useEffect(() => {
     const fetchReservas = async () => {
@@ -47,7 +48,7 @@ const GestionReservas = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleApprovePayment = (id) => {
+  const handleApprovePayment = async (id) => {
     Swal.fire({
       title: '¿Confirmar Pago?',
       text: "Se registrará el pago para esta reserva de forma permanente.",
@@ -58,22 +59,31 @@ const GestionReservas = () => {
       confirmButtonText: 'Sí, confirmar',
       cancelButtonText: 'Cancelar',
       customClass: { popup: 'modern-swal-popup' }
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setReservas(reservas.map(res =>
-          res.id === id ? { ...res, estadoPago: 'Pagado' } : res
-        ));
-        Swal.fire({
-          title: '¡Pago Confirmado!',
-          text: 'El estado de la reserva ha sido actualizado a Pagado.',
-          icon: 'success',
-          confirmButtonColor: '#2ecc71'
-        });
+        try {
+          // Cambiamos el estado de manera asincrónica con la API (/api/reservas)
+          await api.patch(`/reservas/${id}/estado`, { estado: 'Pagado' });
+          
+          setReservas(reservas.map(res =>
+            res.id === id ? { ...res, estadoPago: 'Pagado' } : res
+          ));
+          
+          Swal.fire({
+            title: '¡Pago Confirmado!',
+            text: 'El estado de la reserva ha sido actualizado a Pagado.',
+            icon: 'success',
+            confirmButtonColor: '#2ecc71'
+          });
+        } catch (error) {
+          console.error("Error confirmando pago:", error);
+          Swal.fire('Error', 'No se pudo confirmar el pago. Intenta nuevamente.', 'error');
+        }
       }
     });
   };
 
-  const handleCancelReservation = (id) => {
+  const handleCancelReservation = async (id) => {
     Swal.fire({
       title: '¿Cancelar Reserva?',
       text: "¡Esta acción cambiará el estado de la reserva a Cancelado!",
@@ -84,17 +94,26 @@ const GestionReservas = () => {
       confirmButtonText: 'Sí, cancelar',
       cancelButtonText: 'Volver',
       customClass: { popup: 'modern-swal-popup' }
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setReservas(reservas.map(res =>
-          res.id === id ? { ...res, estadoPago: 'Cancelado' } : res
-        ));
-        Swal.fire({
-          title: '¡Cancelada!',
-          text: 'La reserva ha sido cancelada exitosamente.',
-          icon: 'success',
-          confirmButtonColor: '#2ecc71'
-        });
+        try {
+           // Cancelación a la BD
+           await api.patch(`/reservas/${id}/estado`, { estado: 'Cancelado' });
+           
+           setReservas(reservas.map(res =>
+             res.id === id ? { ...res, estadoPago: 'Cancelado' } : res
+           ));
+           
+           Swal.fire({
+             title: '¡Cancelada!',
+             text: 'La reserva ha sido cancelada exitosamente.',
+             icon: 'success',
+             confirmButtonColor: '#2ecc71'
+           });
+        } catch (error) {
+           console.error("Error cancelando reserva:", error);
+           Swal.fire('Error', 'No se pudo cancelar la reserva. Intenta nuevamente.', 'error');
+        }
       }
     });
   };
@@ -211,7 +230,10 @@ const GestionReservas = () => {
                           <FaTimes /> Cancelar
                         </button>
                       )}
-                      <button className="btn-action-solid btn-details">
+                      <button 
+                        className="btn-action-solid btn-details"
+                        onClick={() => setDetalleReserva(res)}
+                      >
                         <FaEye /> Detalle
                       </button>
                     </div>
@@ -222,6 +244,46 @@ const GestionReservas = () => {
           </tbody>
         </table>
       </div>
+
+      {/* ── Drawer de Detalles de la Reserva ── */}
+      {detalleReserva && (
+          <div className="drawer-overlay" onClick={() => setDetalleReserva(null)}>
+              <div className="drawer-container" onClick={(e) => e.stopPropagation()}>
+                  <button className="drawer-close" onClick={() => setDetalleReserva(null)}>
+                      <FaTimes />
+                  </button>
+                  <h2 className="drawer-title">📋 Detalles de la Reserva</h2>
+                  <div className="drawer-content">
+                      <div className="detalle-block">
+                          <strong>ID:</strong> {detalleReserva.id}
+                      </div>
+                      <div className="detalle-block">
+                          <strong>Turista:</strong> {detalleReserva.turista}
+                      </div>
+                      <div className="detalle-block">
+                          <strong>Tour:</strong> {detalleReserva.tour}
+                      </div>
+                      <div className="detalle-block">
+                          <strong>Fecha:</strong> {detalleReserva.fecha}
+                      </div>
+                      <div className="detalle-block">
+                          <strong>Pax:</strong> {detalleReserva.pax}
+                      </div>
+                      <div className="detalle-block">
+                          <strong>Monto Cancelado:</strong> ${Number(detalleReserva.total || 0).toFixed(2)}
+                      </div>
+                      <div className="detalle-block">
+                          <strong>Estado de Pago:</strong> <span className={`badge badge-${detalleReserva.estadoPago.toLowerCase()}`}>{detalleReserva.estadoPago}</span>
+                      </div>
+                  </div>
+                  <div className="drawer-footer">
+                      <button className="btn-secondary" onClick={() => setDetalleReserva(null)}>
+                          Cerrar
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 

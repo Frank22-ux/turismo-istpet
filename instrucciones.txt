@@ -1,13 +1,49 @@
-cd BACKEND
-npm install
-npm run dev
+=============================================================================
+📜 INSTRUCCIONES PARA DESPLEGAR EL SISTEMA "TURISMO ISTPET" LOCALMENTE
+=============================================================================
 
-cd FRONTEND
-npm install
-npm run dev
+1️⃣ CLONAR EL REPOSITORIO
+Ejecuta el siguiente comando en tu terminal para obtener el código de la rama específica:
+   git clone -b cristhofer-parreno https://github.com/Frank22-ux/turismo-istpet.git
 
-SELECT id_usuario, primer_nombre, correo, id_rol FROM usuarios;
+2️⃣ CONFIGURAR Y LEVANTAR EL BACKEND
+   a. Ingresa a la carpeta del backend:
+      cd turismo-istpet/BACKEND
+   
+   b. Instala las dependencias necesarias:
+      npm install
+      
+   c. Crea un archivo llamado ".env" dentro de la carpeta BACKEND con el siguiente contenido (ajusta el usuario y contraseña de tu PostgreSQL):
+      PORT=4000
+      DB_HOST=localhost
+      DB_USER=postgres
+      DB_PASSWORD=1234
+      DB_NAME=DB_Turismo_C
+      DB_PORT=5432
+      JWT_SECRET=mi_secreto_super_seguro
 
-UPDATE usuarios 
-SET id_rol = 1 
-WHERE correo = 'jose22.quezada@gmail.com';
+   d. Levanta el servidor en modo desarrollo:
+      npm run dev
+
+3️⃣ CONFIGURAR Y LEVANTAR EL FRONTEND
+   a. Abre una nueva terminal e ingresa a la carpeta del frontend:
+      cd turismo-istpet/FRONTEND
+      
+   b. Instala las dependencias necesarias:
+      npm install
+      
+   c. Crea un archivo llamado ".env" dentro de la carpeta FRONTEND con el siguiente contenido:
+      VITE_API_URL=http://localhost:4000
+
+   d. Verifica que exista el archivo "vite.config.js" en la raíz de FRONTEND (ya configurado para soportar los cambios).
+   
+   e. Levanta la aplicación web:
+      npm run dev
+
+4️⃣ BASE DE DATOS Y USUARIOS DE PRUEBA
+Para dar permisos a un usuario:
+   SELECT id_usuario, primer_nombre, correo, id_rol FROM usuarios;
+
+   UPDATE usuarios 
+   SET id_rol = 1 
+   WHERE correo = 'jose22.quezada@gmail.com';

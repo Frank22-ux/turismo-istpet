@@ -1,10 +1,51 @@
 const Reserva = require('./reserva.model');
+const Tour = require('../tours/tour.model');
+const Notificacion = require('../admin/notificacion.model');
+const pool = require('../../config/db');
 
 const ReservaController = {
     crearReserva: async (req, res) => {
         try {
             const id_turista = req.user?.id || req.body.id_turista;
+            const { id_tour, cantidad_personas } = req.body;
+
+            // 1. Verificar capacidad del tour
+            const tour = await Tour.findById(id_tour);
+            if (!tour) return res.status(404).json({ message: 'Tour no encontrado' });
+
+            const cuposOcupados = await Reserva.getOccupiedSpots(id_tour);
+            const cuposDisponibles = tour.maximo_personas - cuposOcupados;
+
+            if (cantidad_personas > cuposDisponibles) {
+                return res.status(400).json({ 
+                    message: `Tour lleno o capacidad insuficiente. Cupos disponibles: ${cuposDisponibles}` 
+                });
+            }
+
+            // 2. Crear reserva
             const newReserva = await Reserva.create({ ...req.body, id_turista });
+
+            // --- NOTIFICAR A ADMINISTRADORES ---
+            try {
+                const clienteNombre = req.user?.nombre || 'Un cliente';
+                const itemNombre = tour?.nombre || 'un servicio';
+                
+                const { rows: admins } = await pool.query('SELECT id_usuario FROM usuarios WHERE id_rol = 1');
+                
+                for (const admin of admins) {
+                    await Notificacion.create({
+                        id_usuario_destino: admin.id_usuario,
+                        titulo: 'Nueva Reserva Realizada',
+                        mensaje: `El cliente <strong>${clienteNombre}</strong> ha realizado una reserva para <strong>${itemNombre}</strong>.`,
+                        tipo: 'nueva_reserva',
+                        id_referencia: newReserva.id_reserva
+                    });
+                }
+                console.log(`🔔 Notificación de reserva enviada a ${admins.length} administradores`);
+            } catch (notifError) {
+                console.error("❌ Error al crear notificación de reserva:", notifError);
+            }
+
             res.status(201).json({ message: 'Reserva creada', reserva: newReserva });
         } catch (error) {
             console.error(error);

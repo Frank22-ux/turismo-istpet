@@ -21,6 +21,7 @@ const guiaRoutes = require('./modules/guias/guia.routes');
 const reservaRoutes = require('./modules/reservas/reserva.routes');
 const pagoRoutes = require('./modules/pagos/pago.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
+const resenaRoutes = require('./modules/resenas/resena.routes');
 
 // 3. Registro de Rutas API
 app.use('/api/auth', authRoutes);   // Ruta para Login/Registro
@@ -33,6 +34,7 @@ app.use('/api/pagos', pagoRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/search', require('./modules/buscador/buscador.routes'));
 app.use('/api/favoritos', require('./modules/favoritos/favorito.routes'));
+app.use('/api/resenas', resenaRoutes);
 
 // Ruta de prueba global
 app.get('/test-directo', (req, res) => res.json({ status: "ok" }));

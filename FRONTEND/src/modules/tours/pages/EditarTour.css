@@ -195,3 +195,254 @@
     .media-section { grid-template-columns: 1fr; }
     .form-row { flex-direction: column; }
 }
+
+/* ─── NUEVOS ESTILOS PARA EDITARTOUR MEJORADO ─── */
+
+/* Volver */
+.btn-volver-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #1f7a8c;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: rgba(31,122,140,0.08);
+    transition: all 0.2s;
+}
+.btn-volver-edit:hover { background: rgba(31,122,140,0.15); transform: translateX(-3px); }
+
+/* Header mejorado */
+.card-header h2 em { font-style: normal; color: #1f7a8c; }
+
+/* Alertas */
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.alert-info { background: #e0f2fe; color: #0369a1; border-left: 4px solid #0369a1; }
+.alert-success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
+.alert-error { background: #fee2e2; color: #991b1b; border-left: 4px solid #dc2626; }
+
+/* Secciones */
+.edit-section {
+    margin-bottom: 32px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.edit-section:last-of-type { border-bottom: none; }
+
+.edit-section-title {
+    font-size: 1.1rem;
+    color: #022b3a;
+    font-weight: 700;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1f7a8c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Galería - thumbnail wrapper */
+.gallery-thumb-wrap {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.thumb-num {
+    position: absolute;
+    bottom: 3px;
+    right: 5px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+.overlay-change {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.image-upload-label:hover .overlay-change { opacity: 1; }
+
+/* Imagen de portada: muestra el overlay por encima */
+.image-upload-wrapper .image-upload-label { position: relative; }
+
+/* Categoría pills edit */
+.categoria-pills-edit {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+.cat-pill-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    border-radius: 30px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.cat-pill-edit:hover { border-color: #1f7a8c; color: #1f7a8c; background: #eef9fb; }
+.cat-pill-edit.active {
+    background: linear-gradient(135deg, #1f7a8c 0%, #155e7a 100%);
+    border-color: #1f7a8c;
+    color: white;
+    box-shadow: 0 4px 10px rgba(31,122,140,0.3);
+}
+
+/* Tags */
+.tags-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.btn-tag-add-edit {
+    background: #1f7a8c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+.btn-tag-add-edit:hover { background: #155e7a; }
+.tags-list-edit { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
+.tag-chip-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(31,122,140,0.10);
+    color: #1f7a8c;
+    border: 1px solid rgba(31,122,140,0.25);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+.tag-chip-edit.tag-green { background: rgba(16,185,129,0.10); color: #059669; border-color: rgba(16,185,129,0.25); }
+.tag-chip-edit.tag-blue { background: rgba(59,130,246,0.10); color: #2563eb; border-color: rgba(59,130,246,0.25); }
+.tag-chip-edit button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+.tag-chip-edit button:hover { opacity: 1; }
+
+/* Geocoding search address */
+.address-search-edit {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 2px solid #1f7a8c;
+    border-radius: 10px;
+    background: #eef9fb;
+    transition: box-shadow 0.2s;
+}
+.address-search-edit:focus-within {
+    box-shadow: 0 0 0 3px rgba(31,122,140,0.12);
+    background: white;
+}
+
+/* Mapa edit */
+.map-wrapper-edit {
+    height: 320px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #cbd5e1;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Badges de coordenadas */
+.coords-badges {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.badge-edit {
+    background: #1f7a8c;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* Botones de acción */
+.form-actions-edit {
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+.btn-save-edit {
+    background: linear-gradient(135deg, #1f7a8c 0%, #155e7a 100%);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.btn-save-edit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(31,122,140,0.3); }
+.btn-save-edit:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-cancel-edit {
+    background: #e1e5f2;
+    color: #022b3a;
+    padding: 12px 24px;
+    border: 2px solid #d4dce8;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-cancel-edit:hover { background: #d4dce8; border-color: #1f7a8c; color: #1f7a8c; }
+
+/* form-group for detail inputs */
+.form-group { margin-bottom: 20px; }

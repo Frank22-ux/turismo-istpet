@@ -16,17 +16,9 @@ import ReservationDrawer from '../../../components/ReservationDrawer';
 import PaymentDrawer from '../../../components/PaymentDrawer';
 import OfferDrawer from '../../../components/OfferDrawer';
 
-// ── Datos de destinos destacados ──────────────────────────────────────────────
-const destinosMock = [
-    { id: 1, nombre: 'Galápagos', pais: 'Ecuador', precio: 1200, rating: 4.9, resenas: 587, img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80', tag: 'Fauna única' },
-    { id: 2, nombre: 'Volcán Cotopaxi', pais: 'Ecuador', precio: 85, rating: 4.8, resenas: 312, img: 'https://images.unsplash.com/photo-1551854304-25049c10e254?w=600&q=80', tag: 'Aventura' },
-    { id: 3, nombre: 'Amazonía', pais: 'Ecuador', precio: 450, rating: 4.85, resenas: 223, img: 'https://images.unsplash.com/photo-1518182170546-07661fd94144?w=600&q=80', tag: 'Naturaleza' },
-    { id: 4, nombre: 'Quito Colonial', pais: 'Ecuador', precio: 45, rating: 4.7, resenas: 189, img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', tag: 'Cultura' },
-    { id: 5, nombre: 'Quilotoa', pais: 'Ecuador', precio: 120, rating: 4.95, resenas: 412, img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80', tag: 'Paisaje' },
-    { id: 6, nombre: 'Baños de Agua Santa', pais: 'Ecuador', precio: 65, rating: 4.9, resenas: 256, img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80', tag: 'Cascadas' },
-];
+const API_URL = 'http://localhost:4000';
 
-// ── Datos de hoteles ──────────────────────────────────────────────────────────
+// ── Datos de hoteles (Se mantiene como fallback visual si no hay hoteles, pero se prioriza API) ──────────────────────────────────────────────────────────
 const hotelesMock = [
     { id: 1, nombre: 'Hotel Galería Plaza', ciudad: 'Quito', estrellas: 5, precio: 189, img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80', rating: 4.8 },
     { id: 2, nombre: 'Casa Gangotena', ciudad: 'Quito', estrellas: 5, precio: 320, img: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80', rating: 4.9 },
@@ -65,7 +57,9 @@ const TuristaDashboard = () => {
     const [tours, setTours] = useState([]);
     const [hoteles, setHoteles] = useState([]);
     const [ofertas, setOfertas] = useState([]);
+    const [resenas, setResenas] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [locationQuery, setLocationQuery] = useState('');
     const [userLocation, setUserLocation] = useState(null);
     const [isLocationFilterActive, setIsLocationFilterActive] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -106,8 +100,17 @@ const TuristaDashboard = () => {
             // Mapeamos a solo IDs para fácil chequeo
             setFavorites(favsRes.data.map(f => f.id_tour || f.id_hotel));
 
-            // Ofertas (podemos usar una lógica de filtrado sobre tours o hoteles con precio bajo)
-            setOfertas(ofertasMock);
+            // Ofertas (filtramos los tours que tienen en_oferta verdadero)
+            const realOffers = toursRes.data.filter(t => t.en_oferta === true);
+            setOfertas(realOffers);
+
+            // Cargar Reseñas recientes para "Voces Reales"
+            try {
+                const resenasRes = await api.get('/resenas/recientes?limit=6');
+                setResenas(resenasRes.data.resenas || []);
+            } catch {
+                setResenas([]); // Si falla, la sección simplemente no se muestra
+            }
 
         } catch (error) {
             console.error("❌ Error cargando datos:", error);
@@ -126,19 +129,27 @@ const TuristaDashboard = () => {
     };
 
     const handleVerDetalles = (tour) => {
-        setSelectedTour(tour);
+        const processedTour = tour.en_oferta 
+            ? { ...tour, precio: tour.precio * (1 - (tour.descuento || 0) / 100) } 
+            : tour;
+        setSelectedTour(processedTour);
         setIsDrawerOpen(true);
     };
 
     const handleOpenReservation = (tour) => {
-        setSelectedTour(tour);
+        const processedTour = tour.en_oferta 
+            ? { ...tour, precio: tour.precio * (1 - (tour.descuento || 0) / 100) } 
+            : tour;
+        // Si el tour viene de una lista que incluye estado (como en búsquedas o mocks), lo respetamos
+        setSelectedTour(processedTour);
         setIsReservationOpen(true);
     };
 
     const handleConfirmReservation = async (resData) => {
         try {
             const payload = {
-                id_tour: resData.tour.id_tour || resData.tour.id_hotel,
+                id_tour: resData.tour.es_hotel ? undefined : resData.tour.id_tour,
+                id_hotel: resData.tour.es_hotel ? resData.tour.id_tour : undefined, // En handleOpenHotelReservation guardamos el hotel en el campo genérico
                 fecha_actividad: resData.fecha,
                 cantidad_personas: resData.personas,
                 total_pagado: resData.total,
@@ -182,24 +193,8 @@ const TuristaDashboard = () => {
     };
 
     const handleOpenDestino = (dest) => {
-        // Mapeamos el destino a un objeto compatible con TourDrawer
-        setSelectedTour({
-            id_tour: dest.id,
-            nombre: dest.nombre,
-            ciudad_destino: dest.pais,
-            precio: dest.precio,
-            imagen_portada: dest.img,
-            calificacion: dest.rating,
-            resenas: dest.resenas,
-            duracion: '3-5 días sugeridos',
-            dificultad: 'Variable',
-            maximo_personas: 10,
-            descripcion: `Explora las maravillas de ${dest.nombre}. Un destino catalogado como "${dest.tag}" que ofrece experiencias inigualables en el corazón de ${dest.pais}.`,
-            incluye: ['Traslados personalizados', 'Guía local bilingüe', 'Seguro de viaje'],
-            no_incluye: ['Vuelos internacionales', 'Gastos personales'],
-            puntos_clave: ['Naturaleza virgen', 'Cultura local viva', 'Gastronomía auténtica']
-        });
-        setIsDrawerOpen(true);
+        // Ahora `dest` es un objeto tour real
+        handleVerDetalles(dest);
     };
 
     const handleOpenHotelReservation = (hotel) => {
@@ -238,13 +233,30 @@ const TuristaDashboard = () => {
         try {
             const params = {
                 q: searchTerm,
+                city: locationQuery,
                 minPrice: 0,
                 maxPrice: filtroPrecioMax,
-                stars: filtroRating
+                stars: filtroRating,
+                type: tabBusqueda // 'tours', 'destinos', 'hoteles'
             };
             const res = await api.get('/search', { params });
-            setTours(res.data.tours);
-            setHoteles(res.data.hoteles);
+            if (tabBusqueda === 'hoteles') {
+                setHoteles(res.data.hoteles);
+                // Opcionalmente blanquear tours si solo busco hoteles
+                // setTours([]); 
+            } else {
+                setTours(res.data.tours);
+                // Si type es todos o destinos, también trae hoteles, 
+                // pero si tabBusqueda es tours, asumimos que solo queremos ver tours
+            }
+            
+            // Si la vista es destinos, podemos bajar suavemente al grid
+            if (tabBusqueda === 'destinos' || tabBusqueda === 'tours') {
+                document.getElementById('tours').scrollIntoView({ behavior: 'smooth' });
+            } else if (tabBusqueda === 'hoteles') {
+                document.getElementById('hoteles').scrollIntoView({ behavior: 'smooth' });
+            }
+
         } catch (error) {
             console.error("Error searching:", error);
         } finally {
@@ -254,12 +266,12 @@ const TuristaDashboard = () => {
 
     useEffect(() => {
         const delaySearch = setTimeout(() => {
-            if (searchTerm || filtroPrecioMax !== 2000 || filtroRating !== 0) {
+            if (searchTerm || locationQuery || filtroPrecioMax !== 2000 || filtroRating !== 0) {
                 handleSearch();
             }
         }, 500);
         return () => clearTimeout(delaySearch);
-    }, [searchTerm, filtroPrecioMax, filtroRating]);
+    }, [searchTerm, locationQuery, filtroPrecioMax, filtroRating]);
 
     const toggleFavorite = async (itemId, type = 'tour') => {
         try {
@@ -283,13 +295,18 @@ const TuristaDashboard = () => {
     };
 
     const filteredTours = tours.filter(tour => {
-        const matchesSearch = tour.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (tour.ciudad_destino || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const term = searchTerm.toLowerCase();
+        const loc = locationQuery.toLowerCase();
+        
+        const matchesSearch = tour.nombre.toLowerCase().includes(term) ||
+            (tour.ciudad_destino || '').toLowerCase().includes(term) ||
+            (tour.descripcion || '').toLowerCase().includes(term);
+            
+        const matchesLocation = (tour.ciudad_destino || '').toLowerCase().includes(loc);
+        
         const matchesPrecio = tour.precio <= filtroPrecioMax;
-        // Use ?? 0 as fallback so tours without calificacion always pass the rating filter
         const matchesRating = (tour.calificacion ?? 0) >= filtroRating;
 
-        // Nueva lógica de categorías
         const matchesCategoria = !categoriaActiva ||
             (tour.categoria && tour.categoria.toLowerCase() === categoriaActiva.toLowerCase()) ||
             (tour.descripcion && tour.descripcion.toLowerCase().includes(categoriaActiva.toLowerCase()));
@@ -303,6 +320,32 @@ const TuristaDashboard = () => {
             return matchesSearch && dist <= RADIUS_KM && matchesPrecio && matchesRating && matchesCategoria && matchesTipo;
         }
         return matchesSearch && matchesPrecio && matchesRating && matchesCategoria && matchesTipo;
+    });
+
+    // Destinos destacados: top 6 tours ordenados por popularidad básica (o id para simular si no hay ratings)
+    const destinosDestacados = [...tours].slice(0, 6);
+
+    // Recomendados: Filtrar aquellos que tienen calificación y ordenar por mayor a menor
+    const toursRecomendados = [...filteredTours].filter(t => t.calificacion && t.calificacion > 0).sort((a, b) => b.calificacion - a.calificacion);
+
+    const filteredHoteles = hoteles.filter(hotel => {
+        const term = searchTerm.toLowerCase();
+        const loc = locationQuery.toLowerCase();
+        
+        const matchesSearch = hotel.nombre.toLowerCase().includes(term) ||
+            (hotel.ciudad || '').toLowerCase().includes(term) ||
+            (hotel.descripcion || '').toLowerCase().includes(term);
+            
+        const matchesLocation = (hotel.ciudad || '').toLowerCase().includes(loc);
+        
+        // El backend devuelve precio_noche, el mock devuelve precio. Manejamos ambos.
+        const precio = hotel.precio_noche || hotel.precio || 0;
+        const estrellas = hotel.estrellas || hotel.rating || 0;
+
+        const matchesPrecio = precio <= filtroPrecioMax;
+        const matchesRating = estrellas >= filtroRating;
+
+        return matchesSearch && matchesLocation && matchesPrecio && matchesRating;
     });
 
     return (
@@ -325,7 +368,7 @@ const TuristaDashboard = () => {
                     </ul>
 
                     <div className="nav-right">
-                        <button className="nav-fav-btn" title="Favoritos">
+                        <button className="nav-fav-btn" title="Favoritos" onClick={() => navigate('/mis-favoritos')}>
                             <FaHeart /> <span>{favorites.length}</span>
                         </button>
                         <div className="user-menu-wrap">
@@ -356,7 +399,7 @@ const TuristaDashboard = () => {
                 </div>
 
                 <div className="hero-body">
-                    <p className="hero-eyebrow">🌍 Descubre Ecuador</p>
+                    <p className="hero-eyebrow">🌍 Descubre el mundo</p>
                     <h1 className="hero-heading">
                         Tu próxima aventura<br />
                         <span className="hero-highlight">comienza aquí</span>
@@ -385,16 +428,22 @@ const TuristaDashboard = () => {
                             </div>
                             <div className="hero-input-group">
                                 <FaMapMarkerAlt className="hero-input-icon" />
-                                <input type="text" placeholder="¿A dónde vas?" className="hero-search-input" />
+                                <input 
+                                    type="text" 
+                                    placeholder="¿A dónde vas?" 
+                                    className="hero-search-input" 
+                                    value={locationQuery}
+                                    onChange={e => setLocationQuery(e.target.value)}
+                                />
                             </div>
-                            <button
-                                className={`hero-geo-btn ${isLocationFilterActive ? 'active' : ''}`}
+                             <button
+                                className={`hero-geo-btn-modern ${isLocationFilterActive ? 'active' : ''}`}
                                 onClick={handleGetLocation}
-                                title="Buscar cerca de mi ubicación real"
+                                title={isLocationFilterActive ? 'Limpiar cercanía' : 'Buscar cerca de mí'}
                             >
-                                <FaLocationArrow />
+                                <FaLocationArrow className="geo-icon" />
                             </button>
-                            <button className="hero-search-btn">
+                            <button className="hero-search-btn" onClick={handleSearch}>
                                 <FaSearch /> Buscar ahora
                             </button>
                         </div>
@@ -449,19 +498,24 @@ const TuristaDashboard = () => {
                     </div>
 
                     <div className="destinos-grid">
-                        {destinosMock.map(dest => (
-                            <div key={dest.id} className="destino-card">
+                        {destinosDestacados.map(dest => (
+                            <div key={dest.id_tour} className="destino-card">
                                 <div className="destino-img-wrap">
-                                    <img src={dest.img} alt={dest.nombre} className="destino-img" />
+                                    <img 
+                                        src={dest.imagen_portada ? `http://localhost:4000${dest.imagen_portada}` : `https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=75&sig=${dest.id_tour}`} 
+                                        alt={dest.nombre} 
+                                        className="destino-img" 
+                                        onError={e => { e.target.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80'; }}
+                                    />
                                     <div className="destino-overlay">
-                                        <button className="btn-destino-ver" onClick={() => handleOpenDestino(dest)}>Ver experiencias <FaArrowRight /></button>
+                                        <button className="btn-destino-ver" onClick={() => handleOpenDestino(dest)}>Ver experiencia <FaArrowRight /></button>
                                     </div>
-                                    <span className="destino-tag">{dest.tag}</span>
-                                    <div className="destino-rating">⭐ {dest.rating}</div>
+                                    <span className="destino-tag">{dest.categoria || 'Aventura'}</span>
+                                    <div className="destino-rating">⭐ {dest.calificacion || 'Nuevo'}</div>
                                 </div>
                                 <div className="destino-body">
                                     <h3 className="destino-nombre">{dest.nombre}</h3>
-                                    <p className="destino-pais"><FaMapMarkerAlt /> {dest.pais} · {dest.resenas} reseñas</p>
+                                    <p className="destino-pais"><FaMapMarkerAlt /> {dest.ciudad_destino} · {dest.resenas || 0} reseñas</p>
                                     <div className="destino-footer">
                                         <span className="destino-desde">Desde <strong>${dest.precio}</strong></span>
                                         <button className="btn-destino-small" onClick={() => handleOpenDestino(dest)}>Ver más</button>
@@ -469,6 +523,9 @@ const TuristaDashboard = () => {
                                 </div>
                             </div>
                         ))}
+                        {destinosDestacados.length === 0 && !loading && (
+                            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#64748b' }}>No hay destinos disponibles en este momento.</p>
+                        )}
                     </div>
                 </div>
             </section>
@@ -540,8 +597,9 @@ const TuristaDashboard = () => {
                             </button>
                         </div>
                     ) : (
-                        <div className="tours-grid">
-                            {filteredTours.map(tour => (
+                        toursRecomendados.length > 0 ? (
+                            <div className="tours-grid">
+                            {toursRecomendados.map(tour => (
                                 <div key={tour.id_tour} className="tour-card">
                                     <div className="tour-card-img">
                                         <img
@@ -563,7 +621,7 @@ const TuristaDashboard = () => {
                                     </div>
                                     <div className="tour-card-body">
                                         <div className="tour-rating-row">
-                                            <span className="tour-stars">{'⭐'.repeat(Math.round(tour.calificacion))}</span>
+                                            <span className="tour-stars">{'⭐'.repeat(Math.round(tour.calificacion || 0))}</span>
                                             <span className="tour-rating-num">{tour.calificacion} <small>({tour.resenas} reseñas)</small></span>
                                         </div>
                                         <h3 className="tour-nombre">{tour.nombre}</h3>
@@ -574,9 +632,35 @@ const TuristaDashboard = () => {
                                         </div>
                                         <p className="tour-desc">{tour.descripcion?.substring(0, 90)}...</p>
                                         <div className="tour-card-footer">
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '8px' }}>
+                                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#e2e8f0', border: '1px solid #ddd' }}>
+                                                    {tour.foto_guia ? (
+                                                        <img 
+                                                            src={tour.foto_guia.startsWith('http') ? tour.foto_guia : `${API_URL}${tour.foto_guia}`} 
+                                                            alt="" 
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}><FaUserCircle /></div>
+                                                    )}
+                                                </div>
+                                                <span style={{ fontSize: '0.8rem', color: '#1e293b', fontWeight: '500' }}>
+                                                    {tour.nombre_guia ? `${tour.nombre_guia} ${tour.apellido_guia || ''}` : <i style={{ color: '#94a3b8' }}>Por asignar</i>}
+                                                </span>
+                                            </div>
                                             <div>
                                                 <p className="tour-desde">Desde</p>
-                                                <p className="tour-price-big">${tour.precio} <small>/persona</small></p>
+                                                {tour.en_oferta ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.9rem' }}>${Number(tour.precio).toFixed(2)}</span>
+                                                        <p className="tour-price-big" style={{ color: '#ef4444' }}>
+                                                            ${(Number(tour.precio) * (1 - (tour.descuento || 0) / 100)).toFixed(2)} 
+                                                            <small style={{ color: '#ef4444' }}>/persona</small>
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="tour-price-big">${Number(tour.precio).toFixed(2)} <small>/persona</small></p>
+                                                )}
                                             </div>
                                             <div className="tour-actions-flex">
                                                 <button className="btn-ver-mas-tour" onClick={() => handleVerDetalles(tour)}>Ver detalles</button>
@@ -586,7 +670,14 @@ const TuristaDashboard = () => {
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: 'white', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                                <FaStar style={{ fontSize: '3rem', color: '#fcd34d', marginBottom: '16px' }} />
+                                <h3 style={{ fontSize: '1.25rem', color: '#1e293b', marginBottom: '8px' }}>Aún no hay tours con calificaciones</h3>
+                                <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto' }}>Reserva un tour, disfrútalo y sé el primero en dejar una reseña para que aparezca aquí.</p>
+                            </div>
+                        )
                     )}
                 </div>
             </section>
@@ -601,34 +692,35 @@ const TuristaDashboard = () => {
                         </div>
                     </div>
                     <div className="ofertas-grid">
-                        {(tours.length > 0 ? tours.slice(0, 3) : ofertasMock).map((item, idx) => {
-                            const esTour = !!item.id_tour;
-                            const descuento = esTour ? 15 : item.descuento;
-                            const precioOriginal = esTour ? Math.round(item.precio * 1.18) : item.precio_original;
-                            const precioOferta = esTour ? item.precio : item.precio_oferta;
-                            const titulo = esTour ? item.nombre : item.titulo;
-                            const imgSrc = esTour
-                                ? (item.imagen_portada ? `http://localhost:4000${item.imagen_portada}` : `https://images.unsplash.com/photo-1518182170546-07661fd94144?w=500&q=80&sig=${item.id_tour}`)
-                                : item.img;
-                            const hasta = esTour && item.fecha_fin ? new Date(item.fecha_fin).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' }) : (item.hasta || 'Tiempo limitado');
-                            return (
-                                <div key={esTour ? item.id_tour : item.id} className="oferta-card">
-                                    <div className="oferta-img-wrap">
-                                        <img src={imgSrc} alt={titulo} onError={e => { e.target.src = 'https://images.unsplash.com/photo-1518182170546-07661fd94144?w=500&q=80'; }} />
-                                        <div className="oferta-badge"><FaPercent /> {descuento}% OFF</div>
-                                    </div>
-                                    <div className="oferta-body">
-                                        <p className="oferta-hasta">⏱️ Válido hasta {hasta}</p>
-                                        <h3 className="oferta-titulo">{titulo}</h3>
-                                        <div className="oferta-precios">
-                                            <span className="precio-antes">${precioOriginal}</span>
-                                            <span className="precio-oferta">${precioOferta}</span>
-                                        </div>
-                                        <button className="btn-oferta" onClick={() => esTour ? handleOpenOffer(item) : handleOpenOffer(item)}>Aprovechar oferta <FaArrowRight /></button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {ofertas.length > 0 ? (
+                            ofertas.map(tour => {
+                                                                const precioOriginal = Number(tour.precio);
+                                                                const precioOferta = tour.descuento ? (precioOriginal * (1 - (tour.descuento / 100))) : precioOriginal;
+                                                                const hasta = tour.fecha_fin ? new Date(tour.fecha_fin).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Tiempo limitado';
+                                                                return (
+                                                                    <div key={tour.id_tour} className="oferta-card">
+                                                                        <div className="oferta-img-wrap">
+                                                                            <img src={tour.imagen_portada ? `http://localhost:4000${tour.imagen_portada}` : `https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&q=80&sig=${tour.id_tour}`} alt={tour.nombre} />
+                                                                            <div className="oferta-badge"><FaPercent /> {tour.descuento || 0}% OFF</div>
+                                                                        </div>
+                                                                        <div className="oferta-body">
+                                                                            <p className="oferta-hasta">⏱️ Válido hasta {hasta}</p>
+                                                                            <h3 className="oferta-titulo">{tour.nombre}</h3>
+                                                                            <div className="oferta-precios">
+                                                                                <span className="precio-antes">${precioOriginal.toFixed(2)}</span>
+                                                                                <span className="precio-oferta">${precioOferta.toFixed(2)}</span>
+                                                                            </div>
+                                                                            <button className="btn-oferta" onClick={() => handleOpenReservation(tour)}>Aprovechar oferta <FaArrowRight /></button>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                            })
+                        ) : (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                                <FaCompass style={{ fontSize: '2.5rem', color: '#94a3b8', marginBottom: '12px' }} />
+                                <p style={{ color: '#475569', fontSize: '1.1rem' }}>No hay ofertas especiales activas en este momento.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -644,11 +736,18 @@ const TuristaDashboard = () => {
                         <a href="#hoteles" className="link-ver-todos">Ver todos <FaArrowRight /></a>
                     </div>
                     <div className="hoteles-grid">
-                        {(hoteles.length > 0 ? hoteles : []).map(hotel => (
+                        {filteredHoteles.map(hotel => (
                             <div key={hotel.id_hotel} className="hotel-card">
                                 <div className="hotel-img-wrap">
                                     <img
-                                        src={`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80&sig=${hotel.id_hotel}`}
+                                        src={(() => {
+                                            if (hotel.imagen_principal) return `http://localhost:4000${hotel.imagen_principal}`;
+                                            try {
+                                                const galeria = typeof hotel.fotos_galeria === 'string' ? JSON.parse(hotel.fotos_galeria) : hotel.fotos_galeria;
+                                                if (Array.isArray(galeria) && galeria.length > 0) return `http://localhost:4000${galeria[0]}`;
+                                            } catch (e) {}
+                                            return `https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80`;
+                                        })()}
                                         alt={hotel.nombre}
                                         className="hotel-img"
                                         onError={e => { e.target.src = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80'; }}
@@ -666,7 +765,7 @@ const TuristaDashboard = () => {
                                     <div className="hotel-footer">
                                         <div>
                                             <p className="hotel-desde">Hotel Asociado</p>
-                                            <p className="hotel-precio">{hotel.estado_convenio || 'Disponible'}</p>
+                                            <p className="hotel-precio" style={{ color: '#0ea5e9', fontWeight: 600 }}>{hotel.estado_convenio || 'Disponible'}</p>
                                         </div>
                                         <div className="hotel-actions-btns">
                                             <button className="btn-hotel-ver" onClick={() => navigate(`/hotel/${hotel.id_hotel}`)}>Ver detalles</button>
@@ -680,58 +779,40 @@ const TuristaDashboard = () => {
                 </div>
             </section>
 
-            {/* ══════════════ 8. TESTIMONIOS ══════════════ */}
-            <section className="section-block testimonios-section">
-                <div className="section-wrap">
-                    <div className="section-head centered">
-                        <p className="section-eyebrow">💬 Voces reales</p>
-                        <h2 className="section-title">Lo que dicen nuestros viajeros</h2>
-                        <p className="section-desc">Más de 2,500 turistas satisfechos comparten su experiencia</p>
-                    </div>
-                    <div className="testimonios-grid">
-                        {testimoniosMock.map(t => (
-                            <div key={t.id} className="testimonio-card">
-                                <div className="test-stars">{'⭐'.repeat(t.rating)}</div>
-                                <p className="test-comentario">"{t.comentario}"</p>
-                                <div className="test-user">
-                                    <div className="test-avatar" style={{ background: t.color }}>{t.avatar}</div>
-                                    <div>
-                                        <p className="test-nombre">{t.nombre}</p>
-                                        <p className="test-info">{t.pais} · Visitó {t.destino}</p>
+            {/* ══════════════ 8. TESTIMONIOS (VOCES REALES) ══════════════ */}
+            {resenas.length > 0 && (
+                <section className="section-block testimonios-section">
+                    <div className="section-wrap">
+                        <div className="section-head centered">
+                            <p className="section-eyebrow">💬 Voces reales</p>
+                            <h2 className="section-title">Lo que dicen nuestros viajeros</h2>
+                            <p className="section-desc">{resenas.length} reseñas verificadas de nuestros turistas</p>
+                        </div>
+                        <div className="testimonios-grid">
+                            {resenas.map(r => {
+                                const iniciales = `${(r.primer_nombre || 'U')[0]}${(r.apellido_paterno || '?')[0]}`.toUpperCase();
+                                const colores = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
+                                const color = colores[r.id_resena % colores.length];
+                                const emojiTipo = r.tipo === 'hotel' ? '🏨' : '🗺e️';
+                                return (
+                                    <div key={`${r.tipo}-${r.id_resena}`} className="testimonio-card">
+                                        <div className="test-stars">{'⭐'.repeat(Math.min(r.calificacion, 5))}</div>
+                                        <p className="test-comentario">"{r.comentario}"</p>
+                                        <div className="test-user">
+                                            <div className="test-avatar" style={{ background: color }}>{iniciales}</div>
+                                            <div>
+                                                <p className="test-nombre">{r.primer_nombre} {r.apellido_paterno}</p>
+                                                <p className="test-info">{emojiTipo} Visió {r.destino}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
 
-            {/* ══════════════ 10. MAPA / EXPLORACIÓN POR REGIÓN ══════════════ */}
-            <section className="section-block mapa-section">
-                <div className="section-wrap">
-                    <div className="section-head centered">
-                        <p className="section-eyebrow">🗺️ Explora por región</p>
-                        <h2 className="section-title">Descubre Ecuador</h2>
-                    </div>
-                    <div className="regiones-grid">
-                        {[
-                            { nombre: 'Sierra', desc: 'Volcanes, páramos y ciudades coloniales', img: 'https://images.unsplash.com/photo-1551854304-25049c10e254?w=400&q=75', tours: 28 },
-                            { nombre: 'Costa', desc: 'Playas, surf y cultura costeña', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=75', tours: 18 },
-                            { nombre: 'Amazonía', desc: 'Selva virgen, fauna exótica y comunidades', img: 'https://images.unsplash.com/photo-1518182170546-07661fd94144?w=400&q=75', tours: 15 },
-                            { nombre: 'Galápagos', desc: 'Fauna única, buceo y naturaleza pristina', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=75', tours: 12 },
-                        ].map(reg => (
-                            <div key={reg.nombre} className="region-card">
-                                <img src={reg.img} alt={reg.nombre} className="region-img" />
-                                <div className="region-overlay">
-                                    <h3 className="region-nombre">{reg.nombre}</h3>
-                                    <p className="region-desc">{reg.desc}</p>
-                                    <span className="region-tours">{reg.tours} tours</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
             {/* ══════════════ 11. FOOTER ══════════════ */}
             <footer className="footer-turista">
@@ -743,7 +824,7 @@ const TuristaDashboard = () => {
                                 <img src="/uploads/logo.png" alt="ECRUT" className="footer-logo-img" />
                                 <span>ECRUT Travels</span>
                             </div>
-                            <p className="footer-desc">Tu agencia de turismo de confianza en Ecuador. Experiencias únicas, guías expertos y memorias para toda la vida.</p>
+                            <p className="footer-desc">Tu agencia de turismo de confianza en el mundo. Experiencias únicas, guías expertos y memorias para toda la vida.</p>
                             <div className="footer-socials">
                                 <a href="#fb" className="social-btn"><FaFacebook /></a>
                                 <a href="#ig" className="social-btn"><FaInstagram /></a>
@@ -787,7 +868,7 @@ const TuristaDashboard = () => {
                                 <button className="newsletter-btn">Suscribirse</button>
                             </div>
                             <div className="footer-contact-info">
-                                <p><FaPhone /> +593 99 XXX XXXX</p>
+                                <p><FaPhone /> +593 97 879 9437</p>
                                 <p><FaEnvelope /> info@ecrut.ec</p>
                                 <p><FaCompass /> Quito, Ecuador</p>
                             </div>
@@ -808,6 +889,8 @@ const TuristaDashboard = () => {
             <TourDrawer
                 tour={selectedTour}
                 isOpen={isDrawerOpen}
+                isFavorite={selectedTour && favorites.includes(selectedTour.id_tour || selectedTour.id)}
+                onToggleFavorite={(id) => toggleFavorite(id, selectedTour?.es_hotel ? 'hotel' : 'tour')}
                 onClose={() => setIsDrawerOpen(false)}
                 onReserve={(t) => {
                     setIsDrawerOpen(false);

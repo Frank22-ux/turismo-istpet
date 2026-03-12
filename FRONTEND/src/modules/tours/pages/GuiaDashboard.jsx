@@ -6,31 +6,50 @@ import api from '../../../core/api';
 import {
     FaHome, FaCalendarAlt, FaCoins, FaUsers, FaStar, FaSignOutAlt,
     FaChartLine, FaTrophy, FaMapMarkerAlt, FaClock, FaUserCircle,
-    FaEdit, FaCheckCircle, FaClock as FaClockIcon, FaEye, FaBell
+    FaEdit, FaCheckCircle, FaEye, FaBell
 } from 'react-icons/fa';
 import './GuiaDashboard.css';
 import TourDrawer from '../../../components/TourDrawer';
+import GuiaNavbar from '../../../components/guia/GuiaNavbar';
+import GuiaSidebar from '../../../components/guia/GuiaSidebar';
+
+const API_URL = 'http://localhost:4000';
 
 const GuiaDashboard = () => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const [showUserMenu, setShowUserMenu] = useState(false);
 
+    const [searchTerm, setSearchTerm] = useState('');
     const [guideTours, setGuideTours] = useState([]);
     const [guideReservas, setGuideReservas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTour, setSelectedTour] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [profile, setProfile] = useState(null);
 
     const handleConfirm = async (res) => {
         try {
-            const tourId = res.id_tour;
+            const tourId = res.id_tour || res.id;
             await api.post(`/tours/${tourId}/assign`);
-            alert('¡Tour asignado y confirmado exitosamente!');
+            alert('¡Te has asignado el tour exitosamente!');
             fetchData(); // Recargar datos
         } catch (error) {
             console.error("Error al confirmar tour:", error);
             alert(error.response?.data?.message || 'No se pudo confirmar el tour');
+        }
+    };
+
+    const handleUnassign = async (res) => {
+        try {
+            const tourId = res.id_tour || res.id;
+            if (!window.confirm('¿Estás seguro que deseas desasignarte de este tour?')) return;
+            await api.delete(`/tours/${tourId}/assign`);
+            alert('Te has desasignado del tour correctamente');
+            fetchData(); // Recargar datos
+        } catch (error) {
+            console.error("Error al desasignar tour:", error);
+            alert(error.response?.data?.message || 'No se pudo desasignar el tour');
         }
     };
 
@@ -54,12 +73,14 @@ const GuiaDashboard = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [toursRes, reservasRes] = await Promise.all([
+            const [toursRes, reservasRes, profileRes] = await Promise.all([
                 api.get('/tours/mis-tours'),
-                api.get('/reservas/guia')
+                api.get('/reservas/guia'),
+                api.get(`/guias/${user.id_usuario}/profile`)
             ]);
 
             setGuideTours(toursRes.data);
+            setProfile(profileRes.data);
 
             // Mapeamos las reservas al formato esperado por la vista
             const mappedReservas = reservasRes.data.map(r => ({
@@ -104,108 +125,29 @@ const GuiaDashboard = () => {
     const proximoTour = guideTours[0];
 
     const currentGuide = {
-        nombre: user.primer_nombre || 'Guía',
-        apellido: user.apellido_paterno || '',
-        imagen: user.foto_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
-        especialidad: user.descripcion_perfil || 'Especialista Ecoturismo',
-        calificacion: 4.9,
-        toursGuiados: guideTours.length,
-        experiencia: 5,
-        idiomas: ['Español', 'Inglés'],
-        disponible: true
+        nombre: profile?.primer_nombre || user.primer_nombre || 'Guía',
+        apellido: profile?.apellido_paterno || user.apellido_paterno || '',
+        imagen: (profile?.foto_url || user.foto_url)
+            ? ((profile?.foto_url || user.foto_url).startsWith('http') ? (profile?.foto_url || user.foto_url) : `${API_URL}${profile?.foto_url || user.foto_url}`) 
+            : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+        especialidad: profile?.especialidades || 'Guía General',
+        calificacion: parseFloat(profile?.calificacion) || 0,
+        toursGuiados: parseInt(profile?.tours) || guideTours.length,
+        experiencia: profile?.experiencia_anios || 0,
+        idiomas: profile?.idiomas || ['Español'],
+        disponible: profile?.disponibilidad?.trim().toLowerCase() === 'disponible',
+        total_resenas: profile?.total_resenas || 0
     };
 
     return (
         <div className="guia-layout">
-            {/* NAVBAR */}
-            <nav className="navbar-guia">
-                <div className="nav-container-guia">
-                    <div className="nav-logo-guia">
-                        <img src="/uploads/logo.png" alt="Logo" className="logo-img-guia" style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }} />
-                        <span className="logo-text-guia">ECORUT Travels</span>
-                    </div>
-
-                    <div className="nav-search-guia">
-                        <FaUsers />
-                        <input
-                            type="text"
-                            placeholder="Busca tus tours..."
-                            className="search-input-guia"
-                        />
-                    </div>
-
-                    <div className="nav-actions-guia">
-                        <button className="nav-badge-guia">
-                            <FaBell /> {guideReservas.length}
-                        </button>
-                        <div className="user-menu-container-guia">
-                            <button
-                                className="btn-user-menu-guia"
-                                onClick={() => setShowUserMenu(!showUserMenu)}
-                            >
-                                <FaUserCircle /> {currentGuide.nombre}
-                            </button>
-                            {showUserMenu && (
-                                <div className="dropdown-menu-guia">
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/editar-perfil'); }}>
-                                        <FaEdit /> Editar Perfil
-                                    </button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/disponibilidad'); }}>
-                                        <FaCalendarAlt /> Mi Disponibilidad
-                                    </button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/mis-resenas'); }}>
-                                        <FaStar /> Mis Reseñas
-                                    </button>
-                                    <hr />
-                                    <button onClick={handleLogout} className="menu-item-guia logout-guia">
-                                        <FaSignOutAlt /> Cerrar Sesión
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            {/* SIDEBAR */}
-            <div className="guia-sidebar">
-                <div className="sidebar-profile-guia">
-                    <div className="profile-avatar-guia">
-                        <img src={currentGuide.imagen} alt={currentGuide.nombre} />
-                    </div>
-                    <h3 className="profile-name-guia">{currentGuide.nombre} {currentGuide.apellido}</h3>
-                    <p className="profile-specialty-guia">{currentGuide.especialidad}</p>
-                    <div className="profile-rating-guia">
-                        <FaStar /> {currentGuide.calificacion}
-                    </div>
-                </div>
-
-                <nav className="sidebar-nav-guia">
-                    <div className="sidebar-group-label">PRINCIPAL</div>
-                    <button className="nav-item-guia active" onClick={() => navigate('/guia')}>
-                        <FaHome /> Dashboard
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/disponibilidad')}>
-                        <FaCalendarAlt /> Mi Disponibilidad
-                    </button>
-
-                    <div className="sidebar-group-label">MI ACTIVIDAD</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/mis-tours')}>
-                        <FaMapMarkerAlt /> Mis Tours
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/reservas')}>
-                        <FaUsers /> Reservas
-                    </button>
-
-                    <div className="sidebar-group-label">REPORTE Y VENTAS</div>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/ganancias')}>
-                        <FaCoins /> Ganancias
-                    </button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/estadisticas')}>
-                        <FaChartLine /> Estadísticas
-                    </button>
-                </nav>
-            </div>
+            <GuiaNavbar 
+                currentGuide={currentGuide} 
+                notificationsCount={guideReservas.length} 
+                onSearch={setSearchTerm}
+                reservations={guideReservas}
+            />
+            <GuiaSidebar currentGuide={currentGuide} />
 
             {/* MAIN CONTENT */}
             <main className="guia-main-content">
@@ -256,33 +198,30 @@ const GuiaDashboard = () => {
                 </section>
 
                 {/* PRÓXIMO TOUR */}
-                {proximoTour && (
-                    <section className="next-tour-section">
-                        <div className="section-header-guia">
-                            <h2 className="section-title-guia">📍 Próximo Tour Programado</h2>
-                        </div>
+                <section className="next-tour-section">
+                    <div className="section-header-guia">
+                        <h2 className="section-title-guia">🎯 Próxima Aventura</h2>
+                        <button className="btn-tour-action" onClick={() => navigate('/guia/mis-tours')}>Ver todos</button>
+                    </div>
+                    {guideTours.length > 0 ? (
                         <div className="next-tour-card">
                             <div className="tour-info-left">
-                                <h3>{proximoTour.nombre}</h3>
-                                <div className="tour-detail-guia">
-                                    <FaMapMarkerAlt /> {proximoTour.ciudad_destino}
-                                </div>
-                                <div className="tour-detail-guia">
-                                    <FaClock /> {proximoTour.duracion}
-                                </div>
-                                <div className="tour-detail-guia">
-                                    <FaUsers /> Máximo {proximoTour.maximo_personas} personas
-                                </div>
+                                <h3>{guideTours[0].nombre}</h3>
+                                <div className="tour-detail-guia"><FaMapMarkerAlt /> {guideTours[0].ciudad_destino}</div>
+                                <div className="tour-detail-guia"><FaCalendarAlt /> Mañana, 09:00 AM</div>
+                                <div className="tour-detail-guia"><FaUsers /> {guideTours[0].maximo_personas} personas confirmadas</div>
                             </div>
                             <div className="tour-info-right">
-                                <span className="tour-price-guia">${proximoTour.precio}</span>
-                                <button className="btn-tour-action" onClick={() => handleVerDetalles(proximoTour)}>
-                                    <FaEye /> Ver Detalles
+                                <div className="tour-price-guia">${guideTours[0].precio}</div>
+                                <button className="btn-tour-action" onClick={() => handleVerDetalles(guideTours[0])}>
+                                    <FaEye /> Detalles del Tour
                                 </button>
                             </div>
                         </div>
-                    </section>
-                )}
+                    ) : (
+                        <div className="no-reservas-guia">No tienes tours próximos asignados</div>
+                    )}
+                </section>
 
                 {/* MIS TOURS */}
                 <section className="my-tours-section">
@@ -304,7 +243,9 @@ const GuiaDashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {guideTours.map((tour) => (
+                                {guideTours
+                                    .filter(tour => tour.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) || tour.ciudad_destino?.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map((tour) => (
                                     <tr key={tour.id_tour}>
                                         <td className="font-bold">{tour.nombre}</td>
                                         <td>{tour.ciudad_destino}</td>
@@ -418,7 +359,7 @@ const GuiaDashboard = () => {
                 tour={selectedTour}
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
-                onReserve={handleConfirm}
+                onReserve={selectedTour?.id_guia_asignado === user.id_usuario ? handleUnassign : handleConfirm}
             />
         </div>
     );

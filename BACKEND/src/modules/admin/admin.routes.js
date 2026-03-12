@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const AdminController = require('./admin.controller');
+const NotificacionController = require('./notificacion.controller');
 const { verifyToken, requireRoles } = require('../../middleware/auth.middleware');
 
 router.get('/stats', verifyToken, requireRoles([1]), AdminController.getStats);
@@ -10,6 +11,12 @@ router.get('/clientes/:id', verifyToken, requireRoles([1]), AdminController.getC
 router.put('/clientes/:id', verifyToken, requireRoles([1]), AdminController.updateCliente);
 router.delete('/clientes/:id', verifyToken, requireRoles([1]), AdminController.deleteCliente);
 router.get('/reservas', verifyToken, requireRoles([1]), AdminController.getReservations);
+
+// Notificaciones
+router.get('/notificaciones', verifyToken, requireRoles([1]), NotificacionController.getNotificaciones);
+router.put('/notificaciones/:id/leida', verifyToken, requireRoles([1]), NotificacionController.markAsRead);
+router.put('/notificaciones/todas-leidas', verifyToken, requireRoles([1]), NotificacionController.markAllAsRead);
+router.delete('/notificaciones/todas', verifyToken, requireRoles([1]), NotificacionController.deleteAll);
 
 // Configuración del sistema
 router.get('/config', verifyToken, requireRoles([1]), AdminController.getConfig);

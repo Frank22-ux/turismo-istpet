@@ -9,9 +9,9 @@ services:
     container_name: turismo_db
     restart: always
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: turismo_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: DB_Turismo_C
     ports:
       - "5432:5432"
     volumes:
@@ -30,9 +30,9 @@ services:
     environment:
       PORT: 4000
       DB_HOST: db
-      DB_USER: admin
-      DB_PASSWORD: password123
-      DB_NAME: turismo_app
+      DB_USER: postgres
+      DB_PASSWORD: 1234
+      DB_NAME: DB_Turismo_C
       DB_PORT: 5432
       JWT_SECRET: mi_secreto_super_seguro
     depends_on:

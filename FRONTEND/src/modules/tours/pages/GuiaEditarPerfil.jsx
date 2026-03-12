@@ -1,39 +1,99 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../../core/api';
+import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { logoutRequest } from '../../../modules/auth/services/auth.service';
 import { guiasMock } from '../../../core/mockData';
 import {
     FaHome, FaCalendarAlt, FaCoins, FaUsers, FaStar, FaSignOutAlt,
-    FaChartLine, FaEdit, FaUserCircle, FaBell, FaSave, FaSearch
+    FaChartLine, FaEdit, FaUserCircle, FaBell, FaSave, FaSearch,
+    FaCheckCircle, FaClock
 } from 'react-icons/fa';
 import './GuiaDashboard.css';
 import './GuiaMisTours.css';
+import GuiaNavbar from '../../../components/guia/GuiaNavbar';
+import GuiaSidebar from '../../../components/guia/GuiaSidebar';
+
+const API_URL = 'http://localhost:4000';
 
 const GuiaEditarPerfil = () => {
     const navigate = useNavigate();
-    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [saved, setSaved] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const baseGuide = guiasMock[0] || {};
-    const currentGuide = {
-        ...baseGuide,
-        nombre: user.primer_nombre || baseGuide.nombre || 'Guía',
-        apellido: user.apellido_paterno || baseGuide.apellido || '',
-        imagen: user.foto_url || baseGuide.imagen,
-        email: user.correo || baseGuide.email,
-    };
+    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
+    const [guideReservas, setGuideReservas] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [form, setForm] = useState({
-        nombre: currentGuide.nombre || '',
-        apellido: currentGuide.apellido || '',
-        especialidad: currentGuide.especialidad || '',
-        telefono: currentGuide.telefono || '',
-        email: currentGuide.email || '',
-        experiencia: currentGuide.experiencia || '',
-        descripcion: currentGuide.descripcion || 'Guía experto con amplia experiencia en turismo.',
-        idiomas: (currentGuide.idiomas || []).join(', '),
+        primer_nombre: '',
+        apellido_paterno: '',
+        segundo_nombre: '',
+        apellido_materno: '',
+        especialidades: '',
+        numero_celular: '',
+        correo: '',
+        experiencia: 0,
+        bio: '',
+        idiomas: '',
+        disponibilidad: 'Disponible'
     });
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await api.get(`/guias/${user.id_usuario}/profile`);
+                setProfile(res.data);
+                setForm({
+                    primer_nombre: res.data.primer_nombre || '',
+                    apellido_paterno: res.data.apellido_paterno || '',
+                    segundo_nombre: res.data.segundo_nombre || '',
+                    apellido_materno: res.data.apellido_materno || '',
+                    especialidades: Array.isArray(res.data.especialidades) ? res.data.especialidades.join(', ') : (res.data.especialidades || ''),
+                    numero_celular: res.data.numero_celular || '',
+                    correo: res.data.correo || '',
+                    experiencia: res.data.experiencia_anios || 0,
+                    bio: res.data.bio || '',
+                    idiomas: Array.isArray(res.data.idiomas) ? res.data.idiomas.join(', ') : (res.data.idiomas || ''),
+                    disponibilidad: res.data.disponibilidad || 'Disponible'
+                });
+            } catch (error) {
+                console.error("Error fetching profile:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const fetchReservas = async () => {
+            try {
+                const response = await api.get('/reservas/guia');
+                const mapped = response.data.map(r => ({
+                    id: r.id_reserva,
+                    tour: r.tour_nombre,
+                    turista: `${r.turista_nombre} ${r.turista_apellido}`,
+                    fecha: new Date(r.fecha_actividad).toLocaleDateString()
+                }));
+                setGuideReservas(mapped);
+            } catch (error) {
+                console.error("Error fetching reservas for notifications:", error);
+            }
+        };
+        fetchProfile();
+        fetchReservas();
+    }, [user.id_usuario]);
+
+    const currentGuide = {
+        nombre: profile?.primer_nombre || user.primer_nombre || 'Guía',
+        apellido: profile?.apellido_paterno || user.apellido_paterno || '',
+        imagen: (profile?.foto_url || user.foto_url)
+            ? ((profile?.foto_url || user.foto_url).startsWith('http') ? (profile?.foto_url || user.foto_url) : `${API_URL}${profile?.foto_url || user.foto_url}`) 
+            : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+        especialidad: profile?.especialidades || 'Guía General',
+        calificacion: parseFloat(profile?.calificacion) || 0,
+        resenas: profile?.total_resenas || 0
+    };
 
     const handleLogout = async () => {
         try { await logoutRequest(); } catch { }
@@ -44,68 +104,45 @@ const GuiaEditarPerfil = () => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        try {
+            const cleanEspecialidades = typeof form.especialidades === 'string' 
+                ? form.especialidades.split(',').map(s => s.trim()).filter(s => s !== '')
+                : (Array.isArray(form.especialidades) ? form.especialidades : []);
+
+            const cleanIdiomas = typeof form.idiomas === 'string'
+                ? form.idiomas.split(',').map(s => s.trim()).filter(s => s !== '')
+                : (Array.isArray(form.idiomas) ? form.idiomas : []);
+
+            await api.put(`/guias/${user.id_usuario}`, {
+                ...form,
+                especialidades: cleanEspecialidades,
+                idiomas: cleanIdiomas
+            });
+            setSaved(true);
+            Swal.fire('¡Éxito!', 'Perfil actualizado correctamente', 'success');
+            setTimeout(() => setSaved(false), 3000);
+        } catch (error) {
+            console.error("Error saving profile:", error);
+            Swal.fire('Error', 'No se pudo actualizar el perfil', 'error');
+        }
     };
 
     return (
         <div className="guia-layout">
-            <nav className="navbar-guia">
-                <div className="nav-container-guia">
-                    <div className="nav-logo-guia">
-                        <img src="/uploads/logo.png" alt="Logo" className="logo-img-guia" style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }} />
-                        <span className="logo-text-guia">ECRUT Travels</span>
-                    </div>
-                    <div className="nav-search-guia">
-                        <FaSearch />
-                        <input type="text" placeholder="Buscar..." className="search-input-guia" />
-                    </div>
-                    <div className="nav-actions-guia">
-                        <button className="nav-badge-guia"><FaBell /> 3</button>
-                        <div className="user-menu-container-guia">
-                            <button className="btn-user-menu-guia" onClick={() => setShowUserMenu(!showUserMenu)}>
-                                <FaUserCircle /> {currentGuide.nombre}
-                            </button>
-                            {showUserMenu && (
-                                <div className="dropdown-menu-guia">
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/editar-perfil'); }}><FaEdit /> Editar Perfil</button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/disponibilidad'); }}><FaCalendarAlt /> Mi Disponibilidad</button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/mis-resenas'); }}><FaStar /> Mis Reseñas</button>
-                                    <hr />
-                                    <button onClick={handleLogout} className="menu-item-guia logout-guia"><FaSignOutAlt /> Cerrar Sesión</button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <div className="guia-sidebar">
-                <div className="sidebar-profile-guia">
-                    <div className="profile-avatar-guia">
-                        <img src={currentGuide.imagen} alt={currentGuide.nombre} />
-                    </div>
-                    <h3 className="profile-name-guia">{currentGuide.nombre} {currentGuide.apellido}</h3>
-                    <p className="profile-specialty-guia">{currentGuide.especialidad}</p>
-                    <div className="profile-rating-guia"><FaStar /> {currentGuide.calificacion}</div>
-                    <p className="profile-reviews-guia">({currentGuide.resenas} reseñas)</p>
-                </div>
-                <nav className="sidebar-nav-guia">
-                    <button className="nav-item-guia" onClick={() => navigate('/guia')}><FaHome /> Dashboard</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/mis-tours')}><FaCalendarAlt /> Mis Tours</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/reservas')}><FaUsers /> Reservas</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/ganancias')}><FaCoins /> Ganancias</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/estadisticas')}><FaChartLine /> Estadísticas</button>
-                </nav>
-            </div>
+            <GuiaNavbar 
+                currentGuide={currentGuide} 
+                onSearch={setSearchTerm}
+                reservations={guideReservas}
+            />
+            <GuiaSidebar currentGuide={currentGuide} />
 
             <main className="guia-main-content">
                 <div className="guia-header">
                     <div>
-                        <h1 className="guia-title">✏️ Editar Perfil</h1>
-                        <p className="guia-subtitle">Actualiza tu información como guía profesional</p>
+                        <h1 className="guia-title">✏️ Perfil Profesional</h1>
+                        <p className="guia-subtitle">Gestiona tu información pública y profesional</p>
                     </div>
                     {saved && (
                         <div style={{
@@ -124,76 +161,127 @@ const GuiaEditarPerfil = () => {
                     )}
                 </div>
 
-                <form onSubmit={handleSave}>
-                    {/* Avatar */}
-                    <div className="avatar-upload-section">
-                        <img src={currentGuide.imagen} alt="Avatar" className="avatar-preview" />
-                        <div>
-                            <p style={{ fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>Foto de perfil</p>
-                            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '10px' }}>Sube una imagen profesional</p>
-                            <button type="button" className="btn-upload">📷 Cambiar foto</button>
+                <form onSubmit={handleSave} className="perfil-form-container">
+                    <div className="perfil-card main-info-card">
+                        {/* Avatar Section */}
+                        <div className="avatar-upload-section">
+                            <div className="avatar-wrapper">
+                                <img src={currentGuide.imagen} alt="Avatar" className="avatar-preview" />
+                                <button type="button" className="btn-change-avatar" title="Cambiar foto">
+                                    <FaEdit />
+                                </button>
+                            </div>
+                            <div className="avatar-text">
+                                <h3>Información de Perfil</h3>
+                                <p>Esta información será visible para los turistas que reserven tus tours. Asegúrate de que tu foto sea profesional.</p>
+                                <div className="profile-badges-row">
+                                    <span className="badge-item"><FaStar /> {currentGuide.calificacion.toFixed(1)} Rating</span>
+                                    <span className="badge-item"><FaUsers /> {currentGuide.resenas} Reseñas</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="perfil-grid-2col">
+                            <div className="form-group-guia">
+                                <label><FaEdit /> Primer Nombre</label>
+                                <input type="text" name="primer_nombre" value={form.primer_nombre} onChange={handleChange} placeholder="Ej. Juan" />
+                            </div>
+                            <div className="form-group-guia">
+                                <label><FaEdit /> Apellido Paterno</label>
+                                <input type="text" name="apellido_paterno" value={form.apellido_paterno} onChange={handleChange} placeholder="Ej. Pérez" />
+                            </div>
+                            <div className="form-group-guia">
+                                <label><FaBell /> Teléfono de Contacto</label>
+                                <input type="text" name="numero_celular" value={form.numero_celular} onChange={handleChange} placeholder="+593..." />
+                            </div>
+                            <div className="form-group-guia">
+                                <label><FaSignOutAlt /> Correo Electrónico</label>
+                                <input type="email" name="correo" value={form.correo} onChange={handleChange} placeholder="nombre@ejemplo.com" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Datos personales */}
-                    <div className="perfil-form-section">
-                        <h3 style={{ margin: '0 0 16px', color: '#1f2937', fontSize: '16px', fontWeight: '700' }}>
-                            👤 Datos Personales
-                        </h3>
-                        <div className="perfil-form-grid">
+                    <div className="perfil-card-row">
+                        <div className="perfil-card secondary-card flex-1">
+                            <h3 className="card-title-guia">🎯 Especialización</h3>
                             <div className="form-group-guia">
-                                <label>Nombre</label>
-                                <input type="text" name="nombre" value={form.nombre} onChange={handleChange} />
+                                <label>Áreas de Especialidad</label>
+                                <input 
+                                    type="text" 
+                                    name="especialidades" 
+                                    value={form.especialidades} 
+                                    onChange={handleChange} 
+                                    placeholder="Ej. Trekking, Historia, Alta Montaña" 
+                                />
+                                <small className="input-tip">Separa tus especialidades por comas</small>
                             </div>
                             <div className="form-group-guia">
-                                <label>Apellido</label>
-                                <input type="text" name="apellido" value={form.apellido} onChange={handleChange} />
-                            </div>
-                            <div className="form-group-guia">
-                                <label>Teléfono</label>
-                                <input type="text" name="telefono" value={form.telefono} onChange={handleChange} placeholder="+593..." />
-                            </div>
-                            <div className="form-group-guia">
-                                <label>Email</label>
-                                <input type="email" name="email" value={form.email} onChange={handleChange} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Datos profesionales */}
-                    <div className="perfil-form-section">
-                        <h3 style={{ margin: '0 0 16px', color: '#1f2937', fontSize: '16px', fontWeight: '700' }}>
-                            🎯 Información Profesional
-                        </h3>
-                        <div className="perfil-form-grid">
-                            <div className="form-group-guia">
-                                <label>Especialidad</label>
-                                <input type="text" name="especialidad" value={form.especialidad} onChange={handleChange} />
+                                <label>Idiomas</label>
+                                <input 
+                                    type="text" 
+                                    name="idiomas" 
+                                    value={form.idiomas} 
+                                    onChange={handleChange} 
+                                    placeholder="Ej. Español, Inglés, Francés" 
+                                />
+                                <small className="input-tip">Los idiomas que dominas para los tours</small>
                             </div>
                             <div className="form-group-guia">
                                 <label>Años de Experiencia</label>
-                                <input type="number" name="experiencia" value={form.experiencia} onChange={handleChange} min="0" />
+                                <div className="range-container">
+                                    <input 
+                                        type="number" 
+                                        name="experiencia" 
+                                        value={form.experiencia} 
+                                        onChange={handleChange} 
+                                        min="0" 
+                                        className="number-input-modern"
+                                    />
+                                    <span className="unit-label">años</span>
+                                </div>
                             </div>
+                        </div>
+
+                        <div className="perfil-card secondary-card flex-1">
+                            <h3 className="card-title-guia">📅 Estado y Disponibilidad</h3>
                             <div className="form-group-guia">
-                                <label>Idiomas (separados por coma)</label>
-                                <input type="text" name="idiomas" value={form.idiomas} onChange={handleChange} placeholder="Español, Inglés, Francés" />
+                                <label>Tu estado actual</label>
+                                <div className="availability-selector">
+                                    <button 
+                                        type="button" 
+                                        className={`btn-select ${form.disponibilidad === 'Disponible' ? 'active available' : ''}`}
+                                        onClick={() => setForm({...form, disponibilidad: 'Disponible'})}
+                                    >
+                                        <FaCheckCircle /> Disponible
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className={`btn-select ${form.disponibilidad === 'No Disponible' ? 'active unavailable' : ''}`}
+                                        onClick={() => setForm({...form, disponibilidad: 'No Disponible'})}
+                                    >
+                                        <FaClock /> Ocupado
+                                    </button>
+                                </div>
                             </div>
                             <div className="form-group-guia full-width">
-                                <label>Descripción / Bio</label>
+                                <label>Biografía Profesional</label>
                                 <textarea
-                                    name="descripcion"
-                                    value={form.descripcion}
+                                    name="bio"
+                                    value={form.bio}
                                     onChange={handleChange}
-                                    rows={4}
-                                    style={{ resize: 'vertical' }}
+                                    rows={6}
+                                    placeholder="Cuéntales a los turistas sobre tu trayectoria, tus pasiones y por qué deberían elegirte como su guía..."
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button type="submit" className="btn-save-guia">
-                            <FaSave /> Guardar Cambios
+                    <div className="form-actions-sticky">
+                        <button type="button" className="btn-cancel-guia" onClick={() => navigate('/guia')}>
+                            Cancelar
+                        </button>
+                        <button type="submit" className="btn-save-guia premium">
+                            <FaSave /> Guardar Perfil Profesional
                         </button>
                     </div>
                 </form>

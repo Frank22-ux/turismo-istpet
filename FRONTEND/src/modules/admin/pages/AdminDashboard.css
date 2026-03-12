@@ -172,13 +172,44 @@
 }
 
 /* ========================================
-   CHARTS ROW
+   CHARTS ROW & GRID
 ======================================== */
 .charts-row {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    width: 100%;
+}
+
+.chart-wrapper {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-wrapper h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.chart-inner {
+    flex: 1;
+    min-height: 250px; /* Minimum height for charts to render properly */
+    position: relative;
 }
 
 .chart-card {
@@ -397,6 +428,11 @@
         grid-template-columns: 1fr;
     }
 
+    .charts-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-md);
+    }
+
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
@@ -417,6 +453,7 @@
 
     .content-area {
         padding: var(--spacing-md);
+        overflow-x: hidden; /* Prevent horizontal scroll on body */
     }
 
     .top-bar {
@@ -432,6 +469,10 @@
     }
 
     .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
         grid-template-columns: 1fr;
     }
 }

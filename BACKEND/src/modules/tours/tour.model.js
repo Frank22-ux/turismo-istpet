@@ -15,8 +15,8 @@ const Tour = {
             (nombre, ciudad_destino, descripcion, precio, duracion, 
              fecha_inicio, fecha_fin, latitud, longitud, 
              imagen_portada, galeria, id_guia_asignado, id_hotel_base,
-             dificultad, maximo_personas, idiomas, incluye, puntos_interes) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) 
+             dificultad, maximo_personas, idiomas, incluye, puntos_interes, categoria, en_oferta, descuento) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
             RETURNING *
         `;
 
@@ -38,20 +38,24 @@ const Tour = {
             data.maximo_personas || 10,
             (idiomasJson && idiomasJson !== '[]') ? idiomasJson : null,
             (incluyeJson && incluyeJson !== '[]') ? incluyeJson : null,
-            (puntosJson && puntosJson !== '[]') ? puntosJson : null
+            (puntosJson && puntosJson !== '[]') ? puntosJson : null,
+            data.categoria || 'Aventura',
+            data.en_oferta === true || data.en_oferta === 'true' ? true : false,
+            data.descuento ? parseInt(data.descuento) : 0
         ];
 
         const { rows } = await pool.query(query, values);
         return rows[0];
     },
 
-    // --- 2. OBTENER TODOS (Con Guía y Hotel) ---
+    // --- 2. OBTENER TODOS (Con Guía, Hotel y Ocupación) ---
     findAll: async () => {
         const query = `
             SELECT t.*, 
                    u.primer_nombre as nombre_guia, 
                    u.apellido_paterno as apellido_guia,
-                   h.nombre as nombre_hotel
+                   h.nombre as nombre_hotel,
+                   COALESCE((SELECT SUM(cantidad_personas) FROM reservas WHERE id_tour = t.id_tour AND estado_reserva != 'Cancelada'), 0) as cupos_ocupados
             FROM tours t
             LEFT JOIN usuarios u ON t.id_guia_asignado = u.id_usuario
             LEFT JOIN hoteles h ON t.id_hotel_base = h.id_hotel
@@ -67,7 +71,9 @@ const Tour = {
             SELECT t.*, 
                    u.primer_nombre as nombre_guia, 
                    u.apellido_paterno as apellido_guia,
-                   h.nombre as nombre_hotel
+                   u.foto_url as foto_guia,
+                   h.nombre as nombre_hotel,
+                   COALESCE((SELECT SUM(cantidad_personas) FROM reservas WHERE id_tour = t.id_tour AND estado_reserva != 'Cancelada'), 0) as cupos_ocupados
             FROM tours t
             LEFT JOIN usuarios u ON t.id_guia_asignado = u.id_usuario
             LEFT JOIN hoteles h ON t.id_hotel_base = h.id_hotel
@@ -105,8 +111,11 @@ const Tour = {
                 maximo_personas = COALESCE($15, maximo_personas),
                 idiomas = COALESCE($16, idiomas),
                 incluye = COALESCE($17, incluye),
-                puntos_interes = COALESCE($18, puntos_interes)
-            WHERE id_tour = $19
+                puntos_interes = COALESCE($18, puntos_interes),
+                categoria = COALESCE($19, categoria),
+                en_oferta = COALESCE($20, en_oferta),
+                descuento = COALESCE($21, descuento)
+            WHERE id_tour = $22
             RETURNING *
         `;
 
@@ -129,6 +138,9 @@ const Tour = {
             (idiomasJson && idiomasJson !== '[]') ? idiomasJson : null,
             (incluyeJson && incluyeJson !== '[]') ? incluyeJson : null,
             (puntosJson && puntosJson !== '[]') ? puntosJson : null,
+            data.categoria || null,
+            data.en_oferta !== undefined ? (data.en_oferta === true || data.en_oferta === 'true') : null,
+            data.descuento !== undefined && data.descuento !== null ? parseInt(data.descuento) : null,
             id
         ];
 
@@ -171,8 +183,23 @@ const Tour = {
 
     // --- 8. ASIGNAR GUÍA A TOUR ---
     assignGuia: async (id_tour, id_guia) => {
-        const query = 'UPDATE tours SET id_guia_asignado = $1 WHERE id_tour = $2 RETURNING *';
+        const query = `
+            UPDATE tours 
+            SET id_guia_asignado = $1 
+            WHERE id_tour = $2 
+            RETURNING *, 
+                      (SELECT primer_nombre FROM usuarios WHERE id_usuario = $1) as nombre_guia,
+                      (SELECT apellido_paterno FROM usuarios WHERE id_usuario = $1) as apellido_guia,
+                      (SELECT foto_url FROM usuarios WHERE id_usuario = $1) as foto_guia
+        `;
         const { rows } = await pool.query(query, [id_guia, id_tour]);
+        return rows[0];
+    },
+
+    // --- 9. DESASIGNAR GUÍA (Unassign) ---
+    unassignGuia: async (id_tour, id_guia) => {
+        const query = 'UPDATE tours SET id_guia_asignado = NULL WHERE id_tour = $1 AND id_guia_asignado = $2 RETURNING *';
+        const { rows } = await pool.query(query, [id_tour, id_guia]);
         return rows[0];
     }
 };

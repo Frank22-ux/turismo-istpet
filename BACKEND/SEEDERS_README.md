@@ -47,9 +47,9 @@ node index.js
    ```env
    DB_HOST=localhost
    DB_PORT=5432
-   DB_NAME=turismo_db
+   DB_NAME=DB_Turismo_C
    DB_USER=postgres
-   DB_PASS=your_password
+   DB_PASS=1234
    ```
 
 3. **Instalar dependencias del backend**
@@ -60,12 +60,12 @@ node index.js
 
 4. **Crear la base de datos** (si no existe)
    ```bash
-   createdb turismo_db
+   createdb DB_Turismo_C
    ```
 
 5. **Ejecutar migraciones** (crear tablas)
    ```bash
-   psql -U postgres -d turismo_db -f ../script_base_de_datos.sql
+   psql -U postgres -d DB_Turismo_C -f ../script_base_de_datos.sql
    ```
 
 6. **Ejecutar seeders** (cargar datos iniciales)
@@ -118,8 +118,8 @@ node index.js
 ### Error: "ya existe relación" (tables already exist)
 - La BD ya tiene tablas. Options:
   - Ejecutar nuevamente el seed (usa `ON CONFLICT DO NOTHING`)
-  - Borrar la BD: `dropdb turismo_db`
-  - Recrear: `createdb turismo_db`
+  - Borrar la BD: `dropdb DB_Turismo_C`
+  - Recrear: `createdb DB_Turismo_C`
 
 ### Error: "falta dependencia"
 ```bash

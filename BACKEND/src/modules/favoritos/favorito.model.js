@@ -60,8 +60,8 @@ const Favorito = {
     findByUser: async (id_usuario) => {
         const query = `
             SELECT f.*, 
-                   t.nombre as tour_nombre, t.precio as tour_precio, t.imagen_portada as tour_img,
-                   h.nombre as hotel_nombre, h.precio_noche as hotel_precio, h.fotos_galeria as hotel_fotos
+                   t.nombre as tour_nombre, t.precio as tour_precio, t.imagen_portada as tour_img, t.ciudad_destino, t.categoria,
+                   h.nombre as hotel_nombre, h.precio_noche as hotel_precio, h.fotos_galeria as hotel_fotos, h.ciudad as hotel_ciudad
             FROM favoritos f
             LEFT JOIN tours t ON f.id_tour = t.id_tour
             LEFT JOIN hoteles h ON f.id_hotel = h.id_hotel

@@ -5,17 +5,20 @@ const GuiaDetalle = {
     upsert: async (id_usuario, data) => {
         const query = `
             INSERT INTO guias_detalles 
-            (id_usuario, idiomas, experiencia_anios, especialidades, bio, disponibilidad, cv_pdf_url, id_hotel_asignado) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            (id_usuario, idiomas, experiencia_anios, especialidades, bio, disponibilidad, dias_activos, hora_inicio, hora_fin, cv_pdf_url, id_hotel_asignado) 
+            VALUES ($1, $2::jsonb, $3, $4::jsonb, $5, $6, $7::jsonb, $8, $9, $10, $11)
             ON CONFLICT (id_usuario) 
             DO UPDATE SET 
-                idiomas = $2,
+                idiomas = $2::jsonb,
                 experiencia_anios = $3,
-                especialidades = $4,
+                especialidades = $4::jsonb,
                 bio = $5,
                 disponibilidad = $6,
-                cv_pdf_url = COALESCE($7, guias_detalles.cv_pdf_url),
-                id_hotel_asignado = $8
+                dias_activos = $7::jsonb,
+                hora_inicio = $8,
+                hora_fin = $9,
+                cv_pdf_url = COALESCE($10, guias_detalles.cv_pdf_url),
+                id_hotel_asignado = $11
             RETURNING *
         `;
 
@@ -26,6 +29,9 @@ const GuiaDetalle = {
             data.especialidades,
             data.bio,
             data.disponibilidad,
+            data.dias_activos,
+            data.hora_inicio || null,
+            data.hora_fin || null,
             data.cv_pdf_url,
             data.id_hotel_asignado || null
         ];
@@ -65,11 +71,20 @@ const GuiaDetalle = {
                 gd.especialidades,
                 gd.bio,
                 gd.disponibilidad,
+                gd.dias_activos,
+                gd.hora_inicio,
+                gd.hora_fin,
                 COALESCE((
                     SELECT COUNT(*) 
                     FROM tours t 
                     WHERE t.id_guia_asignado = u.id_usuario
-                ), 0) as tours
+                ), 0) as tours,
+                COALESCE((
+                    SELECT AVG(calificacion) FROM resenas_guias rg WHERE rg.id_guia = u.id_usuario
+                ), 0) as calificacion,
+                COALESCE((
+                    SELECT COUNT(*) FROM resenas_guias rg WHERE rg.id_guia = u.id_usuario
+                ), 0) as resenas
             FROM usuarios u
             LEFT JOIN guias_detalles gd ON u.id_usuario = gd.id_usuario
             WHERE u.id_rol = (SELECT id_rol FROM roles WHERE nombre_rol = 'Guía')
@@ -77,6 +92,30 @@ const GuiaDetalle = {
         `;
         const { rows } = await pool.query(query);
         return rows;
+    },
+
+    // 4. OBTENER PERFIL COMPLETO (Usuario + Detalles + Stats)
+    getFullProfile: async (id_usuario) => {
+        const query = `
+            SELECT 
+                u.*,
+                gd.idiomas,
+                gd.experiencia_anios,
+                gd.especialidades,
+                gd.bio,
+                gd.disponibilidad,
+                gd.dias_activos,
+                gd.hora_inicio,
+                gd.hora_fin,
+                gd.cv_pdf_url,
+                COALESCE((SELECT AVG(calificacion) FROM resenas_guias WHERE id_guia = u.id_usuario), 0) as calificacion,
+                COALESCE((SELECT COUNT(*) FROM resenas_guias WHERE id_guia = u.id_usuario), 0) as total_resenas
+            FROM usuarios u
+            LEFT JOIN guias_detalles gd ON u.id_usuario = gd.id_usuario
+            WHERE u.id_usuario = $1
+        `;
+        const { rows } = await pool.query(query, [id_usuario]);
+        return rows[0];
     }
 };
 

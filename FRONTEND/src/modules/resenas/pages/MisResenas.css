@@ -1,0 +1,107 @@
+.resenas-container {
+    padding: 30px;
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+.resenas-header {
+    margin-bottom: 40px;
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.resenas-header h1 {
+    font-size: 2.5rem;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.resenas-header p {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.resena-item-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.resena-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 16px;
+}
+
+.user-avatar-mini {
+    width: 45px;
+    height: 45px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #94a3b8;
+}
+
+.resena-user-info h4 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.resena-date {
+    display: block;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.resena-rating-stars {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+}
+
+.star-on {
+    color: #fbbf24;
+}
+
+.star-off {
+    color: #cbd5e1;
+}
+
+.resena-comment {
+    color: #475569;
+    line-height: 1.6;
+    font-size: 1.05rem;
+    font-style: italic;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.empty-resenas {
+    text-align: center;
+    padding: 60px;
+    color: #64748b;
+    background: white;
+    border-radius: 20px;
+    border: 2px dashed #e2e8f0;
+}

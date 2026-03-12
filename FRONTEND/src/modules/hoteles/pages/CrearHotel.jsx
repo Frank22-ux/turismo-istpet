@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link, useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../../core/api';
 import {
     FaSave,
@@ -17,7 +17,7 @@ import {
     FaPlus,
     FaTrash
 } from 'react-icons/fa';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -46,7 +46,11 @@ const CrearHotel = () => {
             precioNoche: 50,
             descripcion: '',
             amenidades: '',
-            convenio: null
+            convenio: null,
+            hora_entrada: '',
+            hora_salida: '',
+            telefono: '',
+            correo_electronico: ''
         }
     });
 
@@ -57,18 +61,25 @@ const CrearHotel = () => {
     const [error, setError] = useState('');
     const [pdfFile, setPdfFile] = useState(null);
     const [pdfFileName, setPdfFileName] = useState('');
+    const [existingPdfUrl, setExistingPdfUrl] = useState(''); // Para mostrar descargar/ver
     const [imagenes, setImagenes] = useState([]);
     const [previews, setPreviews] = useState([]);
+    const [existingImages, setExistingImages] = useState([]); // Para fotos previas
     const [position, setPosition] = useState([-0.1807, -78.4678]); // Quito default
     const [rating, setRating] = useState(3);
     const [rooms, setRooms] = useState([
         { tipo: 'Sencilla', cantidad: 1, precio: 50 }
     ]);
     const [selectedAmenities, setSelectedAmenities] = useState([]);
+    const [geocoding, setGeocoding] = useState(false);
+    const [geocodeMsg, setGeocodeMsg] = useState('');
+    const geocodeTimeoutRef = useRef(null);
 
     const amenitiesOptions = [
         'WiFi Gratis', 'Piscina', 'Gimnasio', 'Restaurante',
-        'Parqueadero', 'Aire Acondicionado', 'Spa', 'Bar'
+        'Parqueadero', 'Aire Acondicionado', 'Spa', 'Bar',
+        'Accesibilidad todo público', 'Servicio de lavandería',
+        'Servicio a la habitación', 'Apto para niños', 'Aceptamos mascotas'
     ];
 
     const handleAmenityChange = (amenity) => {
@@ -93,8 +104,9 @@ const CrearHotel = () => {
         setRooms(newRooms);
     };
 
-    // Componente para manejar clicks en el mapa
+    // Componente para manejar clicks en el mapa y volar a la posición
     const LocationMarker = () => {
+        const map = useMap();
         useMapEvents({
             click(e) {
                 const { lat, lng } = e.latlng;
@@ -102,6 +114,13 @@ const CrearHotel = () => {
                 reverseGeocode(lat, lng);
             },
         });
+
+        // Cuando la posición cambia (desde geocodificación de texto), volar al nuevo punto
+        useEffect(() => {
+            if (position) {
+                map.flyTo(position, 15, { duration: 1.2 });
+            }
+        }, [position, map]);
 
         return <Marker position={position} draggable={true} eventHandlers={{
             dragend: (e) => {
@@ -119,7 +138,6 @@ const CrearHotel = () => {
             const data = await response.json();
             if (data.display_name) {
                 setValue('direccion', data.display_name);
-                // Intentar extraer la ciudad si Nominatim la provee
                 const city = data.address.city || data.address.town || data.address.village || data.address.county;
                 if (city) setValue('ciudad', city);
             }
@@ -127,6 +145,35 @@ const CrearHotel = () => {
             console.error("Error in reverse geocoding:", error);
         }
     };
+
+    // Geocodificación directa: dirección → coordenadas
+    const geocodeAddress = useCallback(async (address) => {
+        if (!address || address.length < 5) return;
+        setGeocoding(true);
+        setGeocodeMsg('🔍 Buscando ubicación...');
+        try {
+            const encoded = encodeURIComponent(address);
+            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`);
+            const results = await resp.json();
+            if (results.length > 0) {
+                const { lat, lon, display_name } = results[0];
+                setPosition([parseFloat(lat), parseFloat(lon)]);
+                setGeocodeMsg('✅ Ubicación encontrada');
+                // Si no se llenó la ciudad, intentar extraerla
+                const addrDetails = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const addrData = await addrDetails.json();
+                const city = addrData?.address?.city || addrData?.address?.town || addrData?.address?.village || addrData?.address?.county;
+                if (city) setValue('ciudad', city);
+            } else {
+                setGeocodeMsg('⚠️ No se encontró la dirección. Intenta ser más específico.');
+            }
+        } catch (err) {
+            setGeocodeMsg('❌ Error al buscar la ubicación');
+        } finally {
+            setGeocoding(false);
+            setTimeout(() => setGeocodeMsg(''), 4000);
+        }
+    }, [setValue]);
 
     // Cargar datos si es edición
     useEffect(() => {
@@ -165,10 +212,36 @@ const CrearHotel = () => {
                             }]);
                         }
 
+                        // Cargar campos de contacto y horarios
+                        setValue('hora_entrada', hotel.hora_entrada ? hotel.hora_entrada.slice(0, 5) : '');
+                        setValue('hora_salida', hotel.hora_salida ? hotel.hora_salida.slice(0, 5) : '');
+                        setValue('telefono', hotel.telefono || '');
+                        setValue('correo_electronico', hotel.correo_electronico || '');
+
                         // Cargar Amenidades
                         if (hotel.amenidades) {
                             const ams = hotel.amenidades.split(',').map(a => a.trim());
                             setSelectedAmenities(ams.filter(a => amenitiesOptions.includes(a)));
+                        }
+
+                        // Cargar Imágenes existentes
+                        if (hotel.fotos_galeria) {
+                            try {
+                                const fotos_array = typeof hotel.fotos_galeria === 'string' 
+                                    ? JSON.parse(hotel.fotos_galeria) 
+                                    : hotel.fotos_galeria;
+                                if (Array.isArray(fotos_array)) {
+                                    setExistingImages(fotos_array.map(img => `http://localhost:4000${img}`));
+                                }
+                            } catch (e) {
+                                console.error('Error parseando fotos_galeria', e);
+                            }
+                        }
+
+                        // Cargar documento PDF existente
+                        if (hotel.convenio_pdf_url) {
+                            setExistingPdfUrl(`http://localhost:4000${hotel.convenio_pdf_url}`);
+                            setPdfFileName(hotel.convenio_pdf_url.split('/').pop());
                         }
                     }
                 } catch (err) {
@@ -208,8 +281,8 @@ const CrearHotel = () => {
     const handleImagenChange = (e) => {
         const files = Array.from(e.target.files);
 
-        if (imagenes.length + files.length > 4) {
-            setError(`❌ Máximo 4 imágenes permitidas. Ya tienes ${imagenes.length}.`);
+        if (imagenes.length + existingImages.length + files.length > 4) {
+            setError(`❌ Máximo 4 imágenes permitidas. Ya tienes ${imagenes.length + existingImages.length}.`);
             setTimeout(() => setError(''), 5000);
             return;
         }
@@ -256,7 +329,8 @@ const CrearHotel = () => {
                 return;
             }
 
-            if (!isEdit && imagenes.length === 0) {
+            // Validar que haya al menos una imagen (nueva o existente)
+            if (imagenes.length === 0 && existingImages.length === 0) {
                 setError('⚠️ Debes cargar al menos una imagen del hotel.');
                 setLoading(false);
                 return;
@@ -280,6 +354,10 @@ const CrearHotel = () => {
             formDataToSend.append('habitaciones', JSON.stringify(rooms)); // Detalle para tabla relacionada
             formDataToSend.append('amenidades', selectedAmenities.join(', '));
             formDataToSend.append('descripcion', data.descripcion);
+            formDataToSend.append('hora_entrada', data.hora_entrada || '');
+            formDataToSend.append('hora_salida', data.hora_salida || '');
+            formDataToSend.append('telefono', data.telefono || '');
+            formDataToSend.append('correo_electronico', data.correo_electronico || '');
             formDataToSend.append('convenio', pdfFile);
 
             imagenes.forEach((img) => {
@@ -296,8 +374,10 @@ const CrearHotel = () => {
             reset();
             setPdfFile(null);
             setPdfFileName('');
+            setExistingPdfUrl('');
             setImagenes([]);
             setPreviews([]);
+            setExistingImages([]);
 
             setTimeout(() => {
                 // La vista de gestión de hoteles vive en /admin/crear-hotel (ruta del sidebar)
@@ -398,6 +478,54 @@ const CrearHotel = () => {
                         </div>
                     </div>
 
+                    {/* CONTACTO Y HORARIOS */}
+                    <div className="form-row-3">
+                        <div className="form-group">
+                            <label>📞 Teléfono de Contacto *</label>
+                            <input
+                                type="tel"
+                                {...register('telefono', { required: 'Teléfono requerido' })}
+                                placeholder="ej: +593 99 123 4567"
+                                className={errors.telefono ? 'error' : ''}
+                            />
+                            {errors.telefono && <span className="error-msg">{errors.telefono.message}</span>}
+                        </div>
+                        <div className="form-group">
+                            <label>✉️ Correo Electrónico *</label>
+                            <input
+                                type="email"
+                                {...register('correo_electronico', {
+                                    required: 'Correo requerido',
+                                    pattern: { value: /^[^@]+@[^@]+\.[^@]+$/, message: 'Correo inválido' }
+                                })}
+                                placeholder="ej: contacto@hotel.com"
+                                className={errors.correo_electronico ? 'error' : ''}
+                            />
+                            {errors.correo_electronico && <span className="error-msg">{errors.correo_electronico.message}</span>}
+                        </div>
+                    </div>
+
+                    <div className="form-row-3">
+                        <div className="form-group">
+                            <label>🕐 Hora de Entrada (Check-in) *</label>
+                            <input
+                                type="time"
+                                {...register('hora_entrada', { required: 'Hora de entrada requerida' })}
+                                className={errors.hora_entrada ? 'error' : ''}
+                            />
+                            {errors.hora_entrada && <span className="error-msg">{errors.hora_entrada.message}</span>}
+                        </div>
+                        <div className="form-group">
+                            <label>🕐 Hora de Salida (Check-out) *</label>
+                            <input
+                                type="time"
+                                {...register('hora_salida', { required: 'Hora de salida requerida' })}
+                                className={errors.hora_salida ? 'error' : ''}
+                            />
+                            {errors.hora_salida && <span className="error-msg">{errors.hora_salida.message}</span>}
+                        </div>
+                    </div>
+
                     <div className="form-row">
                         <div className="form-group">
                             <label>
@@ -425,14 +553,29 @@ const CrearHotel = () => {
                     <div className="form-row">
                         <div className="form-group">
                             <label>
-                                <FaMapMarkerAlt /> Dirección Exacta (Autocompletada) *
+                                <FaMapMarkerAlt /> Dirección Exacta *
                             </label>
                             <textarea
                                 {...register('direccion', { required: 'Dirección requerida' })}
-                                placeholder="La dirección se completará al marcar el punto en el mapa..."
+                                placeholder="Escribe la dirección y el mapa se actualizará automáticamente..."
                                 rows="2"
                                 className={errors.direccion ? 'error' : ''}
+                                onChange={(e) => {
+                                    // Actualizar el valor en react-hook-form
+                                    setValue('direccion', e.target.value, { shouldValidate: true });
+                                    // Debounce: esperar 1s antes de buscar
+                                    if (geocodeTimeoutRef.current) clearTimeout(geocodeTimeoutRef.current);
+                                    geocodeTimeoutRef.current = setTimeout(() => {
+                                        geocodeAddress(e.target.value);
+                                    }, 1000);
+                                }}
                             />
+                            {geocodeMsg && (
+                                <p className="geocode-status" style={{ fontSize: '0.82rem', marginTop: '4px', color: geocodeMsg.startsWith('✅') ? '#16a34a' : geocodeMsg.startsWith('❌') ? '#dc2626' : '#0369a1' }}>
+                                    {geocoding && <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', marginRight: '4px' }}>⏳</span>}
+                                    {geocodeMsg}
+                                </p>
+                            )}
                             {errors.direccion && <span className="error-msg">{errors.direccion.message}</span>}
                         </div>
                     </div>
@@ -549,23 +692,31 @@ const CrearHotel = () => {
                                 Arrastra y suelta tus fotos aquí o haz clic para seleccionar
                             </span>
                             <span className="upload-subtitle">
-                                JPG, PNG, hasta 5MB cada una ({imagenes.length}/4)
+                                JPG, PNG, hasta 5MB cada una ({(imagenes.length + existingImages.length)}/4)
+                                {isEdit && <><br/><strong style={{color:'#e74c3c'}}>Nota:</strong> Subir nuevas fotos reemplazará la galería actual.</>}
                             </span>
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImagenChange}
                                 multiple
-                                disabled={imagenes.length >= 4}
+                                disabled={(imagenes.length + existingImages.length) >= 4}
                                 className="images-input"
                             />
                         </label>
 
-                        {previews.length > 0 && (
+                        {/* Mostrar fotos existentes y nuevas */}
+                        {(existingImages.length > 0 || previews.length > 0) && (
                             <div className="gallery-preview">
+                                {existingImages.length > 0 && existingImages.map((src, index) => (
+                                    <div key={`exist-${index}`} className="gallery-item existing">
+                                        <img src={src} alt={`Actual ${index + 1}`} />
+                                        <div className="image-badge">Actual</div>
+                                    </div>
+                                ))}
                                 {previews.map((preview, index) => (
-                                    <div key={index} className="gallery-item">
-                                        <img src={preview} alt={`Preview ${index + 1}`} />
+                                    <div key={`new-${index}`} className="gallery-item">
+                                        <img src={preview} alt={`Nueva ${index + 1}`} />
                                         <button
                                             type="button"
                                             className="btn-remove-image"
@@ -574,7 +725,7 @@ const CrearHotel = () => {
                                         >
                                             <FaTimes />
                                         </button>
-                                        <span className="image-number">{index + 1}</span>
+                                        <span className="image-number">Nueva</span>
                                     </div>
                                 ))}
                             </div>
@@ -590,7 +741,7 @@ const CrearHotel = () => {
                         <label className="pdf-upload-label">
                             <FaCloudUploadAlt className="upload-icon" />
                             <span className="upload-text">
-                                Cargar Convenio (PDF) *
+                                {isEdit ? 'Reemplazar Convenio (PDF)' : 'Cargar Convenio (PDF) *'}
                             </span>
                             <span className="upload-subtitle">
                                 Solo archivos PDF, máximo 10MB
@@ -603,12 +754,24 @@ const CrearHotel = () => {
                             />
                         </label>
 
-                        {pdfFileName && (
+                        {!pdfFile && existingPdfUrl && (
+                            <div className="pdf-file-info existing">
+                                <FaFileAlt className="pdf-icon" />
+                                <div className="pdf-details">
+                                    <p className="pdf-name">{pdfFileName}</p>
+                                    <p className="pdf-status" style={{color: '#0369a1'}}>
+                                        <a href={existingPdfUrl} target="_blank" rel="noopener noreferrer" style={{color: '#1f7a8c', textDecoration: 'underline'}}>Ver convenio actual</a>
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {pdfFileName && pdfFile && (
                             <div className="pdf-file-info">
                                 <FaFileAlt className="pdf-icon" />
                                 <div className="pdf-details">
                                     <p className="pdf-name">{pdfFileName}</p>
-                                    <p className="pdf-status">✓ Archivo válido</p>
+                                    <p className="pdf-status">✓ Nuevo archivo cargado</p>
                                 </div>
                             </div>
                         )}

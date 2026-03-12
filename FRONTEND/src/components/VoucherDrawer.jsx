@@ -6,6 +6,7 @@ import './VoucherDrawer.css';
 
 const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
     const voucherRef = useRef();
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     if (!reservation) return null;
 
@@ -102,8 +103,13 @@ const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
 
                             <div className="ticket-right">
                                 <div className="qr-box">
-                                    <FaQrcode className="qr-icon" />
-                                    <span className="qr-id">{reservation.id_reserva || 'ID-RESERVA'}</span>
+                                    <img 
+                                        src={`https://chart.googleapis.com/chart?cht=qr&chl=${encodeURIComponent(`Reserva:${reservation.id_reserva || reservation.id}|Turista:${user.username || 'Usuario'}`)}&chs=120x120&choe=UTF-8&chld=L|2`} 
+                                        alt="QR Code" 
+                                        className="real-qr-code" 
+                                        style={{ width: '100px', height: '100px' }}
+                                    />
+                                    <span className="qr-id">ID-{reservation.id_reserva || reservation.id}</span>
                                 </div>
                                 <div className="total-box">
                                     <span className="item-label">Total Pagado</span>
@@ -114,14 +120,22 @@ const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
 
                         <div className="ticket-footer">
                             <div className="guia-mini-info">
-                                <FaUserCircle />
+                                {reservation.foto_guia ? (
+                                    <img src={`http://localhost:4000${reservation.foto_guia}`} alt="Guía" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                ) : (
+                                    <FaUserCircle />
+                                )}
                                 <div>
                                     <span className="item-label">Guía Asignado</span>
-                                    <span className="item-value">{reservation.guia || 'Daniel Mendoza'}</span>
+                                    <span className="item-value">
+                                        {reservation.nombre_guia 
+                                            ? `${reservation.nombre_guia} ${reservation.apellido_guia || ''}` 
+                                            : (reservation.guia || 'Por asignar')}
+                                    </span>
                                 </div>
                             </div>
                             <div className="footer-note">
-                                * ID de Transacción: <span>{reservation.referencia_txn || `TXN-${Math.floor(Math.random() * 1000000)}`}</span>
+                                * ID de Transacción: <span>{reservation.referencia_txn || `TXN-${String(reservation.id || '0').padStart(6, '0')}`}</span>
                             </div>
                         </div>
                     </div>
@@ -141,7 +155,7 @@ const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
 
                     <div className="voucher-help">
                         <h4>¿Necesitas ayuda?</h4>
-                        <p>Si tienes problemas con tu reserva, contáctanos a soporte@ecrut.ec o llámanos al +593 99 XXX XXXX</p>
+                        <p>Si tienes problemas con tu reserva, contáctanos a soporte@ecrut.ec o llámanos al +593 97 879 9437</p>
                     </div>
                 </div>
             </div>

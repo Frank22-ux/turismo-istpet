@@ -13,10 +13,10 @@ const SearchController = {
             const minStars = parseInt(stars) || 0;
 
             // 1. Buscar en TOURS
-            if (!type || type === 'tours' || type === 'todos') {
+            if (!type || type === 'tours' || type === 'todos' || type === 'destinos') {
                 const tourQuery = `
                     SELECT * FROM tours 
-                    WHERE (LOWER(nombre) LIKE $1 OR LOWER(descripcion) LIKE $1)
+                    WHERE (LOWER(nombre) LIKE $1 OR LOWER(descripcion) LIKE $1 OR LOWER(ciudad_destino) LIKE $1)
                     AND LOWER(ciudad_destino) LIKE $2
                     AND precio BETWEEN $3 AND $4
                     ORDER BY id_tour DESC
@@ -26,10 +26,10 @@ const SearchController = {
             }
 
             // 2. Buscar en HOTELES
-            if (!type || type === 'hoteles' || type === 'todos') {
+            if (!type || type === 'hoteles' || type === 'todos' || type === 'destinos') {
                 const hotelQuery = `
                     SELECT * FROM hoteles 
-                    WHERE (LOWER(nombre) LIKE $1 OR LOWER(descripcion) LIKE $1)
+                    WHERE (LOWER(nombre) LIKE $1 OR LOWER(descripcion) LIKE $1 OR LOWER(ciudad) LIKE $1)
                     AND LOWER(ciudad) LIKE $2
                     AND precio_noche BETWEEN $3 AND $4
                     AND estrellas >= $5

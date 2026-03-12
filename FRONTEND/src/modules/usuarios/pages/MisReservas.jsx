@@ -12,6 +12,10 @@ import './TuristaPages.css';
 import TourDrawer from '../../../components/TourDrawer';
 import ReservationDrawer from '../../../components/ReservationDrawer';
 import PaymentDrawer from '../../../components/PaymentDrawer';
+import ReviewModal from '../../../components/ReviewModal';
+import VoucherDrawer from '../../../components/VoucherDrawer';
+
+const API_URL = 'http://localhost:4000';
 
 // Reservas Mock eliminadas para usar datos reales del backend
 
@@ -21,8 +25,6 @@ const estadoConfig = {
     Completada: { icon: <FaStar />, color: '#3b82f6', bg: '#dbeafe', label: 'Completada' },
     Cancelada: { icon: <FaTimesCircle />, color: '#ef4444', bg: '#fee2e2', label: 'Cancelada' },
 };
-
-import VoucherDrawer from '../../../components/VoucherDrawer';
 
 const MisReservas = () => {
     const navigate = useNavigate();
@@ -36,6 +38,7 @@ const MisReservas = () => {
     const [isReservationOpen, setIsReservationOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isVoucherOpen, setIsVoucherOpen] = useState(false);
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [pendingReservation, setPendingReservation] = useState(null);
 
@@ -48,23 +51,37 @@ const MisReservas = () => {
         try {
             const response = await api.get('/reservas/mis-reservas');
             // Mapeamos los datos del backend al formato esperado por la vista
-            const dataMapped = response.data.map(r => ({
-                id: r.id_reserva,
-                tour: r.tour_nombre || r.hotel_nombre || 'Mi Experiencia',
-                guia: 'Guía Asignado', // Podríamos traerlo en el JOIN si fuera necesario
-                imagen: r.id_tour
-                    ? `https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=75&sig=${r.id_tour}`
-                    : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=75',
-                ciudad: 'Ecuador',
-                fecha: r.fecha_actividad,
-                hora: '08:00',
-                personas: r.cantidad_personas,
-                total: parseFloat(r.total_pagado) || 0,
-                estado: r.estado_reserva,
-                duracion: 'Día completo',
-                calificacion: 5.0,
-                pagado: r.estado_reserva !== 'Pendiente',
-            }));
+            const dataMapped = response.data.map(r => {
+                let imgUrl = 'https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=75';
+                if (r.tour_imagen) {
+                    imgUrl = r.tour_imagen.startsWith('http') ? r.tour_imagen : `http://localhost:4000${r.tour_imagen}`;
+                } else if (r.id_tour) {
+                    imgUrl = `https://images.unsplash.com/photo-1551854304-25049c10e254?w=500&q=75&sig=${r.id_tour}`;
+                }
+
+                return {
+                    id: r.id_reserva,
+                    tour: r.tour_nombre || r.hotel_nombre || 'Mi Experiencia',
+                    guia: 'Guía Asignado', // Podríamos traerlo en el JOIN si fuera necesario
+                    imagen: imgUrl,
+                    ciudad: r.tour_ciudad || 'Ecuador',
+                    fecha: r.fecha_actividad,
+                    hora: '08:00', // Hardcoded por ahora, asumiendo inicio estándar
+                    personas: r.cantidad_personas,
+                    total: parseFloat(r.total_pagado) || 0,
+                    estado: r.estado_reserva,
+                    duracion: r.tour_duracion || 'Día completo',
+                    calificacion: r.tour_calificacion || 4.5,
+                    id_guia: r.id_guia,
+                    foto_guia: r.guia_foto,
+                    nombre_guia: r.guia_nombre,
+                    apellido_guia: r.guia_apellido,
+                    id_hotel: r.id_hotel || r.hotel_asociado_id,
+                    hotel_nombre: r.hotel_nombre,
+                    pagado: r.estado_reserva !== 'Pendiente',
+                    id_reserva: r.id_reserva, // Aseguramos que pase como id_reserva también
+                };
+            });
             setReservas(dataMapped);
         } catch (error) {
             console.error("Error fetching reservas:", error);
@@ -86,7 +103,9 @@ const MisReservas = () => {
             imagen_portada: res.imagen,
             calificacion: res.calificacion,
             duracion: res.duracion,
-            guia: res.guia,
+            nombre_guia: res.nombre_guia,
+            apellido_guia: res.apellido_guia,
+            foto_guia: res.foto_guia,
             maximo_personas: 20
         };
         setSelectedTour(tourData);
@@ -105,7 +124,14 @@ const MisReservas = () => {
     };
 
     const handleCalificar = (res) => {
-        alert(`Abriendo panel de calificación para: ${res.tour}. ¡Tu opinión nos ayuda a mejorar!`);
+        setSelectedReservation(res);
+        setIsReviewOpen(true);
+    };
+
+    const handleReviewSuccess = () => {
+        setIsReviewOpen(false);
+        alert("¡Gracias por tu reseña! Tu calificación ha sido registrada.");
+        fetchReservas(); // Opcional, para actualizar algún estado si lo tuviéramos
     };
 
     const handleConfirmReservation = (resData) => {
@@ -211,6 +237,28 @@ const MisReservas = () => {
 
             {/* ── Contenido ── */}
             <div className="page-content-wrap">
+                
+                {/* Banner Informativo de Reseñas */}
+                <div className="review-notice-banner" style={{ 
+                    background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
+                    color: 'white', 
+                    padding: '20px', 
+                    borderRadius: '16px', 
+                    marginBottom: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.2)'
+                }}>
+                    <div style={{ fontSize: '2.5rem' }}>✍️</div>
+                    <div>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>¡Tu opinión nos importa!</h4>
+                        <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: '0.95rem' }}>
+                            Las opciones de calificación aparecerán automáticamente en tus tours una vez que el estado cambie a <strong>"Completada"</strong>. 
+                            ¡Ayuda a otros viajeros compartiendo tu experiencia sobre el tour, el guía y el hotel!
+                        </p>
+                    </div>
+                </div>
 
                 {/* Barra de filtros */}
                 <div className="page-filter-bar">
@@ -271,8 +319,18 @@ const MisReservas = () => {
                                             <span><FaUsers /> {res.personas} persona{res.personas > 1 ? 's' : ''}</span>
                                         </div>
                                         <div className="reserva-guia">
-                                            <FaUserCircle className="guia-icon" />
-                                            <span>Guía: <strong>{res.guia}</strong></span>
+                                            <div className="guia-photo-mini" style={{ width: '30px', height: '30px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#e2e8f0', marginRight: '8px' }}>
+                                                {res.foto_guia ? (
+                                                    <img 
+                                                        src={res.foto_guia.startsWith('http') ? res.foto_guia : `${API_URL}${res.foto_guia}`} 
+                                                        alt={res.nombre_guia}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><FaUserCircle /></div>
+                                                )}
+                                            </div>
+                                            <span>Guía: <strong>{res.nombre_guia ? `${res.nombre_guia} ${res.apellido_guia || ''}` : 'Por asignar'}</strong></span>
                                             <span className="guia-rating"><FaStar /> {res.calificacion}</span>
                                         </div>
                                     </div>
@@ -289,7 +347,9 @@ const MisReservas = () => {
                                         <div className="reserva-acciones">
                                             <button className="btn-accion primary" onClick={() => handleVerDetalles(res)}><FaEye /> Ver detalles</button>
                                             {res.estado === 'Completada' && (
-                                                <button className="btn-accion secondary" onClick={() => handleCalificar(res)}><FaStar /> Calificar</button>
+                                                <button className="btn-accion primary-highlight" onClick={() => handleCalificar(res)} style={{ backgroundColor: '#2563eb', color: 'white', fontWeight: '600' }}>
+                                                    <FaStar /> Calificar ahora
+                                                </button>
                                             )}
                                             {(res.estado === 'Confirmada' || res.estado === 'Pendiente') && (
                                                 <button className="btn-accion danger" onClick={() => handleCancelar(res.id)}><FaTimesCircle /> Cancelar</button>
@@ -313,6 +373,8 @@ const MisReservas = () => {
             <TourDrawer
                 tour={selectedTour}
                 isOpen={isDrawerOpen}
+                isFavorite={false} // Se podría implementar carga de favoritos aquí también si se desea
+                onToggleFavorite={() => alert("Función disponible desde la página principal")}
                 onClose={() => setIsDrawerOpen(false)}
                 onReserve={(t) => {
                     setIsDrawerOpen(false);
@@ -331,6 +393,13 @@ const MisReservas = () => {
                 isOpen={isPaymentOpen}
                 onClose={() => setIsPaymentOpen(false)}
                 onPaymentSuccess={handlePaymentSuccess}
+            />
+
+            <ReviewModal
+                isOpen={isReviewOpen}
+                onClose={() => setIsReviewOpen(false)}
+                reservation={selectedReservation}
+                onSuccess={handleReviewSuccess}
             />
         </div>
     );

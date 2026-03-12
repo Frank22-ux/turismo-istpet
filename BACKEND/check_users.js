@@ -1,14 +1,10 @@
 const pool = require('./src/config/db');
 
-async function checkUsers() {
+async function checkUser() {
     try {
-        const query = `
-            SELECT u.id_usuario, u.primer_nombre, r.nombre_rol, u.id_rol
-            FROM usuarios u
-            JOIN roles r ON u.id_rol = r.id_rol;
-        `;
-        const { rows } = await pool.query(query);
-        console.log(JSON.stringify(rows, null, 2));
+        const res = await pool.query('SELECT id_usuario, correo, primer_nombre, id_rol, cedula FROM usuarios');
+        console.log('--- USUARIOS REGISTRADOS ---');
+        console.table(res.rows);
     } catch (err) {
         console.error(err);
     } finally {
@@ -16,4 +12,4 @@ async function checkUsers() {
     }
 }
 
-checkUsers();
+checkUser();

@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logoutRequest } from '../../../modules/auth/services/auth.service';
-import { guiasMock } from '../../../core/mockData';
+import api from '../../../core/api';
 import {
     FaHome, FaCalendarAlt, FaCoins, FaUsers, FaStar, FaSignOutAlt,
     FaChartLine, FaEdit, FaUserCircle, FaBell, FaSearch
 } from 'react-icons/fa';
 import './GuiaDashboard.css';
 import './GuiaMisTours.css';
+import GuiaNavbar from '../../../components/guia/GuiaNavbar';
+import GuiaSidebar from '../../../components/guia/GuiaSidebar';
 
 // Reseñas de muestra
 const resenasMock = [
@@ -18,18 +20,69 @@ const resenasMock = [
     { id: 5, nombre: 'Sofía Castro', fecha: '12 Mar 2025', estrellas: 5, texto: 'Absolutamente maravilloso. El mejor tour que he tenido. ¡Gracias!', tour: 'Tour Cotopaxi Clásico', inicial: 'S' },
 ];
 
+const API_URL = 'http://localhost:4000';
 const GuiaMisResenas = () => {
     const navigate = useNavigate();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [filtroEstrellas, setFiltroEstrellas] = useState(0);
+    const [resenas, setResenas] = useState([]);
+    const [stats, setStats] = useState({ promedio: 0, total_resenas: 0 });
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [guideReservas, setGuideReservas] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const baseGuide = guiasMock[0] || {};
+
+    useEffect(() => {
+        const fetchReservas = async () => {
+            try {
+                const response = await api.get('/reservas/guia');
+                const mapped = response.data.map(r => ({
+                    id: r.id_reserva,
+                    tour: r.tour_nombre,
+                    turista: `${r.turista_nombre} ${r.turista_apellido}`,
+                    fecha: new Date(r.fecha_actividad).toLocaleDateString()
+                }));
+                setGuideReservas(mapped);
+            } catch (error) {
+                console.error("Error fetching reservas for notifications:", error);
+            }
+        };
+        const fetchData = async () => {
+            try {
+                const [profileRes, resenasRes] = await Promise.all([
+                    api.get(`/guias/${user.id_usuario}/profile`),
+                    api.get(`/resenas/guia/${user.id_usuario}`)
+                ]);
+                setProfile(profileRes.data);
+                
+                const reviews = resenasRes.data.resenas || [];
+                const avg = reviews.reduce((acc, curr) => acc + curr.calificacion, 0) / (reviews.length || 1);
+                setStats({ promedio: avg.toFixed(1), total_resenas: reviews.length });
+                setResenas(reviews); // Changed setReviews to setResenas
+            } catch (error) { console.error(error); } finally {
+                setLoading(false);
+            }
+        };
+        if (user.id_usuario) {
+            fetchData();
+            fetchReservas();
+        }
+    }, [user.id_usuario]);
     const currentGuide = {
-        ...baseGuide,
-        nombre: user.primer_nombre || baseGuide.nombre || 'Guía',
-        apellido: user.apellido_paterno || baseGuide.apellido || '',
-        imagen: user.foto_url || baseGuide.imagen,
+        nombre: profile?.primer_nombre || user.primer_nombre || 'Guía',
+        apellido: profile?.apellido_paterno || user.apellido_paterno || '',
+        imagen: (profile?.foto_url || user.foto_url)
+            ? ((profile?.foto_url || user.foto_url).startsWith('http') ? (profile?.foto_url || user.foto_url) : `${API_URL}${profile?.foto_url || user.foto_url}`) 
+            : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+        especialidad: profile?.especialidades || user.descripcion_perfil || 'Especialista Ecoturismo',
+        calificacion: parseFloat(stats.promedio) || 4.9,
+        total_resenas: parseInt(stats.total_resenas) || 0,
+        toursGuiados: parseInt(profile?.tours) || 0,
+        experiencia: profile?.experiencia_anios || 0,
+        idiomas: Array.isArray(profile?.idiomas) ? profile.idiomas : ['Español'],
+        disponible: profile?.disponibilidad?.trim().toLowerCase() === 'disponible',
     };
 
     const handleLogout = async () => {
@@ -38,61 +91,19 @@ const GuiaMisResenas = () => {
     };
 
     const filtradas = filtroEstrellas === 0
-        ? resenasMock
-        : resenasMock.filter(r => r.estrellas === filtroEstrellas);
+        ? resenas
+        : resenas.filter(r => r.calificacion === filtroEstrellas);
 
-    const promedio = (resenasMock.reduce((s, r) => s + r.estrellas, 0) / resenasMock.length).toFixed(1);
+    const promedio = parseFloat(stats.promedio).toFixed(1);
 
     return (
         <div className="guia-layout">
-            <nav className="navbar-guia">
-                <div className="nav-container-guia">
-                    <div className="nav-logo-guia">
-                        <img src="/uploads/logo.png" alt="Logo" className="logo-img-guia" style={{ maxWidth: '40px', maxHeight: '40px', objectFit: 'contain' }} />
-                        <span className="logo-text-guia">ECRUT Travels</span>
-                    </div>
-                    <div className="nav-search-guia">
-                        <FaSearch />
-                        <input type="text" placeholder="Buscar reseñas..." className="search-input-guia" />
-                    </div>
-                    <div className="nav-actions-guia">
-                        <button className="nav-badge-guia"><FaBell /> 3</button>
-                        <div className="user-menu-container-guia">
-                            <button className="btn-user-menu-guia" onClick={() => setShowUserMenu(!showUserMenu)}>
-                                <FaUserCircle /> {currentGuide.nombre}
-                            </button>
-                            {showUserMenu && (
-                                <div className="dropdown-menu-guia">
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/editar-perfil'); }}><FaEdit /> Editar Perfil</button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/disponibilidad'); }}><FaCalendarAlt /> Mi Disponibilidad</button>
-                                    <button className="menu-item-guia" onClick={() => { setShowUserMenu(false); navigate('/guia/mis-resenas'); }}><FaStar /> Mis Reseñas</button>
-                                    <hr />
-                                    <button onClick={handleLogout} className="menu-item-guia logout-guia"><FaSignOutAlt /> Cerrar Sesión</button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <div className="guia-sidebar">
-                <div className="sidebar-profile-guia">
-                    <div className="profile-avatar-guia">
-                        <img src={currentGuide.imagen} alt={currentGuide.nombre} />
-                    </div>
-                    <h3 className="profile-name-guia">{currentGuide.nombre} {currentGuide.apellido}</h3>
-                    <p className="profile-specialty-guia">{currentGuide.especialidad}</p>
-                    <div className="profile-rating-guia"><FaStar /> {currentGuide.calificacion}</div>
-                    <p className="profile-reviews-guia">({currentGuide.resenas} reseñas)</p>
-                </div>
-                <nav className="sidebar-nav-guia">
-                    <button className="nav-item-guia" onClick={() => navigate('/guia')}><FaHome /> Dashboard</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/mis-tours')}><FaCalendarAlt /> Mis Tours</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/reservas')}><FaUsers /> Reservas</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/ganancias')}><FaCoins /> Ganancias</button>
-                    <button className="nav-item-guia" onClick={() => navigate('/guia/estadisticas')}><FaChartLine /> Estadísticas</button>
-                </nav>
-            </div>
+            <GuiaNavbar 
+                currentGuide={currentGuide} 
+                onSearch={setSearchTerm}
+                reservations={guideReservas}
+            />
+            <GuiaSidebar currentGuide={currentGuide} />
 
             <main className="guia-main-content">
                 <div className="guia-header">
@@ -114,21 +125,21 @@ const GuiaMisResenas = () => {
                     <div className="stat-card-guia success">
                         <div className="stat-icon-guia">💬</div>
                         <div className="stat-info-guia">
-                            <div className="stat-number-guia">{resenasMock.length}</div>
+                            <div className="stat-number-guia">{stats.total_resenas}</div>
                             <div className="stat-label-guia">Total de Reseñas</div>
                         </div>
                     </div>
                     <div className="stat-card-guia info">
                         <div className="stat-icon-guia">🏆</div>
                         <div className="stat-info-guia">
-                            <div className="stat-number-guia">{resenasMock.filter(r => r.estrellas === 5).length}</div>
+                            <div className="stat-number-guia">{resenas.filter(r => r.calificacion === 5).length}</div>
                             <div className="stat-label-guia">5 Estrellas</div>
                         </div>
                     </div>
                     <div className="stat-card-guia warning">
                         <div className="stat-icon-guia">👍</div>
                         <div className="stat-info-guia">
-                            <div className="stat-number-guia">{resenasMock.filter(r => r.estrellas >= 4).length}</div>
+                            <div className="stat-number-guia">{resenas.filter(r => r.calificacion >= 4).length}</div>
                             <div className="stat-label-guia">Positivas (4-5 ⭐)</div>
                         </div>
                     </div>
@@ -153,26 +164,27 @@ const GuiaMisResenas = () => {
 
                     {/* Lista de reseñas */}
                     <div>
-                        {filtradas.map(resena => (
-                            <div key={resena.id} className="resena-card">
+                        {filtradas.length > 0 ? filtradas.map(resena => (
+                            <div key={resena.id_resena} className="resena-card">
                                 <div className="resena-header">
                                     <div className="resena-user">
-                                        <div className="resena-avatar">{resena.inicial}</div>
+                                        <div className="resena-avatar">{resena.primer_nombre ? resena.primer_nombre[0] : 'U'}</div>
                                         <div>
-                                            <p className="resena-nombre">{resena.nombre}</p>
-                                            <p className="resena-fecha-texto">{resena.fecha}</p>
+                                            <p className="resena-nombre">{resena.primer_nombre} {resena.apellido_paterno}</p>
+                                            <p className="resena-fecha-texto">{new Date(resena.fecha_creacion).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     <div className="resena-stars">
                                         {Array.from({ length: 5 }).map((_, i) => (
-                                            <FaStar key={i} style={{ color: i < resena.estrellas ? '#f59e0b' : '#e5e7eb' }} />
+                                            <FaStar key={i} style={{ color: i < resena.calificacion ? '#f59e0b' : '#e5e7eb' }} />
                                         ))}
                                     </div>
                                 </div>
-                                <p className="resena-texto">{resena.texto}</p>
-                                <span className="resena-tour-tag">🗺️ {resena.tour}</span>
+                                <p className="resena-texto">{resena.comentario || 'Sin comentario written'}</p>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="empty-state">No hay reseñas que coincidan con el filtro.</div>
+                        )}
                     </div>
                 </section>
             </main>
