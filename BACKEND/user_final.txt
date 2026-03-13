@@ -1,0 +1,12 @@
+[
+  "admin@ecrut.travel",
+  "alixon@sistema.com",
+  "cristhofer@sistema.com",
+  "dayanara@sistema.com",
+  "doris@sistema.com",
+  "fernando@sistema.com",
+  "jean@sistema.com",
+  "jeremy@sistema.com",
+  "jorge@sistema.com",
+  "jose@sistema.com"
+]

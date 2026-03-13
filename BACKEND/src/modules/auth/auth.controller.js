@@ -134,29 +134,40 @@ const AuthController = {
 
     // INICIO DE SESIÓN
     login: async (req, res) => {
+        const fs = require('fs');
+        const path = require('path');
+        const logFile = path.join(process.cwd(), 'errors.log');
+
         try {
             const { correo, password } = req.body;
-
+            
             // --- LIMPIAR DATOS (trim) ---
             const cleanCorreo = correo?.trim().toLowerCase();
             const cleanPassword = password?.trim();
 
             // Validación rápida de formato antes de consultar BD (Ahorra recursos)
             if (!cleanCorreo || !cleanPassword) {
+                const logMsg = `[${new Date().toISOString()}] LOGIN 400: Falta correo o password\n`;
+                fs.appendFileSync(logFile, logMsg);
                 return res.status(400).json({ message: 'Ingrese correo y contraseña' });
             }
 
             const user = await User.findByEmail(cleanCorreo);
             if (!user) {
+                const logMsg = `[${new Date().toISOString()}] LOGIN 400: Usuario no encontrado: ${cleanCorreo}\n`;
+                fs.appendFileSync(logFile, logMsg);
                 return res.status(400).json({ message: 'Credenciales inválidas' });
             }
 
             // Comparar contraseña (bcrypt lo hace de forma segura)
             const isMatch = await bcrypt.compare(cleanPassword, user.password);
             if (!isMatch) {
+                const logMsg = `[${new Date().toISOString()}] LOGIN 400: Contraseña incorrecta para: ${cleanCorreo}\n`;
+                fs.appendFileSync(logFile, logMsg);
                 return res.status(400).json({ message: 'Credenciales inválidas' });
             }
 
+            console.log(`[LOGIN SUCCESS] Usuario: ${cleanCorreo}, Rol: ${user.id_rol}`);
             const token = jwt.sign(
                 {
                     id: user.id_usuario,

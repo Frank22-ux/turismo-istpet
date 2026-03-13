@@ -34,6 +34,7 @@ const LoginPage = () => {
 
   const onSubmit = async (data) => {
     try {
+      console.log("Intentando login con:", data);
       const res = await loginRequest(data);
 
       // Guardar sesión

@@ -1,0 +1,5 @@
+User: jose@sistema.com
+  Hash: $2b$10$/rEsfcx2VorPoQN1CSwJfuYrzU1/KSzv46ZD92fjR5cdoGpw6JAA6
+  Matches Jose2026: false
+  Matches Jose2026.: false
+  Matches jose2026: false

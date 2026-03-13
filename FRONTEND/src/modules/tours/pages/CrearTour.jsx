@@ -168,15 +168,8 @@ const CrearTour = () => {
             setLoadingDireccion(true);
             const obtenerDireccion = async () => {
                 try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&zoom=18&addressdetails=1`,
-                        {
-                            headers: {
-                                'Accept-Language': 'es'
-                            }
-                        }
-                    );
-                    const data = await response.json();
+                    const response = await api.get(`/geocoding/reverse?lat=${position.lat}&lon=${position.lng}`);
+                    const data = response.data;
 
                     const address = data.address || {};
                     setDireccion({
@@ -223,8 +216,8 @@ const CrearTour = () => {
         setGeocoding(true);
         setGeocodeMsg('🔍 Buscando ubicación...');
         try {
-            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-            const results = await resp.json();
+            const resp = await api.get(`/geocoding/search?q=${encodeURIComponent(address)}`);
+            const results = resp.data;
             if (results.length > 0) {
                 const { lat, lon } = results[0];
                 const newPos = { lat: parseFloat(lat), lng: parseFloat(lon) };
@@ -233,8 +226,8 @@ const CrearTour = () => {
                 setValue('longitud', parseFloat(lon).toFixed(6));
                 setGeocodeMsg('✅ Ubicación encontrada en el mapa');
                 // Autocompletar ciudad destino
-                const rev = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                const revData = await rev.json();
+                const rev = await api.get(`/geocoding/reverse?lat=${lat}&lon=${lon}`);
+                const revData = rev.data;
                 const city = revData?.address?.city || revData?.address?.town || revData?.address?.village || revData?.address?.county;
                 if (city) setValue('ciudad_destino', city);
             } else {
