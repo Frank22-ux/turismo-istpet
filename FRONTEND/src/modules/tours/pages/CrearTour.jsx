@@ -332,6 +332,7 @@ const CrearTour = () => {
             if (incluye.length > 0) formData.append('incluye', JSON.stringify(incluye));
             if (puntosInteres.length > 0) formData.append('puntos_interes', JSON.stringify(puntosInteres));
             formData.append('categoria', categoriaSeleccionada);
+            if (direccion?.pais) formData.append('pais', direccion.pais);
 
             formData.append('en_oferta', data.en_oferta ? 'true' : 'false');
             formData.append('descuento', data.descuento || 0);

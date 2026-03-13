@@ -102,19 +102,6 @@ CREATE TABLE tours (
     id_tour SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
-    precio DECIMAL(10, 2) NOT NULL,
-    duracion VARCHAR(50) DEFAULT '1 día',
-    fecha_inicio DATE,
-    fecha_fin DATE,
-    latitud DECIMAL(10, 8),
-    longitud DECIMAL(11, 8),
-    ciudad_destino VARCHAR(100),
-    
-    -- Multimedia
-    imagen_portada VARCHAR(500),
-    galeria JSONB, -- [url1, url2...]
-    
-    -- Detalles adicionales
     dificultad VARCHAR(50) DEFAULT 'Moderada',
     maximo_personas INTEGER DEFAULT 10,
     idiomas JSONB,

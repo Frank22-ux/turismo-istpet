@@ -63,15 +63,15 @@ const GestionReservas = () => {
       if (result.isConfirmed) {
         try {
           // Cambiamos el estado de manera asincrónica con la API (/api/reservas)
-          await api.patch(`/reservas/${id}/estado`, { estado: 'Pagado' });
+          await api.patch(`/reservas/${id}/estado`, { estado: 'Confirmada' });
           
           setReservas(reservas.map(res =>
-            res.id === id ? { ...res, estadoPago: 'Pagado' } : res
+            res.id === id ? { ...res, estadoPago: 'Confirmada' } : res
           ));
           
           Swal.fire({
             title: '¡Pago Confirmado!',
-            text: 'El estado de la reserva ha sido actualizado a Pagado.',
+            text: 'El estado de la reserva ha sido actualizado a Confirmada.',
             icon: 'success',
             confirmButtonColor: '#2ecc71'
           });

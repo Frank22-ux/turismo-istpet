@@ -6,6 +6,41 @@ import {
 import api from '../core/api';
 import './ReservationDrawer.css';
 
+const CURRENCY_MAP = {
+    'Chile': 'CLP',
+    'Inglaterra': 'GBP',
+    'Reino Unido': 'GBP',
+    'España': 'EUR',
+    'Francia': 'EUR',
+    'Alemania': 'EUR',
+    'Italia': 'EUR',
+    'Ecuador': 'USD',
+    'Estados Unidos': 'USD',
+    'Colombia': 'COP',
+    'México': 'MXN',
+    'Perú': 'PEN',
+    'Argentina': 'ARS',
+    'Brasil': 'BRL',
+    'Japón': 'JPY',
+    'Canadá': 'CAD',
+    'Rusia': 'RUB'
+};
+
+const CURRENCY_NAMES = {
+    'CLP': 'Pesos Chilenos',
+    'GBP': 'Libras Esterlinas',
+    'EUR': 'Euros',
+    'USD': 'Dólares',
+    'COP': 'Pesos Colombianos',
+    'MXN': 'Pesos Mexicanos',
+    'PEN': 'Soles Peruanos',
+    'ARS': 'Pesos Argentinos',
+    'BRL': 'Reales',
+    'JPY': 'Yenes',
+    'CAD': 'Dólares Canadienses',
+    'RUB': 'Rublos'
+};
+
 const ReservationDrawer = ({ tour, isOpen, onClose, onConfirm }) => {
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');
@@ -13,6 +48,8 @@ const ReservationDrawer = ({ tour, isOpen, onClose, onConfirm }) => {
     const [comentarios, setComentarios] = useState('');
     const [reservacionesPrevias, setReservacionesPrevias] = useState([]);
     const [yaReservado, setYaReservado] = useState(false);
+    const [exchangeRate, setExchangeRate] = useState(null);
+    const [loadingCurrency, setLoadingCurrency] = useState(false);
 
     useEffect(() => {
         if (isOpen && tour) {
@@ -20,6 +57,27 @@ const ReservationDrawer = ({ tour, isOpen, onClose, onConfirm }) => {
             api.get('/reservas/mis-reservas')
                 .then(res => setReservacionesPrevias(res.data))
                 .catch(err => console.error("Error cargando reservas previas para validación:", err));
+            
+            // Lógica de conversión de moneda
+            if (tour.pais && CURRENCY_MAP[tour.pais] && CURRENCY_MAP[tour.pais] !== 'USD') {
+                const targetCurrency = CURRENCY_MAP[tour.pais];
+                setLoadingCurrency(true);
+                fetch(`https://open.er-api.com/v6/latest/USD`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.rates && data.rates[targetCurrency]) {
+                            setExchangeRate({
+                                rate: data.rates[targetCurrency],
+                                code: targetCurrency
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Error obteniendo tipo de cambio:", err))
+                    .finally(() => setLoadingCurrency(false));
+            } else {
+                setExchangeRate(null);
+            }
+
             // Pre-fill fixed dates if the tour has them
             setFechaInicio(tour.fecha_inicio ? tour.fecha_inicio.split('T')[0] : '');
             setFechaFin(tour.fecha_fin ? tour.fecha_fin.split('T')[0] : '');
@@ -154,7 +212,15 @@ const ReservationDrawer = ({ tour, isOpen, onClose, onConfirm }) => {
                             </div>
                             <div className="summary-total">
                                 <span>Total a pagar</span>
-                                <span>${total.toFixed(2)}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                    <span>${total.toFixed(2)}</span>
+                                    {exchangeRate && !loadingCurrency && (
+                                        <span style={{ fontSize: '0.9rem', color: '#16a34a', fontWeight: '500' }}>
+                                            ≈ {(total * exchangeRate.rate).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {CURRENCY_NAMES[exchangeRate.code]}
+                                        </span>
+                                    )}
+                                    {loadingCurrency && <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Calculando conversión...</span>}
+                                </div>
                             </div>
                         </div>
 

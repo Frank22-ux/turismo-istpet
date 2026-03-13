@@ -15,8 +15,8 @@ const Tour = {
             (nombre, ciudad_destino, descripcion, precio, duracion, 
              fecha_inicio, fecha_fin, latitud, longitud, 
              imagen_portada, galeria, id_guia_asignado, id_hotel_base,
-             dificultad, maximo_personas, idiomas, incluye, puntos_interes, categoria, en_oferta, descuento) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) 
+             dificultad, maximo_personas, idiomas, incluye, puntos_interes, categoria, en_oferta, descuento, pais) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) 
             RETURNING *
         `;
 
@@ -41,7 +41,8 @@ const Tour = {
             (puntosJson && puntosJson !== '[]') ? puntosJson : null,
             data.categoria || 'Aventura',
             data.en_oferta === true || data.en_oferta === 'true' ? true : false,
-            data.descuento ? parseInt(data.descuento) : 0
+            data.descuento ? parseInt(data.descuento) : 0,
+            data.pais || null
         ];
 
         const { rows } = await pool.query(query, values);
@@ -114,8 +115,9 @@ const Tour = {
                 puntos_interes = COALESCE($18, puntos_interes),
                 categoria = COALESCE($19, categoria),
                 en_oferta = COALESCE($20, en_oferta),
-                descuento = COALESCE($21, descuento)
-            WHERE id_tour = $22
+                descuento = COALESCE($21, descuento),
+                pais = COALESCE($22, pais)
+            WHERE id_tour = $23
             RETURNING *
         `;
 
@@ -141,6 +143,7 @@ const Tour = {
             data.categoria || null,
             data.en_oferta !== undefined ? (data.en_oferta === true || data.en_oferta === 'true') : null,
             data.descuento !== undefined && data.descuento !== null ? parseInt(data.descuento) : null,
+            data.pais || null,
             id
         ];
 

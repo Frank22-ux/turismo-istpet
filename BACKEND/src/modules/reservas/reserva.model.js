@@ -28,7 +28,7 @@ const Reserva = {
     findByUser: async (id_turista) => {
         const query = `
             SELECT r.*, 
-                   t.nombre as tour_nombre, t.imagen_portada as tour_imagen, t.duracion as tour_duracion, t.ciudad_destino as tour_ciudad, t.id_hotel_base as hotel_asociado_id,
+                   t.nombre as tour_nombre, t.imagen_portada as tour_imagen, t.duracion as tour_duracion, t.ciudad_destino as tour_ciudad, t.id_hotel_base as hotel_asociado_id, t.pais as tour_pais,
                    h.nombre as hotel_nombre,
                    ug.id_usuario as id_guia, ug.primer_nombre as guia_nombre, ug.apellido_paterno as guia_apellido, ug.foto_url as guia_foto
             FROM reservas r

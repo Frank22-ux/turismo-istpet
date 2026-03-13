@@ -53,7 +53,8 @@ const TourController = {
                 puntos_interes: parseArr(req.body.puntos_interes),
                 categoria: clean(req.body.categoria) || 'Aventura',
                 en_oferta: req.body.en_oferta,
-                descuento: req.body.descuento
+                descuento: req.body.descuento,
+                pais: clean(req.body.pais)
             };
 
             const newTour = await Tour.create(tourData);
@@ -142,7 +143,8 @@ const TourController = {
                 puntos_interes: parseArr(req.body.puntos_interes),
                 categoria: clean(req.body.categoria),
                 en_oferta: req.body.en_oferta !== undefined ? req.body.en_oferta : null,
-                descuento: req.body.descuento !== undefined ? req.body.descuento : null
+                descuento: req.body.descuento !== undefined ? req.body.descuento : null,
+                pais: clean(req.body.pais)
             };
 
             const updatedTour = await Tour.update(id, tourData);

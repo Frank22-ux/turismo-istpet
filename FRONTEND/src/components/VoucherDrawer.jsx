@@ -1,12 +1,74 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaDownload, FaPrint, FaShareAlt, FaCheckCircle, FaStar, FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUsers, FaUserCircle, FaQrcode } from 'react-icons/fa';
 import './VoucherDrawer.css';
 
+const CURRENCY_MAP = {
+    'Chile': 'CLP',
+    'Inglaterra': 'GBP',
+    'Reino Unido': 'GBP',
+    'España': 'EUR',
+    'Francia': 'EUR',
+    'Alemania': 'EUR',
+    'Italia': 'EUR',
+    'Ecuador': 'USD',
+    'Estados Unidos': 'USD',
+    'Colombia': 'COP',
+    'México': 'MXN',
+    'Perú': 'PEN',
+    'Argentina': 'ARS',
+    'Brasil': 'BRL',
+    'Japón': 'JPY',
+    'Canadá': 'CAD',
+    'Rusia': 'RUB'
+};
+
+const CURRENCY_NAMES = {
+    'CLP': 'Pesos Chilenos',
+    'GBP': 'Libras Esterlinas',
+    'EUR': 'Euros',
+    'USD': 'Dólares',
+    'COP': 'Pesos Colombianos',
+    'MXN': 'Pesos Mexicanos',
+    'PEN': 'Soles Peruanos',
+    'ARS': 'Pesos Argentinos',
+    'BRL': 'Reales',
+    'JPY': 'Yenes',
+    'CAD': 'Dólares Canadienses',
+    'RUB': 'Rublos'
+};
+
 const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
     const voucherRef = useRef();
+    const [exchangeRate, setExchangeRate] = useState(null);
+    const [loadingCurrency, setLoadingCurrency] = useState(false);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    useEffect(() => {
+        if (isOpen && reservation && reservation.pais) {
+            if (CURRENCY_MAP[reservation.pais] && CURRENCY_MAP[reservation.pais] !== 'USD') {
+                const targetCurrency = CURRENCY_MAP[reservation.pais];
+                setLoadingCurrency(true);
+                fetch(`https://open.er-api.com/v6/latest/USD`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.rates && data.rates[targetCurrency]) {
+                            setExchangeRate({
+                                rate: data.rates[targetCurrency],
+                                code: targetCurrency
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Error obteniendo tipo de cambio para voucher:", err))
+                    .finally(() => setLoadingCurrency(false));
+            } else {
+                setExchangeRate(null);
+            }
+        } else if (!isOpen) {
+            setExchangeRate(null);
+        }
+    }, [isOpen, reservation]);
 
     if (!reservation) return null;
 
@@ -19,7 +81,8 @@ const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
         const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            logging: false
+            logging: false,
+            allowTaint: true
         });
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -104,8 +167,9 @@ const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
                             <div className="ticket-right">
                                 <div className="qr-box">
                                     <img 
-                                        src={`https://chart.googleapis.com/chart?cht=qr&chl=${encodeURIComponent(`Reserva:${reservation.id_reserva || reservation.id}|Turista:${user.username || 'Usuario'}`)}&chs=120x120&choe=UTF-8&chld=L|2`} 
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`Reserva:${reservation.id_reserva || reservation.id}|Turista:${user.username || 'Usuario'}`)}`} 
                                         alt="QR Code" 
+                                        crossOrigin="anonymous"
                                         className="real-qr-code" 
                                         style={{ width: '100px', height: '100px' }}
                                     />
@@ -113,7 +177,14 @@ const VoucherDrawer = ({ isOpen, onClose, reservation }) => {
                                 </div>
                                 <div className="total-box">
                                     <span className="item-label">Total Pagado</span>
-                                    <span className="item-value-total">${reservation.total_pagar || reservation.total}</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                        <span className="item-value-total">${reservation.total_pagar || reservation.total}</span>
+                                        {exchangeRate && !loadingCurrency && (
+                                            <span style={{ fontSize: '0.9rem', color: '#16a34a', fontWeight: '600', marginTop: '4px' }}>
+                                                ≈ {((reservation.total_pagar || reservation.total) * exchangeRate.rate).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {CURRENCY_NAMES[exchangeRate.code]}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

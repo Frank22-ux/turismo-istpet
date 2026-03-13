@@ -21,9 +21,58 @@ const API_URL = 'http://localhost:4000';
 
 const estadoConfig = {
     Confirmada: { icon: <FaCheckCircle />, color: '#10b981', bg: '#d1fae5', label: 'Confirmada' },
+    Pagado: { icon: <FaCheckCircle />, color: '#10b981', bg: '#d1fae5', label: 'Pagado' },
     Pendiente: { icon: <FaHourglassHalf />, color: '#f59e0b', bg: '#fef3c7', label: 'Pendiente' },
     Completada: { icon: <FaStar />, color: '#3b82f6', bg: '#dbeafe', label: 'Completada' },
     Cancelada: { icon: <FaTimesCircle />, color: '#ef4444', bg: '#fee2e2', label: 'Cancelada' },
+};
+
+const CURRENCY_MAP = {
+    'Chile': 'CLP',
+    'Inglaterra': 'GBP',
+    'Reino Unido': 'GBP',
+    'España': 'EUR',
+    'Francia': 'EUR',
+    'Alemania': 'EUR',
+    'Italia': 'EUR',
+    'Ecuador': 'USD',
+    'Estados Unidos': 'USD',
+    'Colombia': 'COP',
+    'México': 'MXN',
+    'Perú': 'PEN',
+    'Argentina': 'ARS',
+    'Brasil': 'BRL',
+    'Japón': 'JPY',
+    'Canadá': 'CAD',
+    'Rusia': 'RUB'
+};
+
+const CURRENCY_NAMES = {
+    'CLP': 'Pesos Chilenos',
+    'GBP': 'Libras Esterlinas',
+    'EUR': 'Euros',
+    'USD': 'Dólares',
+    'COP': 'Pesos Colombianos',
+    'MXN': 'Pesos Mexicanos',
+    'PEN': 'Soles Peruanos',
+    'ARS': 'Pesos Argentinos',
+    'BRL': 'Reales',
+    'JPY': 'Yenes',
+    'CAD': 'Dólares Canadienses',
+    'RUB': 'Rublos'
+};
+
+const getEstadoCfg = (estado) => {
+    if (!estado) return { icon: <FaHourglassHalf />, color: '#64748b', bg: '#f1f5f9', label: 'Procesando' };
+    
+    // Normalización para búsqueda insensible a mayúsculas
+    const key = Object.keys(estadoConfig).find(k => k.toLowerCase() === estado.toLowerCase());
+    return estadoConfig[key] || { 
+        icon: <FaHourglassHalf />, 
+                                color: '#64748b', 
+                                bg: '#f1f5f9', 
+                                label: estado 
+                            };
 };
 
 const MisReservas = () => {
@@ -44,7 +93,35 @@ const MisReservas = () => {
 
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [rates, setRates] = useState({});
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const fetchRates = async (reservasData) => {
+        const uniqueCountries = [...new Set(reservasData.map(r => r.pais).filter(p => p && CURRENCY_MAP[p] && CURRENCY_MAP[p] !== 'USD'))];
+        const newRates = { ...rates };
+        
+                try {
+                    // Usamos un API con mejor soporte para monedas latinoamericanas (CLP, COP, PEN, etc.)
+                    const res = await fetch(`https://open.er-api.com/v6/latest/USD`);
+                    const data = await res.json();
+                    if (data.rates) {
+                        const newRates = { ...rates };
+                        uniqueCountries.forEach(c => {
+                            const code = CURRENCY_MAP[c];
+                            if (data.rates[code]) {
+                                newRates[c] = {
+                                    rate: data.rates[code],
+                                    code: code
+                                };
+                            }
+                        });
+                        setRates(newRates);
+                        return; // Salimos si logramos cargar todo de una vez
+                    }
+                } catch (err) {
+                    console.error(`Error fetching rates:`, err);
+                }
+    };
 
     const fetchReservas = async () => {
         setLoading(true);
@@ -80,9 +157,11 @@ const MisReservas = () => {
                     hotel_nombre: r.hotel_nombre,
                     pagado: r.estado_reserva !== 'Pendiente',
                     id_reserva: r.id_reserva, // Aseguramos que pase como id_reserva también
+                    pais: r.tour_pais
                 };
             });
             setReservas(dataMapped);
+            fetchRates(dataMapped);
         } catch (error) {
             console.error("Error fetching reservas:", error);
         } finally {
@@ -106,7 +185,8 @@ const MisReservas = () => {
             nombre_guia: res.nombre_guia,
             apellido_guia: res.apellido_guia,
             foto_guia: res.foto_guia,
-            maximo_personas: 20
+            maximo_personas: 20,
+            pais: res.pais
         };
         setSelectedTour(tourData);
         setIsDrawerOpen(true);
@@ -297,7 +377,7 @@ const MisReservas = () => {
                 ) : (
                     <div className="reservas-list">
                         {reservasFiltradas.map(res => {
-                            const cfg = estadoConfig[res.estado];
+                            const cfg = getEstadoCfg(res.estado);
                             return (
                                 <div key={res.id} className="reserva-card">
                                     {/* Imagen */}
@@ -340,6 +420,11 @@ const MisReservas = () => {
                                         <div className="reserva-precio">
                                             <p className="precio-label">Total pagado</p>
                                             <p className="precio-valor">${res.total.toLocaleString()}</p>
+                                            {rates[res.pais] && (
+                                                <p style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: '500', margin: '-4px 0 8px 0' }}>
+                                                    ≈ {(res.total * rates[res.pais].rate).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {CURRENCY_NAMES[rates[res.pais].code]}
+                                                </p>
+                                            )}
                                             <span className={`pago-badge ${res.pagado ? 'pagado' : 'pendiente-pago'}`}>
                                                 {res.pagado ? '✓ Pagado' : '⏳ Pendiente'}
                                             </span>
